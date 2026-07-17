@@ -1,7 +1,7 @@
 # Testing applications
 
-Status: compiler testing utilities are implemented; recording execution support
-remains planned.
+Status: compiler testing utilities, SQLite execution support, and the bounded
+recording observer are implemented.
 
 SimpleQuery is designed so application query contracts can be tested without a
 network database, while database-specific behavior remains covered by live
@@ -43,8 +43,8 @@ CompiledQueryAssertions::assertMatches(
 ```
 
 `CompiledWriteQuery` provides detached insert, batch-insert, update, and delete
-compilation until those execution terminals are available. It is a testing
-tool, not a second production query API.
+compilation when a test must inspect a write without executing it. It is a
+testing tool, not a second production query API.
 
 Compile tests are appropriate for clause composition, identifier quoting,
 binding order, snapshot behavior, and application-generated query shapes.
@@ -54,9 +54,7 @@ binding order, snapshot behavior, and application-generated query shapes.
 SQLite in-memory is useful for fast CRUD and result-shape tests:
 
 ```php
-$pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-$pdo->exec('PRAGMA foreign_keys = ON');
-$db = Connection::fromPdo($pdo, Driver::Sqlite);
+$db = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
 ```
 
 Do not use SQLite to prove MariaDB/MySQL SQL, affected-row behavior, generated

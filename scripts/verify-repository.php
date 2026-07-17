@@ -32,7 +32,9 @@ $requiredFiles = [
     'examples/compiler-assertions.php',
     'examples/query-building.php',
     'examples/sqlite-compiler-smoke.php',
+    'examples/sqlite-execution.php',
     'tools/database-probes/compose.yaml',
+    'tools/database-probes/execution-smoke.php',
 ];
 
 $errors = [];

@@ -38,6 +38,11 @@ and green static/style checks.
 
 ## Phase 2: PDO execution and results
 
+Repository implementation status: complete. The public executor is covered by
+SQLite integration tests and exact MariaDB/MySQL/ProxySQL/MaxScale execution
+smokes alongside the lower-level PDO behavior matrix. The no-dev consumer job
+executes the SQLite example using production autoloading only.
+
 - implement connection policy and executor;
 - implement object/associative results, aggregates, raw-query terminals,
   affected rows, generated IDs, batch inserts, cursors, exceptions, and

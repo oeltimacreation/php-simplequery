@@ -88,6 +88,52 @@ abstract class AbstractDialectCompiler implements DialectCompiler
     }
 
     #[\Override]
+    final public function count(QueryState $state): CompiledQuery
+    {
+        $logicalState = $this->withoutTopLevelPaginationAndLock($state);
+        if ($logicalState->distinct || $logicalState->groups !== [] || !$logicalState->having->isEmpty()) {
+            $inner = $this->select($logicalState);
+
+            return new CompiledQuery(
+                sprintf(
+                    'SELECT COUNT(*) FROM (%s) AS %s',
+                    $inner->sql,
+                    $this->quote(Identifier::fromSegments('simplequery_count')),
+                ),
+                $inner->bindings,
+            );
+        }
+
+        $logicalState->projections = [new RawExpression('COUNT(*)')];
+
+        return $this->select($logicalState);
+    }
+
+    #[\Override]
+    final public function aggregate(
+        QueryState $state,
+        string $function,
+        Identifier|RawExpression $column,
+    ): CompiledQuery {
+        if (!in_array($function, ['SUM', 'AVG', 'MIN', 'MAX'], true)) {
+            throw new InvalidQueryException('Unknown aggregate function.');
+        }
+        if ($column instanceof Identifier && ($column->wildcard || $column->alias !== null)) {
+            throw new InvalidQueryException('Aggregate columns cannot be wildcards or aliases.');
+        }
+
+        $expressionContext = new CompilationContext();
+        $columnSql = $this->expression($column, $expressionContext);
+        $aggregateState = $this->withoutTopLevelPaginationAndLock($state);
+        $aggregateState->projections = [new RawExpression(
+            sprintf('%s(%s)', $function, $columnSql),
+            $expressionContext->bindings(),
+        )];
+
+        return $this->select($aggregateState);
+    }
+
+    #[\Override]
     final public function insert(QueryState $state, array $row): CompiledQuery
     {
         $this->validateInsertState($state);
@@ -411,5 +457,17 @@ abstract class AbstractDialectCompiler implements DialectCompiler
         ) {
             throw new UnsupportedFeatureException('Update and delete accept predicates but no other read clauses.');
         }
+    }
+
+    private function withoutTopLevelPaginationAndLock(QueryState $state): QueryState
+    {
+        $copy = $state->copy();
+        $copy->orders = [];
+        $copy->limit = null;
+        $copy->offset = null;
+        $copy->lock->mode = null;
+        $copy->lock->modifier = null;
+
+        return $copy;
     }
 }

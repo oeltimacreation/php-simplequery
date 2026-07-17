@@ -12,6 +12,13 @@
     "failed_observations": 0,
     "modes": ["native-buffered", "native-unbuffered", "emulated-buffered", "emulated-unbuffered"]
   },
+  "phase2_execution_reports": {
+    "count": 5,
+    "failed_observations": 0,
+    "passed_observations": 63,
+    "mode": "native-buffered",
+    "targets": ["sqlite", "mariadb", "mysql", "proxysql", "maxscale"]
+  },
   "mysql_family_observations": {
     "mariadb_backend_version": "11.8.8-MariaDB-ubu2404",
     "mysql_version": "8.0.45",

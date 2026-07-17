@@ -26,5 +26,13 @@ with ZeroVer releases before `1.0.0`.
   locks, writes, raw expressions, subquery snapshots, and clone isolation.
 - Compiler testing utilities, versioned golden fixtures, executable examples,
   and a SQLite in-memory compiler smoke test.
+- Supported-profile PDO construction, connection lifecycle enforcement, and
+  explicit prepared-statement execution with concrete binding types.
+- Object/associative hydration, scalar aggregates, affected-row writes,
+  immediate generated IDs, genuine multi-row inserts, and deferred raw queries.
+- One-shot tracked cursors, redacted query exceptions, immutable execution
+  observations, and a bounded recording observer.
+- Public execution smokes for SQLite, MariaDB, MySQL, ProxySQL, and MaxScale,
+  plus a no-dev SQLite execution consumer example.
 
 [Unreleased]: https://github.com/oeltimacreation/php-simplequery

@@ -1,6 +1,6 @@
 # Raw SQL and security
 
-Status: target `0.1.0` contract.
+Status: raw expression and deferred raw-query execution contract implemented.
 
 SimpleQuery separates four input domains:
 

@@ -88,16 +88,17 @@ The complete service-backed command uses exact, disposable fixtures:
 bash tools/database-probes/run-services.sh
 ```
 
-Coverage, the SQLite-only evidence probe, and benchmarks run with
+Coverage, the SQLite-only behavior/execution probes, and benchmarks run with
 `composer test:coverage`, `composer coverage:check`,
-`composer probe:sqlite`, and `composer benchmark`. CI commands match local
+`composer probe:sqlite`, `composer probe:execution -- sqlite`, and
+`composer benchmark`. CI commands match local
 commands and report fixture driver, version, SQLSTATE, placeholder SQL, and
 setup context without leaking binding values. Naming, cleanup, and evidence
 formats are frozen in [testing architecture](testing-architecture.md).
 
 ## CI jobs
 
-The planned CI surface includes:
+The CI surface includes:
 
 1. PHP 8.2 through the current supported PHP release;
 2. live MariaDB at the minimum/current supported versions;

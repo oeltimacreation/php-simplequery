@@ -11,7 +11,7 @@ composer test:coverage         # writes Clover and HTML coverage
 composer coverage:check        # 90/80 overall, 95/90 compiler gates
 composer examples:check        # executable compiler and SQLite examples
 composer probe:sqlite          # JSON PDO/SQLite evidence
-bash tools/database-probes/run-services.sh  # complete direct/proxy behavior matrix
+bash tools/database-probes/run-services.sh  # complete direct/proxy behavior and execution matrix
 php tools/database-probes/ambiguous-write.php proxysql  # operator-controlled failure window
 composer benchmark             # PDO-only control benchmark
 ```

@@ -1,7 +1,6 @@
 # Query builder
 
-Status: compiler clauses are implemented; execution terminals remain the
-target `0.1.0` contract.
+Status: compiler clauses and Phase 2 execution terminals are implemented.
 
 ## Lifecycle
 
@@ -159,7 +158,7 @@ pagination, and locking:
 ## Locking reads
 
 `forUpdate()`, `forShare()`, `noWait()`, and `skipLocked()` compile for
-MariaDB and MySQL. Future execution requires an active transaction and InnoDB for the
+MariaDB and MySQL. Execution requires an active transaction and InnoDB for the
 documented guarantees. SQLite rejects lock clauses.
 
 Exactly one lock mode is allowed. `noWait()` and `skipLocked()` are mutually

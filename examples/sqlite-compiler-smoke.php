@@ -9,6 +9,7 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 
 $pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 $pdo->exec('PRAGMA foreign_keys = ON');
+$pdo->exec('PRAGMA busy_timeout = 5000');
 $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, email TEXT NOT NULL, active INTEGER NOT NULL)');
 $pdo->exec("INSERT INTO users VALUES (1, 'person@example.test', 1)");
 

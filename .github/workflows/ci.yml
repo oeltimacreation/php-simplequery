@@ -32,6 +32,7 @@ jobs:
       - run: composer install --no-interaction --prefer-dist --no-progress
       - run: composer test
       - run: composer probe:sqlite > sqlite-probe.json
+      - run: composer probe:execution -- sqlite > sqlite-execution-probe.json
       - name: Report linked SQLite runtime
         run: php -r 'echo (new PDO("sqlite::memory:"))->query("SELECT sqlite_version()")->fetchColumn(), PHP_EOL;'
 
@@ -80,6 +81,10 @@ jobs:
               done
             done
           done
+          php tools/database-probes/execution-smoke.php mariadb \
+            --output=tools/database-probes/results/mariadb-execution-native-buffered.json
+          php tools/database-probes/execution-smoke.php mysql \
+            --output=tools/database-probes/results/mysql-execution-native-buffered.json
           php tools/database-probes/summarize.php tools/database-probes/results
       - name: Stop direct-engine fixtures
         if: always()
@@ -113,11 +118,12 @@ jobs:
       - uses: shivammathur/setup-php@add91f08e1598a0b6ff470f1e389f9d652559bf0
         with:
           php-version: "8.2"
-          extensions: pdo
+          extensions: pdo, pdo_sqlite
           coverage: none
       - run: composer install --no-dev --no-interaction --prefer-dist --no-progress
       - run: php -r 'require "vendor/autoload.php"; echo "autoload-ok", PHP_EOL;'
       - run: php examples/compiler-assertions.php
+      - run: php examples/sqlite-execution.php
 
   benchmark-control:
     name: PDO SQLite benchmark control

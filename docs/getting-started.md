@@ -1,7 +1,8 @@
 # Getting started
 
-Status: compiler API available from the development checkout. Execution and
-result APIs remain planned for `0.1.0`; no package release exists yet.
+Status: compiler, execution, result, cursor, and observation APIs are available
+from the development checkout. Managed transactions and a package release
+remain pending.
 
 ## Requirements
 
@@ -26,10 +27,6 @@ The driver is explicit. `pdo_mysql` alone cannot reliably distinguish MariaDB
 from MySQL, especially through a proxy.
 
 ## Connect from a DSN
-
-`Connection::connect()` is part of the accepted execution-layer contract but
-is not implemented yet. Use an explicitly configured injected PDO while the
-project is unreleased.
 
 The convenience factory creates and owns PDO:
 
@@ -61,7 +58,8 @@ $compiled = $db
     ->compile();
 ```
 
-Execution terminals such as `get()` and `getAssociative()` remain pending.
+Execution terminals such as `get()`, `getAssociative()`, aggregates, and writes
+prepare and explicitly bind the compiled query on the same connection.
 
 Every `table()` call returns a fresh mutable builder. Fluent clause methods
 mutate that builder, while `compile()`, `get()`, `first()`, aggregates, and
@@ -82,7 +80,7 @@ $compiled->bindings;
 Compiled SQL plus ordered typed bindings is canonical. Interpolated debug SQL
 is never used for execution.
 
-## Future deterministic close
+## Deterministic close
 
 ```php
 $db->close();

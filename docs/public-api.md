@@ -1,8 +1,8 @@
 # Public API contract
 
-Status: query construction, immutable values, compilation, and the minimal
-injected-PDO connection are implemented. Execution and transaction portions
-remain the accepted target `0.1.0` contract.
+Status: query construction, compilation, PDO execution, results, cursors, and
+observation are implemented. Managed transactions remain the accepted target
+`0.1.0` contract.
 
 This is the signature index for the public surface. The linked topic guides
 define overloads, mutation rules, validation, result shapes, and dialect
@@ -30,16 +30,15 @@ Connection::connect(
 
 Connection::table(string|Identifier|QueryBuilder $source, ?string $alias = null): QueryBuilder
 Connection::raw(string $trustedSql, array $bindings = []): RawExpression
-Connection::query(string $trustedSql, iterable $bindings = []): RawQuery
+Connection::query(string $trustedSql, array $bindings = []): RawQuery
 Connection::transaction(Closure $callback): mixed
 Connection::pdo(): PDO
 Connection::close(): void
 ```
 
-`fromPdo()`, `table()`, `raw()`, `pdo()`, and detached compilation are
-implemented. `connect()`, raw-query execution, managed transactions, and
-closing lifecycle enforcement are scheduled with the execution/transaction
-layers.
+Everything above except managed `transaction()` is implemented. `close()` is
+idempotent after success and rejects active physical transactions or tracked
+cursors rather than silently completing/truncating them.
 
 `Driver` has exactly `MariaDb`, `MySql`, and `Sqlite`. `ConnectionOptions` is a
 final readonly declaration with nullable prepare-emulation, buffering,
@@ -78,9 +77,9 @@ promises.
 detached dialect assertions. `Testing\CompiledQueryAssertions::assertMatches()`
 checks SQL, ordered values, and optionally concrete parameter types.
 `Testing\CompiledWriteQuery` exposes detached insert, multi-row insert, update,
-and delete compilation until the corresponding production execution terminals
-are implemented. These utilities invoke the same closed internal compilers as
-production builders; they are not compiler extension points.
+and delete compilation for tests that must not execute. These utilities invoke
+the same closed internal compilers as production builders; they are not
+compiler extension points.
 
 ## Builder clauses
 

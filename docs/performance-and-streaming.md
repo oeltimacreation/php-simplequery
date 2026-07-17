@@ -1,6 +1,6 @@
 # Performance and streaming
 
-Status: target `0.1.0` contract and benchmark plan.
+Status: streaming/batch implementation complete; expanded benchmark plan open.
 
 Database and network execution normally dominate latency, but compilation,
 hydration, and memory behavior still matter in high-throughput applications.

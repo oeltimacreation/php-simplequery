@@ -14,6 +14,13 @@ connections allowed the active-cursor second-statement probe, and unbuffered
 connections rejected it. The redacted values are retained in
 [`fixture-baseline.json`](fixture-baseline.json).
 
+Phase 2 adds separate native-buffered public executor smokes for SQLite,
+MariaDB, and MySQL. They cover DSN construction, explicit bindings, object and
+associative hydration, logical counts, decimal aggregates, generated IDs,
+changed affected rows, genuine batch inserts, raw terminals, early cursor
+close, transaction-required row locks, exception conversion, and observer
+metadata. All three direct reports passed in the 2026-07-17 run.
+
 | Behavior | MariaDB control | MySQL control | SQLite control | Owning probe/policy |
 | --- | --- | --- | --- | --- |
 | Positional placeholders and literal/comment `?` | Recorded | Recorded | Recorded | `positional_placeholders`; ADR-005 |

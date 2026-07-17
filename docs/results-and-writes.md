@@ -1,6 +1,6 @@
 # Results and writes
 
-Status: target `0.1.0` contract.
+Status: implemented Phase 2 contract.
 
 ## Object results
 

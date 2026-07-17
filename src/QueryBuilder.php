@@ -6,6 +6,7 @@ namespace Oeltima\SimpleQuery;
 
 use Closure;
 use Oeltima\SimpleQuery\Exception\InvalidQueryException;
+use Oeltima\SimpleQuery\Exception\QueryExecutionException;
 use Oeltima\SimpleQuery\Expression\Identifier;
 use Oeltima\SimpleQuery\Expression\RawExpression;
 use Oeltima\SimpleQuery\Internal\Ast\ConditionCollection;
@@ -15,9 +16,13 @@ use Oeltima\SimpleQuery\Internal\Ast\JoinState;
 use Oeltima\SimpleQuery\Internal\Ast\OrderClause;
 use Oeltima\SimpleQuery\Internal\Ast\QueryState;
 use Oeltima\SimpleQuery\Internal\Ast\Source;
+use Oeltima\SimpleQuery\Internal\AggregateResult;
 use Oeltima\SimpleQuery\Internal\BuildsConditions;
 use Oeltima\SimpleQuery\Internal\Compiler\CompilerFactory;
+use Oeltima\SimpleQuery\Internal\Compiler\DialectCompiler;
+use Oeltima\SimpleQuery\Internal\Executor;
 use Oeltima\SimpleQuery\Internal\InputNormalizer;
+use stdClass;
 
 final class QueryBuilder
 {
@@ -178,7 +183,100 @@ final class QueryBuilder
 
     public function compile(): CompiledQuery
     {
-        return CompilerFactory::for($this->connection->driver())->select($this->state);
+        return $this->compiler()->select($this->state);
+    }
+
+    /** @return list<stdClass> */
+    public function get(): array
+    {
+        return $this->executor()->getObjects($this->compiledForExecution());
+    }
+
+    public function first(): ?stdClass
+    {
+        return $this->executor()->firstObject($this->compiledForExecution(true));
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function getAssociative(): array
+    {
+        return $this->executor()->getAssociative($this->compiledForExecution());
+    }
+
+    /** @return array<string, mixed>|null */
+    public function firstAssociative(): ?array
+    {
+        return $this->executor()->firstAssociative($this->compiledForExecution(true));
+    }
+
+    public function iterate(): Cursor
+    {
+        return $this->executor()->cursor($this->compiledForExecution(), false);
+    }
+
+    public function iterateAssociative(): Cursor
+    {
+        return $this->executor()->cursor($this->compiledForExecution(), true);
+    }
+
+    public function count(): int
+    {
+        $query = $this->compiler()->count($this->state);
+        $value = $this->executor()->scalar($query);
+        try {
+            return AggregateResult::count($value);
+        } catch (\UnexpectedValueException $exception) {
+            throw $this->invalidAggregate($exception->getMessage(), $query);
+        }
+    }
+
+    public function sum(string|Identifier|RawExpression $column): int|float|string|null
+    {
+        return $this->numericAggregate('SUM', $column);
+    }
+
+    public function average(string|Identifier|RawExpression $column): int|float|string|null
+    {
+        return $this->numericAggregate('AVG', $column);
+    }
+
+    public function min(string|Identifier|RawExpression $column): mixed
+    {
+        return $this->aggregate('MIN', $column);
+    }
+
+    public function max(string|Identifier|RawExpression $column): mixed
+    {
+        return $this->aggregate('MAX', $column);
+    }
+
+    /** @param array<string, mixed> $row */
+    public function insert(array $row): int
+    {
+        return $this->executor()->affectedRows($this->compiler()->insert($this->state, $row));
+    }
+
+    /** @param array<string, mixed> $row */
+    public function insertGetId(array $row): string
+    {
+        return $this->executor()->insertGetId($this->compiler()->insert($this->state, $row));
+    }
+
+    /** @param array<array-key, array<string, mixed>> $rows */
+    public function insertMany(array $rows): int
+    {
+        return $this->executor()->affectedRows($this->compiler()->insertMany($this->state, $rows));
+    }
+
+    /** @param array<string, mixed> $changes */
+    public function update(array $changes): int
+    {
+        return $this->executor()->affectedRows($this->compiler()->update($this->state, $changes));
+    }
+
+    public function delete(): int
+    {
+        return $this->executor()->affectedRows($this->compiler()->delete($this->state));
     }
 
     /** @internal */
@@ -287,5 +385,71 @@ final class QueryBuilder
         $this->state->lock->modifier = $modifier;
 
         return $this;
+    }
+
+    private function compiler(): DialectCompiler
+    {
+        return CompilerFactory::for($this->connection->driver());
+    }
+
+    private function executor(): Executor
+    {
+        return new Executor($this->connection);
+    }
+
+    private function compiledForExecution(bool $first = false): CompiledQuery
+    {
+        $state = $this->state;
+        if ($first) {
+            $state = $this->state->copy();
+            $state->limit = min($state->limit ?? 1, 1);
+        }
+
+        $query = $this->compiler()->select($state);
+        if ($state->lock->mode !== null) {
+            $this->connection->requireTransactionForLock();
+        }
+
+        return $query;
+    }
+
+    private function aggregate(
+        string $function,
+        string|Identifier|RawExpression $column,
+    ): mixed {
+        $query = $this->compiler()->aggregate(
+            $this->state,
+            $function,
+            InputNormalizer::structuredExpression($column),
+        );
+
+        return $this->executor()->scalar($query);
+    }
+
+    private function numericAggregate(
+        string $function,
+        string|Identifier|RawExpression $column,
+    ): int|float|string|null {
+        $query = $this->compiler()->aggregate(
+            $this->state,
+            $function,
+            InputNormalizer::structuredExpression($column),
+        );
+        $value = $this->executor()->scalar($query);
+        if ($value !== null && !is_int($value) && !is_float($value) && !is_string($value)) {
+            throw $this->invalidAggregate('A numeric aggregate returned an unsupported scalar type.', $query);
+        }
+
+        return $value;
+    }
+
+    private function invalidAggregate(string $message, CompiledQuery $query): QueryExecutionException
+    {
+        return QueryExecutionException::invalidResult(
+            $message,
+            $query->sql,
+            $this->connection->driver(),
+            $this->connection->connectionOptions()->label,
+        );
     }
 }

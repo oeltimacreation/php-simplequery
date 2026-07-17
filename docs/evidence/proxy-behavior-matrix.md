@@ -17,6 +17,12 @@ also completed 32 unique explicitly closed prepares, retained one connection
 identity through transaction/savepoint completion, and did not leak a user
 session variable into a new logical PDO connection.
 
+The Phase 2 public executor smoke also passed 13 checks through each proxy in
+native-buffered mode, including prepared CRUD/batch execution, immediate IDs,
+changed-row counts, decimal aggregates, early cursor close, user-session
+continuity, transaction-required row locking, redacted SQL errors, and bounded
+observer diagnostics.
+
 | Behavior | ProxySQL fixture | MaxScale fixture | Required deployment extension |
 | --- | --- | --- | --- |
 | Native binary prepares | All probe statements | All probe statements | Backend pooling/history and exact rules/settings |

@@ -1,7 +1,7 @@
 # Architecture
 
-Status: compiler architecture implemented; executor and transaction layers are
-the accepted target architecture for `0.1.0`.
+Status: compiler and executor architecture implemented; managed transactions
+remain the accepted target architecture for `0.1.0`.
 
 PHP SimpleQuery separates query construction, compilation, and execution while
 keeping the replaceable surface deliberately small.
@@ -86,8 +86,8 @@ src/
 └── Internal/
     ├── Ast/
     ├── Compiler/
-    ├── Executor/
-    └── Transaction/
+    ├── AggregateResult.php
+    └── Executor.php
 ```
 
 See the [architecture decision records](adr/README.md) for the reasons behind

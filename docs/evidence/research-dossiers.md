@@ -70,7 +70,7 @@ ADRs 005, 006, 008, 009, 011, and 017 own the affected product policies.
 - Portability consequence: MySQL and MariaDB retain independent golden/live
   tests even where emitted SQL happens to match.
 - Automated evidence: direct behavior matrix, independent MySQL golden compiler
-  tests, and the planned executor live tests.
+  tests and the public executor live smokes.
 
 ## SQLite
 

@@ -4,30 +4,31 @@ PHP SimpleQuery is a small, framework-agnostic PDO query builder and execution
 library for PHP 8.2 and later.
 
 > [!IMPORTANT]
-> Deterministic query construction and compilation are implemented, alongside
-> the PDO/engine probe suite. Execution/result terminals, transaction handling,
-> and a package release remain pending; do not treat the checkout as a released
-> query execution library.
+> Deterministic compilation and the PDO execution/result layer are implemented,
+> alongside the PDO/engine probe suite. Managed transaction handling and a
+> package release remain pending; do not treat the checkout as a released
+> library.
 
 The project focuses on predictable SQL compilation, ordered typed bindings,
 explicit connection ownership, safe nested transactions, and honest database
 support. It is not an ORM, schema manager, connection pool, retry engine, or
 general database abstraction platform.
 
-## Compiler highlights
+## Implementation highlights
 
 - mutable fluent builders with private typed state;
 - a fresh builder for every `Connection::table()` call;
 - non-mutating terminal operations and deterministic compilation;
 - positional placeholders with ordered, explicitly typed bindings;
 - independent MariaDB, MySQL, and SQLite compiler paths;
-- compiler-only testing connections and detached write-query fixtures;
+- compiler-only testing connections and detached query fixtures;
 - explicit identifier, value, subquery, and trusted-raw-SQL boundaries;
 - snapshotted subqueries, clone isolation, and deterministic ordered bindings.
+- explicit connection policy through injected PDO or DSN construction;
+- object/associative hydration, scalar aggregates, writes, and deferred raw SQL;
+- tracked one-shot cursors, redacted execution exceptions, and bounded observers.
 
-Result hydration, affected-row/generated-ID terminals, cursors, observers, and
-managed transactions remain part of the accepted `0.1.0` contract but are not
-implemented yet.
+Managed transactions remain the next accepted `0.1.0` implementation phase.
 
 ## Planned package
 
@@ -46,6 +47,7 @@ composer install
 composer check
 composer examples:check
 composer probe:sqlite
+composer probe:execution -- sqlite
 bash tools/database-probes/run-services.sh
 ```
 

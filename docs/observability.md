@@ -1,6 +1,6 @@
 # Observability
 
-Status: target `0.1.0` contract.
+Status: implemented Phase 2 contract.
 
 SimpleQuery provides one narrow optional post-attempt observer. It does not
 provide mutable events, middleware, a global registry, or a logging dependency.
@@ -30,7 +30,7 @@ No notification is emitted for:
 
 ## Execution metadata
 
-Planned metadata includes:
+Metadata includes:
 
 - placeholder SQL;
 - binding count and parameter types;
@@ -60,9 +60,9 @@ first-party PSR-3 bridge in `0.1.0`.
 
 ## Recording tests
 
-A bounded `RecordingQueryObserver` is planned under the testing namespace for
-application assertions. It must redact values and have an explicit lifetime so
-long-running workers do not retain unbounded query history.
+`Testing\RecordingQueryObserver` retains a caller-selected bounded number of
+immutable executions for application assertions. Values are absent from the
+records, and `clear()` provides an explicit lifecycle boundary.
 
 ## No last-query state
 
