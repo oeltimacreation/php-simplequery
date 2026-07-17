@@ -13,6 +13,9 @@ composer examples:check        # executable compiler and SQLite examples
 composer probe:sqlite          # JSON PDO/SQLite evidence
 composer probe:execution -- sqlite    # public executor smoke
 composer probe:transaction -- sqlite  # managed transaction state matrix
+composer probe:migration -- sqlite    # synthetic migration slice smoke
+composer migration:check       # deterministic change/ambiguity report
+composer benchmark:migration   # direct-PDO result/timing comparison
 bash tools/database-probes/run-services.sh  # complete direct/proxy behavior and execution matrix
 php tools/database-probes/ambiguous-write.php proxysql  # operator-controlled failure window
 composer benchmark             # PDO-only control benchmark
@@ -22,7 +25,8 @@ composer benchmark             # PDO-only control benchmark
 starts only the exact synthetic Docker fixtures in
 [`compose.yaml`](../tools/database-probes/compose.yaml), records native/emulated and
 buffered/unbuffered reports plus public execution and transaction smokes under
-the ignored `tools/database-probes/results/` directory, prints a summary, and
+the ignored `tools/database-probes/results/` directory. It also runs the
+library-owned migration slices through every target, prints a summary, and
 removes containers, networks, and volumes.
 
 ## Naming and placement
@@ -34,10 +38,14 @@ removes containers, networks, and volumes.
 - `tests/Integration/{MariaDb,MySql,SQLite,Proxy}` owns live behavior;
 - `tests/Compatibility` owns runtime/minimum-version behavior;
 - `tests/Consumer` owns no-dev and external-project fixtures;
+- `tests/Migration` owns synthetic native-API slices and automation refusal
+  checks;
 - `tests/Fixtures/Contracts` is versioned executable contract data;
 - `tests/Fixtures/Migration` is synthetic migration characterization data;
 - `tools/database-probes` owns probe commands, fixtures, and their private
   support classes.
+- `tools/migration` owns deterministic analysis/reporting helpers that are
+  development-only and never mutate application files.
 
 The suite uses synthetic tables prefixed `sq_probe_`. Every fixture creates its
 own random table name and removes it in `finally`. File-backed SQLite fixtures

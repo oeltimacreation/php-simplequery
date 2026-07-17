@@ -18,6 +18,7 @@
 - [Database support](database-support.md)
 - [Testing applications](testing-applications.md)
 - [Migrating from Pixie](migrating-from-pixie.md)
+- [Migration validation](migration-validation.md)
 - [Upgrading](upgrading.md)
 
 ## Project design and maintenance

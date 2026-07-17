@@ -1,0 +1,14 @@
+<?php
+use Pixie\QueryBuilder\QueryBuilderHandler;
+final class SyntheticDiagnosticQuery
+{
+    public function __construct(private QueryBuilderHandler $database) {}
+    public function run(string $kind): array
+    {
+        $rows = $this->database->table('users', 'u')
+            ->join('assignments', "a.user_id = u.id AND a.kind = '$kind'")
+            ->get();
+        log_sql($this->database->getLastQuery()->getRawSql());
+        return $rows;
+    }
+}

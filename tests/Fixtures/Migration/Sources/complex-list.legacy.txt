@@ -1,0 +1,20 @@
+<?php
+use Pixie\QueryBuilder\QueryBuilder;
+use Pixie\QueryBuilder\QueryBuilderHandler;
+final class SyntheticMemberList
+{
+    public function __construct(private QueryBuilderHandler $database) {}
+    public function page(array $teams): array
+    {
+        $query = $this->database->table('members', 'm')
+            ->join('teams', 't.id', '=', 'm.team_id')
+            ->leftJoin('roles', 'r.id', '=', 'm.role_id')
+            ->where(function (QueryBuilder $group): void {
+                $group->where('m.active', true)->orWhere('m.status', 'pending');
+            })
+            ->whereIn('m.team_id', $teams)
+            ->orderBy('m.id')
+            ->limit(25);
+        return [$query->get(), $query->count()];
+    }
+}

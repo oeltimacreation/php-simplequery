@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "corpus_version": "2.0.0",
+  "collected_at": "2026-07-17",
+  "scope": "Synthetic recreations of representative consumer shapes; no application source is copied.",
+  "slices": [
+    {
+      "id": "sqlite-importer-crud",
+      "legacy_source": "Sources/sqlite-importer.legacy.txt",
+      "native_source": "Sources/sqlite-importer.native.txt",
+      "consumer_style": "embedded SQLite importer",
+      "engine_profiles": ["sqlite"],
+      "validated_shapes": ["dynamic_allowlisted_identifier", "object_hydration", "insert_get_id", "affected_rows", "nullable_first"],
+      "support_effort": "small",
+      "rollout_risk": "low",
+      "measurement": {
+        "insert_return_rewrites": 2,
+        "unsupported_methods": 0,
+        "raw_sql_findings": 0,
+        "safe_mechanical_edits": 4,
+        "manual_edits": 5,
+        "query_parity_cases": 5,
+        "result_parity_cases": 5
+      }
+    },
+    {
+      "id": "injected-shared-model",
+      "legacy_source": "Sources/injected-model.legacy.txt",
+      "native_source": "Sources/injected-model.native.txt",
+      "consumer_style": "container-injected MariaDB/MySQL model",
+      "engine_profiles": ["mariadb", "mysql", "sqlite"],
+      "validated_shapes": ["constructor_injection", "fresh_builder", "join", "raw_projection", "direct_pdo_external_transaction"],
+      "support_effort": "medium",
+      "rollout_risk": "medium",
+      "measurement": {
+        "insert_return_rewrites": 1,
+        "unsupported_methods": 0,
+        "raw_sql_findings": 1,
+        "safe_mechanical_edits": 6,
+        "manual_edits": 9,
+        "query_parity_cases": 6,
+        "result_parity_cases": 4
+      }
+    },
+    {
+      "id": "raw-reporting-model",
+      "legacy_source": "Sources/raw-report.legacy.txt",
+      "native_source": "Sources/raw-report.native.txt",
+      "consumer_style": "SQL-heavy reporting service",
+      "engine_profiles": ["mariadb", "mysql", "sqlite"],
+      "validated_shapes": ["deferred_raw_query", "positional_bindings", "vendor_date_expression", "object_and_associative_results", "aggregate_scalar"],
+      "support_effort": "large",
+      "rollout_risk": "high",
+      "measurement": {
+        "insert_return_rewrites": 0,
+        "unsupported_methods": 1,
+        "raw_sql_findings": 3,
+        "safe_mechanical_edits": 3,
+        "manual_edits": 16,
+        "query_parity_cases": 7,
+        "result_parity_cases": 5
+      }
+    },
+    {
+      "id": "diagnostic-raw-join",
+      "legacy_source": "Sources/diagnostic-join.legacy.txt",
+      "native_source": "Sources/diagnostic-join.native.txt",
+      "consumer_style": "debug-instrumented backend",
+      "engine_profiles": ["mariadb", "mysql", "sqlite"],
+      "validated_shapes": ["raw_join_binding_order", "detached_compile", "recording_observer", "redacted_diagnostics", "no_last_query_state"],
+      "support_effort": "medium",
+      "rollout_risk": "medium",
+      "measurement": {
+        "insert_return_rewrites": 0,
+        "unsupported_methods": 0,
+        "raw_sql_findings": 2,
+        "safe_mechanical_edits": 3,
+        "manual_edits": 11,
+        "query_parity_cases": 5,
+        "result_parity_cases": 3
+      }
+    },
+    {
+      "id": "complex-list-join",
+      "legacy_source": "Sources/complex-list.legacy.txt",
+      "native_source": "Sources/complex-list.native.txt",
+      "consumer_style": "high-volume fluent list endpoint",
+      "engine_profiles": ["mariadb", "mysql", "sqlite"],
+      "validated_shapes": ["mutable_conditional_builder", "grouped_predicate", "inner_and_left_join", "pagination", "logical_count", "direct_pdo_parity"],
+      "support_effort": "medium",
+      "rollout_risk": "medium",
+      "measurement": {
+        "insert_return_rewrites": 1,
+        "unsupported_methods": 0,
+        "raw_sql_findings": 1,
+        "safe_mechanical_edits": 5,
+        "manual_edits": 12,
+        "query_parity_cases": 8,
+        "result_parity_cases": 6
+      }
+    }
+  ],
+  "automation_cases": [
+    {
+      "id": "query-builder-import",
+      "source": "use Pixie\\QueryBuilder\\QueryBuilder;",
+      "safe": true,
+      "reason": "import_only"
+    },
+    {
+      "id": "handler-import",
+      "source": "use Pixie\\QueryBuilder\\QueryBuilderHandler;",
+      "safe": true,
+      "reason": "import_only"
+    },
+    {
+      "id": "assigned-insert",
+      "source": "$id = $db->table('users')->insert($row);",
+      "safe": false,
+      "reason": "insert_return_semantics"
+    },
+    {
+      "id": "unsupported-upsert",
+      "source": "$db->table('users')->updateOrInsert($keys, $values);",
+      "safe": false,
+      "reason": "unsupported_method"
+    },
+    {
+      "id": "interpolated-raw-query",
+      "source": "$db->query(\"SELECT * FROM users WHERE email = '$email'\")->get();",
+      "safe": false,
+      "reason": "raw_sql_security"
+    },
+    {
+      "id": "last-query-debug",
+      "source": "$sql = $db->getLastQuery()->getRawSql();",
+      "safe": false,
+      "reason": "diagnostic_semantics"
+    },
+    {
+      "id": "named-placeholder",
+      "source": "$db->query('SELECT * FROM users WHERE id = :id', ['id' => $id]);",
+      "safe": false,
+      "reason": "named_placeholder_contract"
+    },
+    {
+      "id": "manual-transaction-completion",
+      "source": "$db->transaction(function () use ($db): void { $db->pdo()->commit(); });",
+      "safe": false,
+      "reason": "transaction_ownership"
+    }
+  ],
+  "unknown_blockers": []
+}

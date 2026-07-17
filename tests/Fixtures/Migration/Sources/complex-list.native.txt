@@ -1,0 +1,21 @@
+<?php
+use Oeltima\SimpleQuery\ConditionGroup;
+use Oeltima\SimpleQuery\Connection;
+use Oeltima\SimpleQuery\Expression\Identifier;
+final class SyntheticMemberList
+{
+    public function __construct(private Connection $database) {}
+    public function page(array $teams): array
+    {
+        $query = $this->database->table('members', 'm')
+            ->join(Identifier::of('teams')->as('t'), 't.id', '=', 'm.team_id')
+            ->leftJoin(Identifier::of('roles')->as('r'), 'r.id', '=', 'm.role_id')
+            ->where(function (ConditionGroup $group): void {
+                $group->where('m.active', true)->orWhere('m.status', 'pending');
+            })
+            ->whereIn('m.team_id', $teams)
+            ->orderBy('m.id')
+            ->limit(25);
+        return [$query->getAssociative(), $query->count()];
+    }
+}

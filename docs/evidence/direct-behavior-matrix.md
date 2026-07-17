@@ -30,6 +30,13 @@ rollback failures that cannot be induced deterministically on a live server.
 All 15 checks passed on SQLite 3.45.1, MariaDB 11.8.8, and MySQL 8.0.45 in the
 2026-07-17 fixture run.
 
+The synthetic migration smoke adds eight checks for CRUD/write returns,
+injected-model joins, deferred raw reports, vendor date expressions, direct
+PDO ownership, redacted diagnostics, and complex-list direct-PDO parity. All
+eight passed independently on SQLite, MariaDB, and MySQL. MySQL's strict
+grouping behavior required a fixed date format to remain trusted static SQL
+rather than separate repeated format parameters.
+
 | Behavior | MariaDB control | MySQL control | SQLite control | Owning probe/policy |
 | --- | --- | --- | --- | --- |
 | Positional placeholders and literal/comment `?` | Recorded | Recorded | Recorded | `positional_placeholders`; ADR-005 |

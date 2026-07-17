@@ -1,0 +1,12 @@
+<?php
+use Pixie\QueryBuilder\QueryBuilderHandler;
+final class SyntheticReport
+{
+    public function __construct(private QueryBuilderHandler $database) {}
+    public function totals(string $category): array
+    {
+        return $this->database->query(
+            "SELECT category, SUM(amount) total FROM events WHERE category = '$category' GROUP BY category"
+        )->get();
+    }
+}

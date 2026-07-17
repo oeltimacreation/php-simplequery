@@ -1,6 +1,7 @@
 # Consumer requirements and API review
 
-Status: requirement review accepted; fixture corpus version 1.0.0.
+Status: requirement review accepted; representative synthetic corpus version
+2.0.0 passes migration validation.
 
 The research corpus covered nine application lineages and the current
 executable checkout contains four independently scannable Pixie consumers.
@@ -18,7 +19,9 @@ Public records use profiles rather than private paths or proprietary SQL.
 
 This is review against more than three materially different styles. The
 executable synthetic cases live in
-[`tests/Fixtures/Migration/v1.json`](../../tests/Fixtures/Migration/v1.json).
+[`tests/Fixtures/Migration/v1.json`](../../tests/Fixtures/Migration/v1.json) and
+the measured
+[`representative-slices.json`](../../tests/Fixtures/Migration/representative-slices.json).
 No runtime Pixie adapter is accepted.
 
 ## Required migration features

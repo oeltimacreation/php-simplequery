@@ -1,0 +1,19 @@
+<?php
+use Oeltima\SimpleQuery\Connection;
+use Oeltima\SimpleQuery\Expression\Identifier;
+final class SyntheticStaffModel
+{
+    public function __construct(private Connection $database) {}
+    public function active(): array
+    {
+        return $this->database->table('staff', 's')
+            ->select('s.id', $this->database->raw('UPPER(s.name) AS display'))
+            ->join(Identifier::of('departments')->as('d'), 'd.id', '=', 's.department_id')
+            ->where('s.active', true)
+            ->get();
+    }
+    public function pdo(): PDO
+    {
+        return $this->database->pdo();
+    }
+}

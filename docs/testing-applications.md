@@ -92,3 +92,12 @@ integration, a recording observer, and live engine tests.
 Tests and failure output must use synthetic data. Never commit production DSNs,
 credentials, hostnames, customer identifiers, private query samples, or copied
 production rows.
+
+## Recreated migration slices
+
+The library's migration suite contains synthetic recreations rather than
+application source. Use them as patterns for CRUD, injected models, raw
+reports, diagnostics, and complex lists, then build application-owned
+characterization tests around real behavior. See
+[migration validation](migration-validation.md) and run
+`composer migration:check` before changing the corpus.

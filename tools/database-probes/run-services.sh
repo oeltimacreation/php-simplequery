@@ -26,6 +26,7 @@ done
 php "${probe_dir}/run.php" sqlite --output="${result_dir}/sqlite.json"
 php "${probe_dir}/execution-smoke.php" sqlite --output="${result_dir}/sqlite-execution.json"
 php "${probe_dir}/transaction-smoke.php" sqlite --output="${result_dir}/sqlite-transaction.json"
+php "${probe_dir}/migration-smoke.php" sqlite --output="${result_dir}/sqlite-migration.json"
 
 for prepare_mode in native emulated; do
     if [[ "${prepare_mode}" == "native" ]]; then
@@ -55,6 +56,8 @@ for target in mariadb mysql proxysql maxscale; do
         --output="${result_dir}/${target}-execution-native-buffered.json"
     php "${probe_dir}/transaction-smoke.php" "${target}" \
         --output="${result_dir}/${target}-transaction-native-buffered.json"
+    php "${probe_dir}/migration-smoke.php" "${target}" \
+        --output="${result_dir}/${target}-migration-native-buffered.json"
 done
 
 php "${probe_dir}/summarize.php" "${result_dir}"

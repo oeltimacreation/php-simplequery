@@ -34,6 +34,7 @@ jobs:
       - run: composer probe:sqlite > sqlite-probe.json
       - run: composer probe:execution -- sqlite > sqlite-execution-probe.json
       - run: composer probe:transaction -- sqlite > sqlite-transaction-probe.json
+      - run: composer probe:migration -- sqlite > sqlite-migration-probe.json
       - name: Report linked SQLite runtime
         run: php -r 'echo (new PDO("sqlite::memory:"))->query("SELECT sqlite_version()")->fetchColumn(), PHP_EOL;'
 
@@ -90,6 +91,10 @@ jobs:
             --output=tools/database-probes/results/mariadb-transaction-native-buffered.json
           php tools/database-probes/transaction-smoke.php mysql \
             --output=tools/database-probes/results/mysql-transaction-native-buffered.json
+          php tools/database-probes/migration-smoke.php mariadb \
+            --output=tools/database-probes/results/mariadb-migration-native-buffered.json
+          php tools/database-probes/migration-smoke.php mysql \
+            --output=tools/database-probes/results/mysql-migration-native-buffered.json
           php tools/database-probes/summarize.php tools/database-probes/results
       - name: Stop direct-engine fixtures
         if: always()
@@ -130,6 +135,7 @@ jobs:
       - run: php examples/compiler-assertions.php
       - run: php examples/sqlite-execution.php
       - run: php examples/sqlite-transactions.php
+      - run: php examples/sqlite-migration-slice.php
 
   benchmark-control:
     name: PDO SQLite benchmark control

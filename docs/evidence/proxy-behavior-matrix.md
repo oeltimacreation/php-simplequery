@@ -30,6 +30,12 @@ guards, and clean connection replacement without treating either proxy as a
 dialect or retry guarantee. All 15 checks passed through both proxy fixtures in
 the 2026-07-17 run.
 
+Both proxies also passed all eight synthetic migration checks, including
+deferred raw reporting, caller-owned direct PDO transactions, joins,
+diagnostics, and direct-PDO row parity. This validates the disposable
+single-backend fixture path only; application topology rollout remains a
+separate migration responsibility.
+
 | Behavior | ProxySQL fixture | MaxScale fixture | Required deployment extension |
 | --- | --- | --- | --- |
 | Native binary prepares | All probe statements | All probe statements | Backend pooling/history and exact rules/settings |

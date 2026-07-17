@@ -67,6 +67,14 @@ transaction can be committed by SimpleQuery.
 
 ## Phase 4: migration validation
 
+Repository implementation status: complete. Five library-owned synthetic
+slices cover SQLite CRUD, injected MariaDB/MySQL model construction, raw
+reporting, diagnostic raw joins, direct PDO ownership, and complex lists. The
+deterministic corpus records change/ambiguity/security effort, direct-PDO
+result parity, an environment-specific benchmark, and 40 passing live
+migration observations across all direct/proxy fixtures. No application
+repository was modified and no compatibility façade was introduced.
+
 - validate representative SQLite, MariaDB/MySQL, raw-query, join, direct-PDO,
   and diagnostic application shapes;
 - publish a repeatable migration playbook and intentional differences;

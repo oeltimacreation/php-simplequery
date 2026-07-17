@@ -5,9 +5,9 @@ library for PHP 8.2 and later.
 
 > [!IMPORTANT]
 > Deterministic compilation, PDO execution/results, and managed transactions
-> are implemented alongside the PDO/engine/proxy probe suite. Migration
-> validation and a package release remain pending; do not treat the checkout
-> as a released library.
+> are implemented alongside the PDO/engine/proxy probe suite and synthetic
+> migration validation. Release preparation remains pending; do not treat the
+> checkout as a released library.
 
 The project focuses on predictable SQL compilation, ordered typed bindings,
 explicit connection ownership, safe nested transactions, and honest database
@@ -28,9 +28,11 @@ general database abstraction platform.
 - object/associative hydration, scalar aggregates, writes, and deferred raw SQL;
 - tracked one-shot cursors, redacted execution exceptions, and bounded observers;
 - callback transactions with savepoint nesting, strict ownership, failure
-  evidence, and unusable-state quarantine.
+  evidence, and unusable-state quarantine;
+- executable synthetic migration slices with ambiguity, parity, security, and
+  performance evidence.
 
-Migration validation is the next accepted `0.1.0` implementation phase.
+Release preparation is the next accepted `0.1.0` implementation phase.
 
 ## Planned package
 
@@ -51,6 +53,8 @@ composer examples:check
 composer probe:sqlite
 composer probe:execution -- sqlite
 composer probe:transaction -- sqlite
+composer probe:migration -- sqlite
+composer migration:check
 bash tools/database-probes/run-services.sh
 ```
 
@@ -69,6 +73,7 @@ library.
 - [Concurrency and workers](docs/concurrency-and-workers.md)
 - [Testing applications](docs/testing-applications.md)
 - [Migrating from Pixie](docs/migrating-from-pixie.md)
+- [Migration validation](docs/migration-validation.md)
 - [Architecture](docs/architecture.md)
 - [Public API contract](docs/public-api.md)
 - [Testing architecture](docs/testing-architecture.md)

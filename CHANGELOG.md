@@ -39,5 +39,12 @@ with ZeroVer releases before `1.0.0`.
   cursor guards, structured failure evidence, and unusable-state quarantine.
 - Direct/proxy transaction smokes, controlled transaction-control failure
   injection, and an executable no-dev SQLite transaction example.
+- Five library-owned synthetic migration slices covering SQLite CRUD, injected
+  models/direct PDO, raw reporting, diagnostic joins, and complex list queries.
+- Deterministic migration ambiguity/refusal reporting, direct-PDO query/result
+  parity, a migration performance control, and live migration smokes for all
+  direct and proxy fixtures.
+- A repeatable direct-migration playbook and complete intentional-difference
+  checklist without a runtime Pixie dependency or compatibility façade.
 
 [Unreleased]: https://github.com/oeltimacreation/php-simplequery

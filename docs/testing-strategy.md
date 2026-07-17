@@ -38,6 +38,15 @@
 - representative MariaDB/MySQL behavior;
 - migration characterization fixtures using synthetic data.
 
+### Migration tests
+
+- five materially different library-owned synthetic slices;
+- exact query/binding and direct-PDO row parity;
+- changed-line, insert-return, unsupported-method, raw-SQL, effort, and risk
+  measurements;
+- deterministic safe import rewrites and mandatory semantic refusals;
+- proof that the runtime package has no Pixie dependency or façade.
+
 ### Benchmarks and soak tests
 
 - compiler scaling and memory;
@@ -91,7 +100,9 @@ bash tools/database-probes/run-services.sh
 Coverage, the SQLite-only behavior/execution probes, and benchmarks run with
 `composer test:coverage`, `composer coverage:check`,
 `composer probe:sqlite`, `composer probe:execution -- sqlite`,
-`composer probe:transaction -- sqlite`, and `composer benchmark`. CI commands match local
+`composer probe:transaction -- sqlite`, `composer probe:migration -- sqlite`,
+`composer migration:check`, `composer benchmark:migration`, and
+`composer benchmark`. CI commands match local
 commands and report fixture driver, version, SQLSTATE, placeholder SQL, and
 setup context without leaking binding values. Naming, cleanup, and evidence
 formats are frozen in [testing architecture](testing-architecture.md).

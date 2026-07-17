@@ -32,3 +32,12 @@ The hard compiler invariant is approximately linear growth with query size.
 Database latency is reported separately from detached compilation. Proxy
 measurements are compared with their direct-engine control and never used to
 claim topology-independent performance.
+
+## Migration query control
+
+`composer benchmark:migration` recreates the complex list/join migration slice
+over 500 SQLite rows, compares 100 ordered associative results with direct PDO,
+and records nine-sample median timings. Correctness and result digest parity
+are mandatory. The SimpleQuery/PDO timing ratio is recorded for review but is
+not a portable hard threshold. The accepted 2026-07-17 control is retained in
+[`migration-benchmark.json`](evidence/migration-benchmark.json).

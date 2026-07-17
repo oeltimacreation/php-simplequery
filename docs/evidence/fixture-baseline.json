@@ -8,7 +8,7 @@
     "pdo_sqlite": "SQLite 3.45.1"
   },
   "reports": {
-    "count": 27,
+    "count": 32,
     "failed_observations": 0,
     "modes": ["native-buffered", "native-unbuffered", "emulated-buffered", "emulated-unbuffered"]
   },
@@ -31,6 +31,13 @@
     "targets": ["sqlite", "mariadb", "mysql", "proxysql", "maxscale"],
     "ddl_state_loss_detected": ["mariadb", "mysql", "proxysql", "maxscale"],
     "ddl_remained_transactional": ["sqlite"]
+  },
+  "migration_reports": {
+    "count": 5,
+    "failed_observations": 0,
+    "passed_observations": 40,
+    "mode": "native-buffered",
+    "targets": ["sqlite", "mariadb", "mysql", "proxysql", "maxscale"]
   },
   "mysql_family_observations": {
     "mariadb_backend_version": "11.8.8-MariaDB-ubu2404",

@@ -45,7 +45,8 @@
     "autoload-dev": {
         "psr-4": {
             "Oeltima\\SimpleQuery\\Tests\\": "tests/",
-            "Oeltima\\SimpleQuery\\Tools\\DatabaseProbe\\": "tools/database-probes/src/"
+            "Oeltima\\SimpleQuery\\Tools\\DatabaseProbe\\": "tools/database-probes/src/",
+            "Oeltima\\SimpleQuery\\Tools\\Migration\\": "tools/migration/"
         }
     },
     "scripts": {
@@ -59,14 +60,18 @@
         "probe:sqlite": "php tools/database-probes/run.php sqlite",
         "probe:execution": "php tools/database-probes/execution-smoke.php",
         "probe:transaction": "php tools/database-probes/transaction-smoke.php",
+        "probe:migration": "php tools/database-probes/migration-smoke.php",
         "probe:matrix": "php tools/database-probes/run-matrix.php",
+        "migration:check": "php tools/migration/report.php",
         "benchmark": "php benchmarks/run.php",
+        "benchmark:migration": "php benchmarks/migration.php",
         "examples:check": [
             "php examples/compiler-assertions.php",
             "php examples/query-building.php",
             "php examples/sqlite-compiler-smoke.php",
             "php examples/sqlite-execution.php",
-            "php examples/sqlite-transactions.php"
+            "php examples/sqlite-transactions.php",
+            "php examples/sqlite-migration-slice.php"
         ],
         "verify": "php scripts/verify-repository.php",
         "check": [
@@ -75,6 +80,7 @@
             "@phpstan",
             "@cs:check",
             "@examples:check",
+            "@migration:check",
             "@verify"
         ]
     },

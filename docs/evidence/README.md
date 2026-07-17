@@ -30,6 +30,8 @@ Files:
 - [proxy behavior matrix](proxy-behavior-matrix.md);
 - [consumer requirement audit](consumer-requirements-audit.md);
 - [insert return audit](insert-return-audit.md);
+- [synthetic migration validation](migration-validation.json) and its
+  [performance control](migration-benchmark.json);
 - [edge-feature usage verification](feature-usage-verification.md).
 
 Generated reports belong in `tools/database-probes/results/`, are ignored by Git, and
