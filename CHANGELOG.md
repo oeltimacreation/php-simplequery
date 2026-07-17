@@ -39,8 +39,10 @@ with ZeroVer releases before `1.0.0`.
   cursor guards, structured failure evidence, and unusable-state quarantine.
 - Direct/proxy transaction smokes, controlled transaction-control failure
   injection, and an executable no-dev SQLite transaction example.
-- Five library-owned synthetic migration slices covering SQLite CRUD, injected
-  models/direct PDO, raw reporting, diagnostic joins, and complex list queries.
+- An anonymized read-only baseline across nine Pecee Pixie 4.15.8/4.16.3
+  consumers and five grounded synthetic migration slices covering SQLite CRUD,
+  injected models/direct PDO, raw reporting, diagnostic joins, and complex
+  list queries.
 - Deterministic migration ambiguity/refusal reporting, direct-PDO query/result
   parity, a migration performance control, and live migration smokes for all
   direct and proxy fixtures.

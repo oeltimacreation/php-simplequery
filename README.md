@@ -29,8 +29,8 @@ general database abstraction platform.
 - tracked one-shot cursors, redacted execution exceptions, and bounded observers;
 - callback transactions with savepoint nesting, strict ownership, failure
   evidence, and unusable-state quarantine;
-- executable synthetic migration slices with ambiguity, parity, security, and
-  performance evidence.
+- executable, audit-grounded synthetic migration slices with ambiguity,
+  parity, security, and performance evidence.
 
 Release preparation is the next accepted `0.1.0` implementation phase.
 

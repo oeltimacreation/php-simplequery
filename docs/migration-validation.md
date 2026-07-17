@@ -1,10 +1,15 @@
 # Migration validation
 
-Status: complete synthetic migration spike for the target `0.1.0` contract.
+Status: complete audit-grounded synthetic migration spike for the target
+`0.1.0` contract.
 
-This validation uses library-owned synthetic recreations. It does not copy or
-modify an application repository, publish private SQL, or claim that a real
-application has already completed rollout. The executable corpus is
+This validation uses library-owned synthetic recreations grounded in a
+read-only scan and manual review of nine Pecee Pixie 4.15.8/4.16.3 consumer
+checkouts. It does not copy or modify an application repository, publish
+private SQL, or claim that a real application has already completed rollout.
+The anonymous aggregate evidence is
+[`consumer-audit-baseline.json`](evidence/consumer-audit-baseline.json). The
+executable corpus is
 [`representative-slices.json`](../tests/Fixtures/Migration/representative-slices.json),
 and its deterministic summary is
 [`migration-validation.json`](evidence/migration-validation.json).
@@ -25,28 +30,33 @@ MaxScale 23.02.17-2: 40 passed observations and no failures.
 
 ## Change and ambiguity measurements
 
-The checked-in source pairs contain 79 non-empty legacy-shape lines and 84
-native lines. A longest-common-subsequence comparison counts 63 inserted or
-removed lines, while only eight legacy imports are mechanical candidates. The five slices
+The checked-in source pairs contain 115 non-empty legacy-shape lines and 96
+native lines. A longest-common-subsequence comparison counts 91 inserted or
+removed lines, while only five same-name connection imports are mechanical
+candidates. The legacy recreations now use the observed `Pecee\Pixie`
+namespace and connection-plus-handler construction shape. The five slices
 identify:
 
 - four insert-return rewrites requiring call-site classification;
-- one unsupported method (`updateOrInsert()`) requiring redesign;
+- zero unsupported methods in the recreated slices; `updateOrInsert()` remains
+  a tested automation refusal if a later consumer introduces it;
 - seven raw-SQL findings requiring trust/binding review;
-- 21 safe mechanical edits and 53 manual edits;
+- five safe mechanical edits and 86 manual edits;
 - 31 query-parity and 23 result-parity cases;
 - one low-, three medium-, and one high-risk rollout profile.
 
-These are measurements of the synthetic recreation, not estimates secretly
-derived from an external project. Application owners repeat the same inventory
-against their own source and replace the numbers with application evidence.
+These change measurements belong to the anonymized synthetic recreation. The
+separate audit baseline records lexical scale without copying consumer source.
+Application owners repeat the same inventory against their own source and
+replace the numbers with application evidence.
 
 ## Automation decision
 
-The bundled analyzer only rewrites an isolated, known Pixie import. It refuses
-insert returns, raw interpolation, named placeholders, last-query diagnostics,
-manual transaction completion, construction context, and unsupported methods.
-Six of eight representative automation cases are intentionally refused.
+The bundled analyzer only rewrites an isolated, same-name
+`Pecee\Pixie\Connection` import. It refuses handler construction, insert
+returns, raw interpolation, named placeholders, last-query diagnostics, manual
+transaction completion, and unsupported methods. Seven of eight
+representative automation cases are intentionally refused.
 
 This limited tool does not mutate application files. It demonstrates the safe
 boundary for an optional project-owned codemod; it is not installed at runtime

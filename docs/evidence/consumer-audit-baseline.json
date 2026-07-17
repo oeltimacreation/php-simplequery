@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "collected_at": "2026-07-17",
+  "audit_tool_schema_version": 2,
+  "scope": "Read-only lexical scan of nine local Pecee Pixie consumer checkouts; paths, application code, SQL, and project identifiers are excluded.",
+  "method": "Recursive candidate scan of non-vendor PHP; ambiguous and return-sensitive matches require application-owner confirmation.",
+  "consumer_count": 9,
+  "pixie_versions": {
+    "4.15.8": 1,
+    "4.16.3": 8
+  },
+  "aggregate": {
+    "php_files": 836,
+    "table_calls": 3290,
+    "where_calls": 4683,
+    "get_calls": 3378,
+    "first_calls": 1158,
+    "select_calls": 1221,
+    "count_calls": 388,
+    "join_calls": 413,
+    "having_calls": 1,
+    "raw_expression_calls": 1481,
+    "raw_query_calls": 473,
+    "raw_query_terminal_candidates": 404,
+    "interpolated_raw_sql_candidates": 1066,
+    "insert_calls": 648,
+    "insert_assigned": 162,
+    "insert_returned": 77,
+    "insert_truthiness": 9,
+    "insert_ignored_or_chained": 400,
+    "empty_in_literal": 0,
+    "update_or_insert": 0,
+    "lock_calls": 0,
+    "lock_clause_candidates": 5,
+    "transaction_calls": 0,
+    "manual_pdo_transaction_calls": 14,
+    "direct_pdo_calls": 65,
+    "last_query_diagnostics": 13,
+    "dynamic_table_candidates": 78,
+    "closure_criteria_candidates": 200,
+    "named_placeholder_candidates": 0,
+    "clone_calls": 33,
+    "pixie_exception_catches": 0
+  },
+  "consumer_prevalence": {
+    "insert": 9,
+    "joins": 8,
+    "raw_query": 5,
+    "raw_interpolation_candidate": 9,
+    "dynamic_table_candidate": 7,
+    "closure_criteria_candidate": 7,
+    "direct_pdo": 1,
+    "manual_pdo_transaction_candidate": 3,
+    "lock_clause_candidate": 2,
+    "query_diagnostic_candidate": 4
+  },
+  "limitations": [
+    "Counts include non-vendor PHP in source, tests, scripts, and checked-in support copies.",
+    "The scan identifies syntax candidates, not executed call paths or value provenance.",
+    "Interpolation, named-placeholder, return-use, lock, and transaction findings require manual confirmation."
+  ]
+}

@@ -45,6 +45,7 @@ final class MigrationCorpusReporter
 
         $corpusVersion = $this->string($root['corpus_version'] ?? null, 'corpus_version');
         $collectedAt = $this->string($root['collected_at'] ?? null, 'collected_at');
+        $this->string($root['scope'] ?? null, 'scope');
         $slices = $this->objectList($root['slices'] ?? null, 'slices');
         $automationCases = $this->objectList($root['automation_cases'] ?? null, 'automation_cases');
         $blockers = $root['unknown_blockers'] ?? null;
@@ -80,17 +81,29 @@ final class MigrationCorpusReporter
                 'changed_lines' => $this->changedLineCount($legacySource, $nativeSource),
                 'import_only_edits' => count(array_filter(
                     $legacySource,
-                    static fn (string $line): bool => str_starts_with($line, 'use Pixie\\'),
+                    fn (string $line): bool => $this->rewriter->analyze($line)->safe,
                 )),
             ];
             foreach ($computedCounts as $field => $value) {
                 $totals[$field] += $value;
             }
             $measurement = $this->object($slice['measurement'] ?? null, $id . '.measurement');
+            $derivedMeasurements = [
+                'insert_return_rewrites' => $this->matchingLineCount(
+                    $legacySource,
+                    '/(?:\breturn\b|=).*->insert\s*\(/',
+                ),
+                'unsupported_methods' => $this->matchingLineCount($legacySource, '/->updateOrInsert\s*\(/'),
+                'safe_mechanical_edits' => $computedCounts['import_only_edits'],
+                'manual_edits' => $computedCounts['changed_lines'] - $computedCounts['import_only_edits'],
+            ];
             foreach (self::DECLARED_COUNT_FIELDS as $field) {
                 $value = $measurement[$field] ?? null;
                 if (!is_int($value) || $value < 0) {
                     throw new RuntimeException(sprintf('%s.%s must be a non-negative integer.', $id, $field));
+                }
+                if (isset($derivedMeasurements[$field]) && $value !== $derivedMeasurements[$field]) {
+                    throw new RuntimeException(sprintf('%s.%s does not match the source pair.', $id, $field));
                 }
                 $totals[$field] += $value;
             }
@@ -100,6 +113,7 @@ final class MigrationCorpusReporter
             }
             ++$risks[$risk];
             $this->string($slice['support_effort'] ?? null, $id . '.support_effort');
+            $this->string($slice['evidence_basis'] ?? null, $id . '.evidence_basis');
             $this->stringList($slice['validated_shapes'] ?? null, $id . '.validated_shapes');
         }
 
@@ -131,7 +145,7 @@ final class MigrationCorpusReporter
             'schema_version' => 1,
             'corpus_version' => $corpusVersion,
             'collected_at' => $collectedAt,
-            'scope' => 'synthetic library-owned migration slices; no application repository modified',
+            'scope' => 'audit-grounded synthetic slices; no application repository modified or copied',
             'slice_count' => count($slices),
             'slice_ids' => array_keys($sliceIds),
             'engine_profiles' => $engineNames,
@@ -187,6 +201,17 @@ final class MigrationCorpusReporter
         }
 
         return $result;
+    }
+
+    /**
+     * @param list<string> $lines
+     */
+    private function matchingLineCount(array $lines, string $pattern): int
+    {
+        return count(array_filter(
+            $lines,
+            static fn (string $line): bool => preg_match($pattern, $line) === 1,
+        ));
     }
 
     private function string(mixed $value, string $field): string

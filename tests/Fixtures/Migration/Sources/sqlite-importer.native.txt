@@ -12,4 +12,8 @@ final class SyntheticImporter
         $record->imported = true;
         return $record;
     }
+    public function append(string $allowedTable, array $row): string
+    {
+        return $this->database->table(Identifier::of($allowedTable))->insertGetId($row);
+    }
 }

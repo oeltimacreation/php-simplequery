@@ -20,6 +20,7 @@ $requiredFiles = [
     'docs/evidence/direct-behavior-matrix.md',
     'docs/evidence/proxy-behavior-matrix.md',
     'docs/evidence/consumer-requirements-audit.md',
+    'docs/evidence/consumer-audit-baseline.json',
     'docs/evidence/insert-return-audit.md',
     'docs/evidence/migration-validation.json',
     'docs/evidence/migration-benchmark.json',
@@ -43,6 +44,7 @@ $requiredFiles = [
     'tools/database-probes/execution-smoke.php',
     'tools/database-probes/transaction-smoke.php',
     'tools/database-probes/migration-smoke.php',
+    'tools/audit-consumers.php',
     'tools/migration/report.php',
     'benchmarks/migration.php',
 ];
@@ -57,6 +59,7 @@ foreach ($requiredFiles as $requiredFile) {
 $jsonFiles = [
     'docs/evidence/deployment-inventory.json',
     'docs/evidence/fixture-baseline.json',
+    'docs/evidence/consumer-audit-baseline.json',
     'docs/evidence/migration-validation.json',
     'docs/evidence/migration-benchmark.json',
     'tests/Fixtures/Contracts/aggregate-scalars.json',

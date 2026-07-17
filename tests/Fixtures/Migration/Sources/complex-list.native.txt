@@ -18,4 +18,8 @@ final class SyntheticMemberList
             ->limit(25);
         return [$query->getAssociative(), $query->count()];
     }
+    public function create(array $row): string
+    {
+        return $this->database->table('members')->insertGetId($row);
+    }
 }

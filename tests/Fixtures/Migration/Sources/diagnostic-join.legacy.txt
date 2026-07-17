@@ -1,14 +1,20 @@
 <?php
-use Pixie\QueryBuilder\QueryBuilderHandler;
+use Pecee\Pixie\Connection;
+use Pecee\Pixie\QueryBuilder\QueryBuilderHandler;
 final class SyntheticDiagnosticQuery
 {
-    public function __construct(private QueryBuilderHandler $database) {}
+    public function __construct(private Connection $database) {}
+    private function db(): QueryBuilderHandler
+    {
+        return new QueryBuilderHandler($this->database);
+    }
     public function run(string $kind): array
     {
-        $rows = $this->database->table('users', 'u')
+        $query = $this->db()->table('users', 'u')
             ->join('assignments', "a.user_id = u.id AND a.kind = '$kind'")
-            ->get();
-        log_sql($this->database->getLastQuery()->getRawSql());
+            ->where('u.active', true);
+        $rows = $query->get();
+        log_sql($query->getLastQuery()->getRawSql());
         return $rows;
     }
 }

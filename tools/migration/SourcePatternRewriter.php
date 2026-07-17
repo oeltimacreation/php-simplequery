@@ -8,8 +8,7 @@ final class SourcePatternRewriter
 {
     /** @var array<string, string> */
     private const IMPORT_REWRITES = [
-        'use Pixie\\QueryBuilder\\QueryBuilder;' => 'use Oeltima\\SimpleQuery\\QueryBuilder;',
-        'use Pixie\\QueryBuilder\\QueryBuilderHandler;' => 'use Oeltima\\SimpleQuery\\Connection;',
+        'use Pecee\\Pixie\\Connection;' => 'use Oeltima\\SimpleQuery\\Connection;',
     ];
 
     public function analyze(string $source): RewriteDecision
@@ -38,11 +37,14 @@ final class SourcePatternRewriter
         }
         if (
             str_contains($source, 'transaction(')
-            && preg_match('/->pdo\(\)->(?:commit|rollBack)\s*\(/', $source) === 1
+            && preg_match(
+                '/(?:->(?:pdo|getPdoInstance)\(\)|\$transaction)->(?:commit|rollBack)\s*\(/',
+                $source,
+            ) === 1
         ) {
             return new RewriteDecision(false, 'transaction_ownership');
         }
-        if (str_contains($source, 'Pixie\\')) {
+        if (str_contains($source, 'Pecee\\Pixie\\')) {
             return new RewriteDecision(false, 'construction_context');
         }
 

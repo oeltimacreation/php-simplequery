@@ -95,9 +95,11 @@ production rows.
 
 ## Recreated migration slices
 
-The library's migration suite contains synthetic recreations rather than
-application source. Use them as patterns for CRUD, injected models, raw
-reports, diagnostics, and complex lists, then build application-owned
+The library's migration suite contains anonymized synthetic recreations rather
+than application source. Their shapes are grounded in a read-only scan and
+manual review of Pecee Pixie consumers, but all names, SQL, rows, and project
+identifiers remain synthetic. Use them as patterns for CRUD, injected models,
+raw reports, diagnostics, and complex lists, then build application-owned
 characterization tests around real behavior. See
 [migration validation](migration-validation.md) and run
 `composer migration:check` before changing the corpus.

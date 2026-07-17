@@ -9,6 +9,7 @@ use Oeltima\SimpleQuery\Tools\Migration\SourcePatternRewriter;
 use PHPUnit\Framework\TestCase;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use RuntimeException;
 use SplFileInfo;
 
 final class MigrationCorpusTest extends TestCase
@@ -30,24 +31,25 @@ final class MigrationCorpusTest extends TestCase
         );
         self::assertSame(['mariadb', 'mysql', 'sqlite'], $report['engine_profiles']);
         self::assertSame([
-            'legacy_lines' => 79,
-            'native_lines' => 84,
-            'changed_lines' => 63,
-            'import_only_edits' => 8,
+            'legacy_lines' => 115,
+            'native_lines' => 96,
+            'changed_lines' => 91,
+            'import_only_edits' => 5,
             'insert_return_rewrites' => 4,
-            'unsupported_methods' => 1,
+            'unsupported_methods' => 0,
             'raw_sql_findings' => 7,
-            'safe_mechanical_edits' => 21,
-            'manual_edits' => 53,
+            'safe_mechanical_edits' => 5,
+            'manual_edits' => 86,
             'query_parity_cases' => 31,
             'result_parity_cases' => 23,
         ], $report['measurements']);
         self::assertSame([
-            'safe' => 2,
-            'refused' => 6,
+            'safe' => 1,
+            'refused' => 7,
             'reasons' => [
+                'construction_context' => 1,
                 'diagnostic_semantics' => 1,
-                'import_only' => 2,
+                'import_only' => 1,
                 'insert_return_semantics' => 1,
                 'named_placeholder_contract' => 1,
                 'raw_sql_security' => 1,
@@ -68,22 +70,47 @@ final class MigrationCorpusTest extends TestCase
     {
         $rewriter = new SourcePatternRewriter();
 
-        $builder = $rewriter->analyze('use Pixie\\QueryBuilder\\QueryBuilder;');
-        self::assertTrue($builder->safe);
-        self::assertSame('import_only', $builder->reason);
-        self::assertSame('use Oeltima\\SimpleQuery\\QueryBuilder;', $builder->rewrittenSource);
+        $connection = $rewriter->analyze('use Pecee\\Pixie\\Connection;');
+        self::assertTrue($connection->safe);
+        self::assertSame('import_only', $connection->reason);
+        self::assertSame('use Oeltima\\SimpleQuery\\Connection;', $connection->rewrittenSource);
 
         $ambiguous = [
             '$id = $db->table(\'users\')->insert($row);' => 'insert_return_semantics',
             '$db->table(\'users\')->updateOrInsert($key, $values);' => 'unsupported_method',
             '$sql = $db->getLastQuery()->getRawSql();' => 'diagnostic_semantics',
             '$db->query(\'SELECT * FROM users WHERE id = :id\');' => 'named_placeholder_contract',
+            'use Pecee\\Pixie\\QueryBuilder\\QueryBuilderHandler;' => 'construction_context',
         ];
         foreach ($ambiguous as $source => $reason) {
             $decision = $rewriter->analyze($source);
             self::assertFalse($decision->safe);
             self::assertSame($reason, $decision->reason);
             self::assertNull($decision->rewrittenSource);
+        }
+    }
+
+    public function testDeclaredDerivedMeasurementMustMatchItsSourcePair(): void
+    {
+        $fixturePath = $this->fixturePath();
+        $fixture = $this->readJsonObject($fixturePath);
+        $slices = $fixture['slices'] ?? null;
+        self::assertIsArray($slices);
+        self::assertIsArray($slices[0] ?? null);
+        self::assertIsArray($slices[0]['measurement'] ?? null);
+        $slices[0]['measurement']['manual_edits'] = 999;
+        $fixture['slices'] = $slices;
+
+        $temporaryPath = tempnam(dirname($fixturePath), 'invalid-corpus-');
+        self::assertIsString($temporaryPath);
+        file_put_contents($temporaryPath, json_encode($fixture, JSON_THROW_ON_ERROR));
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('sqlite-importer-crud.manual_edits does not match the source pair.');
+        try {
+            $this->reporter()->report($temporaryPath);
+        } finally {
+            unlink($temporaryPath);
         }
     }
 
@@ -107,6 +134,7 @@ final class MigrationCorpusTest extends TestCase
             $contents = file_get_contents($file->getPathname());
             self::assertIsString($contents);
             self::assertStringNotContainsString('namespace Pixie', $contents);
+            self::assertStringNotContainsString('Pecee\\Pixie', $contents);
             self::assertStringNotContainsString('class_alias(', $contents);
         }
     }

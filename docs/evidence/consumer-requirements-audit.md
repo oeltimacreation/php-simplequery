@@ -1,11 +1,37 @@
 # Consumer requirements and API review
 
-Status: requirement review accepted; representative synthetic corpus version
-2.0.0 passes migration validation.
+Status: requirement review accepted; representative audit-grounded corpus
+version 3.0.0 passes migration validation.
 
-The research corpus covered nine application lineages and the current
-executable checkout contains four independently scannable Pixie consumers.
-Public records use profiles rather than private paths or proprietary SQL.
+The current read-only workspace audit covers nine independently scannable
+Pecee Pixie consumers: eight resolve 4.16.3 and one resolves 4.15.8. Public
+records use anonymous aggregate profiles rather than paths, project names,
+application source, or proprietary SQL. The frozen result is
+[`consumer-audit-baseline.json`](consumer-audit-baseline.json).
+
+## Read-only audit observations
+
+The recursive scanner reviewed 836 non-vendor PHP files and found 3,290
+`table()`, 4,683 `where()`, 3,378 `get()`, 1,158 `first()`, 1,221 `select()`,
+413 join-family, and 1,481 `raw()` call candidates. All nine consumers contain
+insert and raw-interpolation review candidates; eight contain joins; five use
+raw `query()`; seven contain dynamic-table candidates; and one exposes direct
+PDO through its application model boundary.
+
+These are conservative lexical measurements across source, tests, scripts,
+and checked-in support copies, not a runtime call graph. Manual review
+confirmed the shapes represented by the five synthetic slices: connection
+injection plus fresh handler creation, mutable fluent lists, raw query result
+terminals, raw join bindings, compiled/last-query diagnostics, dynamic SQLite
+tables, direct PDO, manual PDO transactions, and generated-ID pass-through.
+
+Inspection of the installed Pixie implementation also confirmed why these
+rewrites are semantic: single-row `insert()` returns an ID or null while batch
+insert returns ID lists; update/delete return PDO statements; `query()`
+executes before its later fetch terminal; last-query diagnostics interpolate
+bindings into SQL; transaction callbacks permit explicit halt-style
+completion; and the first connection is stored statically. None of those
+implementation contracts is reproduced as a compatibility layer.
 
 ## Reviewed consumer styles
 
@@ -18,7 +44,7 @@ Public records use profiles rather than private paths or proprietary SQL.
 | Container-injected model layer | Independent connections, fresh table builders, object hydration | `fromPdo()`, no globals, fresh builder, object/associative terminals | Package maintainer |
 
 This is review against more than three materially different styles. The
-executable synthetic cases live in
+executable, anonymized synthetic cases live in
 [`tests/Fixtures/Migration/v1.json`](../../tests/Fixtures/Migration/v1.json) and
 the measured
 [`representative-slices.json`](../../tests/Fixtures/Migration/representative-slices.json).

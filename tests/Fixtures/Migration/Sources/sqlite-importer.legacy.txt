@@ -1,14 +1,22 @@
 <?php
-use Pixie\QueryBuilder\QueryBuilder;
-use Pixie\QueryBuilder\QueryBuilderHandler;
+use Pecee\Pixie\Connection;
+use Pecee\Pixie\QueryBuilder\QueryBuilderHandler;
 final class SyntheticImporter
 {
-    public function __construct(private QueryBuilderHandler $database) {}
+    public function __construct(private Connection $database) {}
+    private function db(): QueryBuilderHandler
+    {
+        return new QueryBuilderHandler($this->database);
+    }
     public function import(string $table, array $row): object
     {
-        $id = $this->database->table($table)->insert($row);
-        $record = $this->database->table($table)->where('id', $id)->first();
+        $id = $this->db()->table($table)->insert($row);
+        $record = $this->db()->table($table)->where('id', $id)->first();
         $record->imported = true;
         return $record;
+    }
+    public function append(string $table, array $row): string
+    {
+        return $this->db()->table($table)->insert($row);
     }
 }

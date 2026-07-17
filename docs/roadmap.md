@@ -67,8 +67,9 @@ transaction can be committed by SimpleQuery.
 
 ## Phase 4: migration validation
 
-Repository implementation status: complete. Five library-owned synthetic
-slices cover SQLite CRUD, injected MariaDB/MySQL model construction, raw
+Repository implementation status: complete. A read-only audit of nine Pecee
+Pixie 4.15.8/4.16.3 consumers grounds five anonymized, library-owned synthetic
+slices covering SQLite CRUD, injected MariaDB/MySQL model construction, raw
 reporting, diagnostic raw joins, direct PDO ownership, and complex lists. The
 deterministic corpus records change/ambiguity/security effort, direct-PDO
 result parity, an environment-specific benchmark, and 40 passing live

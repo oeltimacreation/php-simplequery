@@ -5,7 +5,8 @@ namespace compatibility package, runtime facade, or deprecation shim.
 
 Migration is an application change supported by characterization tests. The
 library-owned [migration validation](migration-validation.md) recreates five
-representative shapes without changing any application repository.
+representative shapes grounded in a read-only nine-consumer audit without
+changing any application repository.
 
 ## Familiar behavior retained
 
@@ -27,6 +28,12 @@ representative shapes without changing any application repository.
 
 Replace Pixie classes/configuration arrays with `Connection::fromPdo()` or
 `Connection::connect()` and explicit `Driver` selection.
+
+The same-name `Pecee\Pixie\Connection` import is the only bundled mechanical
+rewrite. `QueryBuilderHandler` imports, cached/root handlers, `new
+QueryBuilderHandler($connection)`, and container factories require a manual
+rewrite to direct `Connection::table()` calls; SimpleQuery does not expose a
+root handler or default connection.
 
 ### Insert results
 
@@ -141,8 +148,9 @@ Every migration must explicitly resolve these differences:
 8. Run fast SQLite/application tests, then the real MariaDB/MySQL and proxy
    paths needed by that slice. Compare rows, types, affected rows, IDs, side
    effects, SQLSTATE behavior, timings, and memory.
-9. Review any mechanical output. The provided analyzer permits isolated import
-   rewrites only and refuses ambiguous semantic changes.
+9. Review any mechanical output. The provided analyzer permits only an
+   isolated same-name connection import and refuses handler construction plus
+   every ambiguous semantic change.
 10. Deploy the bounded slice through the application's staged rollout, observe
     errors/latency/connection state, reconcile writes, and retain a rapid
     rollback path before expanding scope.

@@ -40,7 +40,8 @@
 
 ### Migration tests
 
-- five materially different library-owned synthetic slices;
+- five materially different, audit-grounded library-owned synthetic slices;
+- an anonymized lexical baseline spanning nine read-only consumer checkouts;
 - exact query/binding and direct-PDO row parity;
 - changed-line, insert-return, unsupported-method, raw-SQL, effort, and risk
   measurements;

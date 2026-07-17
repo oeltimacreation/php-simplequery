@@ -12,6 +12,10 @@ final class SyntheticStaffModel
             ->where('s.active', true)
             ->get();
     }
+    public function create(array $row): string
+    {
+        return $this->database->table('staff')->insertGetId($row);
+    }
     public function pdo(): PDO
     {
         return $this->database->pdo();

@@ -28,7 +28,8 @@ Files:
 - [research dossiers](research-dossiers.md);
 - [direct behavior matrix](direct-behavior-matrix.md);
 - [proxy behavior matrix](proxy-behavior-matrix.md);
-- [consumer requirement audit](consumer-requirements-audit.md);
+- [consumer requirement audit](consumer-requirements-audit.md) and its
+  [anonymized read-only baseline](consumer-audit-baseline.json);
 - [insert return audit](insert-return-audit.md);
 - [synthetic migration validation](migration-validation.json) and its
   [performance control](migration-benchmark.json);
