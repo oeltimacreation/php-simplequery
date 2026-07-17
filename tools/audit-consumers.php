@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
-if ($argc < 2) {
+/** @var list<string> $arguments */
+$arguments = $_SERVER['argv'] ?? [];
+
+if (count($arguments) < 2) {
     fwrite(STDERR, "Usage: audit-consumers.php <workspace-root> [--include-paths] [--deterministic]\n");
     exit(2);
 }
@@ -39,14 +42,14 @@ $pixieVersion = static function (string $repositoryPath): ?string {
     return null;
 };
 
-$workspaceRoot = realpath($argv[1]);
+$workspaceRoot = realpath($arguments[1]);
 if (!is_string($workspaceRoot) || !is_dir($workspaceRoot)) {
     fwrite(STDERR, "The consumer workspace root does not exist.\n");
     exit(2);
 }
 
-$includePaths = in_array('--include-paths', $argv, true);
-$deterministic = in_array('--deterministic', $argv, true);
+$includePaths = in_array('--include-paths', $arguments, true);
+$deterministic = in_array('--deterministic', $arguments, true);
 $repositories = [];
 $directory = new RecursiveDirectoryIterator($workspaceRoot, RecursiveDirectoryIterator::SKIP_DOTS);
 $filter = new RecursiveCallbackFilterIterator(

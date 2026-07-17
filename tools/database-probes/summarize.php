@@ -2,12 +2,15 @@
 
 declare(strict_types=1);
 
-if ($argc !== 2 || !is_dir($argv[1])) {
+/** @var list<string> $arguments */
+$arguments = $_SERVER['argv'] ?? [];
+
+if (count($arguments) !== 2 || !is_dir($arguments[1])) {
     fwrite(STDERR, "Usage: summarize.php <database-probe-result-directory>\n");
     exit(2);
 }
 
-$files = glob(rtrim($argv[1], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . '*.json');
+$files = glob(rtrim($arguments[1], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . '*.json');
 if ($files === false) {
     $files = [];
 }

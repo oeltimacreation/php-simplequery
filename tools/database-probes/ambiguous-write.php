@@ -6,14 +6,17 @@ use Oeltima\SimpleQuery\Tools\DatabaseProbe\ProbeTarget;
 
 require dirname(__DIR__, 2) . '/vendor/autoload.php';
 
-if ($argc < 2 || !in_array($argv[1], ['mariadb', 'mysql', 'proxysql', 'maxscale'], true)) {
+/** @var list<string> $arguments */
+$arguments = $_SERVER['argv'] ?? [];
+
+if (count($arguments) < 2 || !in_array($arguments[1], ['mariadb', 'mysql', 'proxysql', 'maxscale'], true)) {
     fwrite(STDERR, "Usage: ambiguous-write.php <target> [--reconcile=MARKER]\n");
     exit(2);
 }
 
-$target = ProbeTarget::named($argv[1]);
+$target = ProbeTarget::named($arguments[1]);
 $reconcileMarker = null;
-foreach (array_slice($argv, 2) as $argument) {
+foreach (array_slice($arguments, 2) as $argument) {
     if (str_starts_with($argument, '--reconcile=')) {
         $reconcileMarker = substr($argument, strlen('--reconcile='));
     }

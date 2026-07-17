@@ -13,7 +13,9 @@ use Oeltima\SimpleQuery\Tools\DatabaseProbe\ProbeTarget;
 
 require dirname(__DIR__, 2) . '/vendor/autoload.php';
 
-$targetName = $argv[1] ?? 'sqlite';
+/** @var list<string> $arguments */
+$arguments = $_SERVER['argv'] ?? [];
+$targetName = $arguments[1] ?? 'sqlite';
 $target = ProbeTarget::named($targetName);
 $driver = match ($target->engine) {
     'mysql' => Driver::MySql,
@@ -22,7 +24,7 @@ $driver = match ($target->engine) {
     default => throw new RuntimeException('Unsupported migration-smoke engine.'),
 };
 $output = null;
-foreach (array_slice($argv, 2) as $argument) {
+foreach (array_slice($arguments, 2) as $argument) {
     if (str_starts_with($argument, '--output=')) {
         $output = substr($argument, strlen('--output='));
     }

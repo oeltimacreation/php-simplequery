@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
-if ($argc < 2) {
+/** @var list<string> $arguments */
+$arguments = $_SERVER['argv'] ?? [];
+
+if (count($arguments) < 2) {
     fwrite(
         STDERR,
         "Usage: check-coverage.php <clover.xml> --line=90 --branch=80 --compiler-line=95 --compiler-branch=90\n",
@@ -10,7 +13,7 @@ if ($argc < 2) {
     exit(2);
 }
 
-$reportPath = $argv[1];
+$reportPath = $arguments[1];
 $thresholds = [
     'line' => 90.0,
     'branch' => 80.0,
@@ -18,7 +21,7 @@ $thresholds = [
     'compiler-branch' => 90.0,
 ];
 
-foreach (array_slice($argv, 2) as $argument) {
+foreach (array_slice($arguments, 2) as $argument) {
     if (!str_starts_with($argument, '--') || !str_contains($argument, '=')) {
         fwrite(STDERR, sprintf("Unknown coverage option: %s\n", $argument));
         exit(2);

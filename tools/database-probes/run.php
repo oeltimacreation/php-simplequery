@@ -7,7 +7,9 @@ use Oeltima\SimpleQuery\Tools\DatabaseProbe\ProbeTarget;
 
 require dirname(__DIR__, 2) . '/vendor/autoload.php';
 
-$targetName = $argv[1] ?? 'sqlite';
+/** @var list<string> $arguments */
+$arguments = $_SERVER['argv'] ?? [];
+$targetName = $arguments[1] ?? 'sqlite';
 $target = ProbeTarget::named($targetName);
 
 try {
@@ -27,7 +29,7 @@ try {
 
 $json = json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . PHP_EOL;
 $output = null;
-foreach (array_slice($argv, 2) as $argument) {
+foreach (array_slice($arguments, 2) as $argument) {
     if (str_starts_with($argument, '--output=')) {
         $output = substr($argument, strlen('--output='));
     }

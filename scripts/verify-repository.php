@@ -3,7 +3,9 @@
 declare(strict_types=1);
 
 $root = dirname(__DIR__);
-$certify = in_array('--certify', $argv, true);
+/** @var list<string> $arguments */
+$arguments = $_SERVER['argv'] ?? [];
+$certify = in_array('--certify', $arguments, true);
 $requiredFiles = [
     'composer.json',
     'phpunit.xml.dist',
