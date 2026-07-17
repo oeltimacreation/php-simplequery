@@ -90,8 +90,8 @@ bash tools/database-probes/run-services.sh
 
 Coverage, the SQLite-only behavior/execution probes, and benchmarks run with
 `composer test:coverage`, `composer coverage:check`,
-`composer probe:sqlite`, `composer probe:execution -- sqlite`, and
-`composer benchmark`. CI commands match local
+`composer probe:sqlite`, `composer probe:execution -- sqlite`,
+`composer probe:transaction -- sqlite`, and `composer benchmark`. CI commands match local
 commands and report fixture driver, version, SQLSTATE, placeholder SQL, and
 setup context without leaking binding values. Naming, cleanup, and evidence
 formats are frozen in [testing architecture](testing-architecture.md).

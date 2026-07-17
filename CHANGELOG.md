@@ -34,5 +34,10 @@ with ZeroVer releases before `1.0.0`.
   observations, and a bounded recording observer.
 - Public execution smokes for SQLite, MariaDB, MySQL, ProxySQL, and MaxScale,
   plus a no-dev SQLite execution consumer example.
+- Managed callback transactions with generated savepoint nesting, strict
+  external ownership rejection, physical-state mismatch detection, active
+  cursor guards, structured failure evidence, and unusable-state quarantine.
+- Direct/proxy transaction smokes, controlled transaction-control failure
+  injection, and an executable no-dev SQLite transaction example.
 
 [Unreleased]: https://github.com/oeltimacreation/php-simplequery

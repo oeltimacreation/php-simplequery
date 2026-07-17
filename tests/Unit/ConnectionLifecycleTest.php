@@ -70,6 +70,7 @@ final class ConnectionLifecycleTest extends TestCase
             [
                 static fn () => $connection->table('records'),
                 static fn () => $connection->query('SELECT 1'),
+                static fn () => $connection->transaction(static fn (): null => null),
                 static fn () => $connection->pdo(),
             ] as $operation
         ) {

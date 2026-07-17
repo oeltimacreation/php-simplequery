@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Oeltima\SimpleQuery;
 
+use Closure;
 use Oeltima\SimpleQuery\Exception\ConfigurationException;
 use Oeltima\SimpleQuery\Exception\ConnectionException;
 use Oeltima\SimpleQuery\Exception\InvalidQueryException;
@@ -11,6 +12,7 @@ use Oeltima\SimpleQuery\Exception\TransactionStateException;
 use Oeltima\SimpleQuery\Expression\Identifier;
 use Oeltima\SimpleQuery\Expression\RawExpression;
 use Oeltima\SimpleQuery\Internal\Ast\Source;
+use Oeltima\SimpleQuery\Internal\Transaction\TransactionManager;
 use Oeltima\SimpleQuery\Observability\QueryObserver;
 use PDO;
 use PDOException;
@@ -21,12 +23,15 @@ final class Connection
 
     private int $activeCursors = 0;
 
+    private readonly TransactionManager $transactionManager;
+
     private function __construct(
         private ?PDO $pdoInstance,
         private readonly Driver $selectedDriver,
         private readonly ConnectionOptions $options,
         private readonly ?QueryObserver $observer,
     ) {
+        $this->transactionManager = new TransactionManager($this);
     }
 
     public static function fromPdo(
@@ -132,16 +137,38 @@ final class Connection
         return $this->pdoForExecution();
     }
 
+    /**
+     * @template T
+     * @param Closure(self): T $callback
+     * @return T
+     */
+    public function transaction(Closure $callback): mixed
+    {
+        return $this->transactionManager->run($callback);
+    }
+
     public function close(): void
     {
         if ($this->closed) {
             return;
         }
         if ($this->activeCursors > 0) {
-            throw new TransactionStateException('A connection with an active cursor cannot be closed.');
+            throw new TransactionStateException(
+                'A connection with an active cursor cannot be closed.',
+                operation: 'close',
+                managedDepth: $this->transactionManager->depth(),
+                driver: $this->selectedDriver,
+                connectionLabel: $this->options->label,
+            );
         }
         if ($this->pdoInstance !== null && $this->pdoInstance->inTransaction()) {
-            throw new TransactionStateException('A connection with an active transaction cannot be closed.');
+            throw new TransactionStateException(
+                'A connection with an active transaction cannot be closed.',
+                operation: 'close',
+                managedDepth: $this->transactionManager->depth(),
+                driver: $this->selectedDriver,
+                connectionLabel: $this->options->label,
+            );
         }
 
         $this->pdoInstance = null;
@@ -173,6 +200,7 @@ final class Connection
         if ($this->pdoInstance === null) {
             throw new ConnectionException('A compiler-only connection has no PDO instance.');
         }
+        $this->transactionManager->assertUsable();
 
         return $this->pdoInstance;
     }
@@ -194,14 +222,31 @@ final class Connection
     /** @internal */
     public function transactionDepth(): int
     {
+        $managedDepth = $this->transactionManager->depth();
+        if ($managedDepth > 0) {
+            return $managedDepth;
+        }
+
         return $this->pdoInstance !== null && $this->pdoInstance->inTransaction() ? 1 : 0;
+    }
+
+    /** @internal */
+    public function hasActiveCursors(): bool
+    {
+        return $this->activeCursors > 0;
     }
 
     /** @internal */
     public function requireTransactionForLock(): void
     {
         if (!$this->pdoForExecution()->inTransaction()) {
-            throw new TransactionStateException('A row-lock query requires an active transaction.');
+            throw new TransactionStateException(
+                'A row-lock query requires an active transaction.',
+                operation: 'lock_query',
+                managedDepth: $this->transactionManager->depth(),
+                driver: $this->selectedDriver,
+                connectionLabel: $this->options->label,
+            );
         }
     }
 

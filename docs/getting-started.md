@@ -1,8 +1,8 @@
 # Getting started
 
-Status: compiler, execution, result, cursor, and observation APIs are available
-from the development checkout. Managed transactions and a package release
-remain pending.
+Status: compiler, execution, result, cursor, observation, and managed
+transaction APIs are available from the development checkout. Migration
+validation and a package release remain pending.
 
 ## Requirements
 
@@ -65,6 +65,23 @@ Every `table()` call returns a fresh mutable builder. Fluent clause methods
 mutate that builder, while `compile()`, `get()`, `first()`, aggregates, and
 writes do not mutate its clause state.
 
+## Run related work atomically
+
+```php
+$accountId = $db->transaction(function (Connection $connection): string {
+    $id = $connection->table('accounts')->insertGetId(['name' => 'primary']);
+    $connection->table('audit_log')->insert(['account_id' => $id]);
+
+    return $id;
+});
+```
+
+The outer callback owns the physical transaction. Nested callbacks use
+savepoints, and callback failures are rethrown unchanged after successful
+rollback. SimpleQuery rejects an already-active external transaction rather
+than adopting it. See [transactions](transactions.md) for cursor and failure
+rules.
+
 ## Compile without execution
 
 ```php
@@ -90,5 +107,6 @@ Closing rejects active transactions and tracked cursors. Destructor cleanup is
 best effort; applications should close at a deterministic lifecycle boundary
 when cleanup guarantees matter.
 
-Continue with the [query builder](query-builder.md), [results and writes](results-and-writes.md),
+Continue with the [query builder](query-builder.md),
+[results and writes](results-and-writes.md), [transactions](transactions.md),
 and [raw SQL security](raw-sql-and-security.md) guides.

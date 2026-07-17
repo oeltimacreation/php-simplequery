@@ -53,6 +53,11 @@ safe early cursor close, and no-dev consumer installation.
 
 ## Phase 3: transactions
 
+Repository implementation status: complete. The managed transaction API,
+savepoint nesting, ownership guard, failure metadata, cursor boundaries, and
+unusable-state quarantine are covered by controlled failure injection and the
+SQLite/MariaDB/MySQL/ProxySQL/MaxScale transaction smoke matrix.
+
 - implement callback ownership, savepoint nesting, external transaction
   detection, state mismatch detection, unusable-state handling, and failure
   evidence.

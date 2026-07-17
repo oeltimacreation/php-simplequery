@@ -8,9 +8,13 @@
     "pdo_sqlite": "SQLite 3.45.1"
   },
   "reports": {
-    "count": 17,
+    "count": 27,
     "failed_observations": 0,
     "modes": ["native-buffered", "native-unbuffered", "emulated-buffered", "emulated-unbuffered"]
+  },
+  "pdo_behavior_reports": {
+    "count": 17,
+    "failed_observations": 0
   },
   "phase2_execution_reports": {
     "count": 5,
@@ -18,6 +22,15 @@
     "passed_observations": 63,
     "mode": "native-buffered",
     "targets": ["sqlite", "mariadb", "mysql", "proxysql", "maxscale"]
+  },
+  "transaction_reports": {
+    "count": 5,
+    "failed_observations": 0,
+    "passed_observations": 75,
+    "mode": "native-buffered",
+    "targets": ["sqlite", "mariadb", "mysql", "proxysql", "maxscale"],
+    "ddl_state_loss_detected": ["mariadb", "mysql", "proxysql", "maxscale"],
+    "ddl_remained_transactional": ["sqlite"]
   },
   "mysql_family_observations": {
     "mariadb_backend_version": "11.8.8-MariaDB-ubu2404",

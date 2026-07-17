@@ -33,8 +33,10 @@ $requiredFiles = [
     'examples/query-building.php',
     'examples/sqlite-compiler-smoke.php',
     'examples/sqlite-execution.php',
+    'examples/sqlite-transactions.php',
     'tools/database-probes/compose.yaml',
     'tools/database-probes/execution-smoke.php',
+    'tools/database-probes/transaction-smoke.php',
 ];
 
 $errors = [];

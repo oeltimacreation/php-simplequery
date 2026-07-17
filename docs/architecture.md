@@ -1,7 +1,7 @@
 # Architecture
 
-Status: compiler and executor architecture implemented; managed transactions
-remain the accepted target architecture for `0.1.0`.
+Status: compiler, executor, and managed transaction architecture implemented
+for the target `0.1.0` contract.
 
 PHP SimpleQuery separates query construction, compilation, and execution while
 keeping the replaceable surface deliberately small.
@@ -11,12 +11,12 @@ Application
     |
     v
 Connection (PDO, driver, transaction state, optional observer)
-    | table()                         | query()
-    v                                 v
-Mutable QueryBuilder                  RawQuery
-    | compile                         | execute
-    +---------------+-----------------+
-                    v
+    | transaction()              | table()                         | query()
+    v                            v                                 v
+Internal transaction manager    Mutable QueryBuilder              RawQuery
+    | begin/savepoint/complete        | compile                         | execute
+    +---------------------------------+---------------+-----------------+
+                                      v
 Internal dialect compiler
     typed state -> SQL + ordered typed bindings
                     |
@@ -86,6 +86,7 @@ src/
 └── Internal/
     ├── Ast/
     ├── Compiler/
+    ├── Transaction/
     ├── AggregateResult.php
     └── Executor.php
 ```

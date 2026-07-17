@@ -4,10 +4,10 @@ PHP SimpleQuery is a small, framework-agnostic PDO query builder and execution
 library for PHP 8.2 and later.
 
 > [!IMPORTANT]
-> Deterministic compilation and the PDO execution/result layer are implemented,
-> alongside the PDO/engine probe suite. Managed transaction handling and a
-> package release remain pending; do not treat the checkout as a released
-> library.
+> Deterministic compilation, PDO execution/results, and managed transactions
+> are implemented alongside the PDO/engine/proxy probe suite. Migration
+> validation and a package release remain pending; do not treat the checkout
+> as a released library.
 
 The project focuses on predictable SQL compilation, ordered typed bindings,
 explicit connection ownership, safe nested transactions, and honest database
@@ -26,9 +26,11 @@ general database abstraction platform.
 - snapshotted subqueries, clone isolation, and deterministic ordered bindings.
 - explicit connection policy through injected PDO or DSN construction;
 - object/associative hydration, scalar aggregates, writes, and deferred raw SQL;
-- tracked one-shot cursors, redacted execution exceptions, and bounded observers.
+- tracked one-shot cursors, redacted execution exceptions, and bounded observers;
+- callback transactions with savepoint nesting, strict ownership, failure
+  evidence, and unusable-state quarantine.
 
-Managed transactions remain the next accepted `0.1.0` implementation phase.
+Migration validation is the next accepted `0.1.0` implementation phase.
 
 ## Planned package
 
@@ -48,6 +50,7 @@ composer check
 composer examples:check
 composer probe:sqlite
 composer probe:execution -- sqlite
+composer probe:transaction -- sqlite
 bash tools/database-probes/run-services.sh
 ```
 

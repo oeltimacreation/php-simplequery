@@ -1,6 +1,6 @@
 # Transactions
 
-Status: target `0.1.0` contract.
+Status: implemented `0.1.0` contract.
 
 ## Callback API
 
@@ -67,6 +67,13 @@ rollback after a callback failure, both failures are retained in a
 
 After the connection is marked unusable, every execution or managed
 transaction attempt fails. Discard the wrapper and its PDO.
+
+`TransactionException` records the control `operation`, `managedDepth`,
+`driver`, optional `connectionLabel`, original `callbackFailure`, primary
+`controlFailure`, optional recovery `recoveryFailure`, and
+`connectionUnusable`. The previous-exception chain points to the most relevant
+recovery, control, or callback failure, while the named fields preserve all
+available evidence without including bindings or credentials.
 
 ## DDL
 

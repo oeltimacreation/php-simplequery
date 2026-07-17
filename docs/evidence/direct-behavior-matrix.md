@@ -21,6 +21,15 @@ changed affected rows, genuine batch inserts, raw terminals, early cursor
 close, transaction-required row locks, exception conversion, and observer
 metadata. All three direct reports passed in the 2026-07-17 run.
 
+The managed transaction smoke independently exercises outer commit/rollback,
+returned values, `Throwable` identity, nested savepoint success/failure,
+external ownership rejection, direct-PDO state loss, DDL behavior, observer
+depth, every tracked-cursor completion boundary, replacement, and lifecycle.
+Controlled PDO tests inject begin, savepoint, release, rollback-to, commit, and
+rollback failures that cannot be induced deterministically on a live server.
+All 15 checks passed on SQLite 3.45.1, MariaDB 11.8.8, and MySQL 8.0.45 in the
+2026-07-17 fixture run.
+
 | Behavior | MariaDB control | MySQL control | SQLite control | Owning probe/policy |
 | --- | --- | --- | --- | --- |
 | Positional placeholders and literal/comment `?` | Recorded | Recorded | Recorded | `positional_placeholders`; ADR-005 |

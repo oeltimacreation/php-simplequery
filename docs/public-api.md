@@ -1,8 +1,8 @@
 # Public API contract
 
-Status: query construction, compilation, PDO execution, results, cursors, and
-observation are implemented. Managed transactions remain the accepted target
-`0.1.0` contract.
+Status: query construction, compilation, PDO execution, results, cursors,
+observation, and managed transactions are implemented for the target `0.1.0`
+contract.
 
 This is the signature index for the public surface. The linked topic guides
 define overloads, mutation rules, validation, result shapes, and dialect
@@ -36,9 +36,9 @@ Connection::pdo(): PDO
 Connection::close(): void
 ```
 
-Everything above except managed `transaction()` is implemented. `close()` is
-idempotent after success and rejects active physical transactions or tracked
-cursors rather than silently completing/truncating them.
+Everything above is implemented. `close()` is idempotent after success and
+rejects active physical transactions or tracked cursors rather than silently
+completing or truncating them.
 
 `Driver` has exactly `MariaDb`, `MySql`, and `Sqlite`. `ConnectionOptions` is a
 final readonly declaration with nullable prepare-emulation, buffering,
@@ -195,6 +195,8 @@ SimpleQueryException
 
 Execution failures expose SQLSTATE, driver code when available, placeholder
 SQL, driver/connection identity, and the previous `PDOException`, without
-interpolated binding values. Domain exceptions retain identity when rollback
-succeeds. Pixie's broad vendor-normalized constraint subclass family is not
-part of `0.1.0`.
+interpolated binding values. Transaction failures expose the attempted control
+operation, managed depth, driver/connection label, callback/control/recovery
+failures, and whether the connection is unusable. Domain exceptions retain
+identity when rollback succeeds. Pixie's broad vendor-normalized constraint
+subclass family is not part of `0.1.0`.

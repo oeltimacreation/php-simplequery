@@ -11,6 +11,8 @@ composer test:coverage         # writes Clover and HTML coverage
 composer coverage:check        # 90/80 overall, 95/90 compiler gates
 composer examples:check        # executable compiler and SQLite examples
 composer probe:sqlite          # JSON PDO/SQLite evidence
+composer probe:execution -- sqlite    # public executor smoke
+composer probe:transaction -- sqlite  # managed transaction state matrix
 bash tools/database-probes/run-services.sh  # complete direct/proxy behavior and execution matrix
 php tools/database-probes/ambiguous-write.php proxysql  # operator-controlled failure window
 composer benchmark             # PDO-only control benchmark
@@ -19,8 +21,9 @@ composer benchmark             # PDO-only control benchmark
 `composer check` is the clean-checkout contract. The service-backed command
 starts only the exact synthetic Docker fixtures in
 [`compose.yaml`](../tools/database-probes/compose.yaml), records native/emulated and
-buffered/unbuffered reports under the ignored `tools/database-probes/results/`
-directory, prints a summary, and removes containers, networks, and volumes.
+buffered/unbuffered reports plus public execution and transaction smokes under
+the ignored `tools/database-probes/results/` directory, prints a summary, and
+removes containers, networks, and volumes.
 
 ## Naming and placement
 

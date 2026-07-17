@@ -13,8 +13,8 @@ successful simple query does not imply support.
 | Basic CRUD compilation | Implemented | Implemented | Implemented |
 | Inner/left joins | Implemented | Implemented | Implemented |
 | Group/order/pagination | Implemented | Implemented | Implemented |
-| Savepoints | Required | Required | Required |
-| Generated IDs | Required | Required | Required |
+| Savepoints | Implemented | Implemented | Implemented |
+| Generated IDs | Implemented | Implemented | Implemented |
 | Multi-row insert compilation | Implemented | Implemented | Implemented |
 | Lock clauses | Implemented | Implemented | Unsupported |
 | Generic upsert | Deferred | Deferred | Deferred |
