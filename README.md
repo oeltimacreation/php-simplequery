@@ -1,104 +1,101 @@
-# PHP SimpleQuery
+# OeltimaCreation PHP SimpleQuery
 
-PHP SimpleQuery is a small, framework-agnostic PDO query builder and execution
-library for PHP 8.2 and later.
+PHP SimpleQuery is a small, framework-agnostic PDO query builder for PHP 8.2+
+with deterministic SQL compilation, typed positional bindings, and explicit
+connection and transaction ownership.
 
-> [!IMPORTANT]
-> Deterministic compilation, PDO execution/results, and managed transactions
-> are implemented alongside the PDO/engine/proxy probe suite and synthetic
-> migration validation. Release preparation remains pending; do not treat the
-> checkout as a released library.
+It supports MariaDB 11.8, MySQL 8.0, and SQLite 3.39.2+ through PDO. It is a
+query builder—not an ORM, migration tool, connection pool, or retry layer.
 
-The project focuses on predictable SQL compilation, ordered typed bindings,
-explicit connection ownership, safe nested transactions, and honest database
-support. It is not an ORM, schema manager, connection pool, retry engine, or
-general database abstraction platform.
+## Install
 
-## Implementation highlights
-
-- mutable fluent builders with private typed state;
-- a fresh builder for every `Connection::table()` call;
-- non-mutating terminal operations and deterministic compilation;
-- positional placeholders with ordered, explicitly typed bindings;
-- independent MariaDB, MySQL, and SQLite compiler paths;
-- compiler-only testing connections and detached query fixtures;
-- explicit identifier, value, subquery, and trusted-raw-SQL boundaries;
-- snapshotted subqueries, clone isolation, and deterministic ordered bindings.
-- explicit connection policy through injected PDO or DSN construction;
-- object/associative hydration, scalar aggregates, writes, and deferred raw SQL;
-- tracked one-shot cursors, redacted execution exceptions, and bounded observers;
-- callback transactions with savepoint nesting, strict ownership, failure
-  evidence, and unusable-state quarantine;
-- executable, audit-grounded synthetic migration slices with ambiguity,
-  parity, security, and performance evidence.
-
-Release preparation is the next accepted `0.1.0` implementation phase.
-
-## Planned package
-
-```text
-Composer package: oeltimacreation/php-simplequery
-PHP namespace:    Oeltima\SimpleQuery
-PHP requirement:  ^8.2
-License:          MIT
-First release:    0.1.0
+```bash
+composer require oeltimacreation/php-simplequery:^0.1
 ```
 
-Maintainers can bootstrap the development environment with:
+Your PHP installation also needs `ext-pdo` and the matching driver, such as
+`pdo_sqlite` or `pdo_mysql`.
+
+## Quick start
+
+This complete SQLite example creates a table, writes a row, and reads it back.
+It needs no server, so it is a good first check after installation.
+
+```php
+<?php
+
+declare(strict_types=1);
+
+use Oeltima\SimpleQuery\Connection;
+use Oeltima\SimpleQuery\Driver;
+
+require __DIR__ . '/vendor/autoload.php';
+
+$db = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
+$db->query(
+    'CREATE TABLE tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, completed INTEGER NOT NULL)',
+)->execute();
+
+$id = $db->table('tasks')->insertGetId([
+    'title' => 'Read the getting-started guide',
+    'completed' => false,
+]);
+
+$task = $db->table('tasks')->where('id', (int) $id)->firstAssociative();
+echo $task['title'];
+```
+
+For a runnable version, use `php examples/beginner/first-query.php` from a
+source checkout.
+
+## What it does well
+
+- Builds predictable SQL with SQL and bindings kept separate.
+- Quotes structured identifiers and rejects invalid query shapes early.
+- Executes reads, writes, aggregates, and one-shot cursors with PDO.
+- Provides managed callback transactions with nested savepoints.
+- Lets applications test generated SQL without a database using the included
+  compiler testing utilities.
+
+## Important boundaries
+
+Values are parameter-bound. Table names, column names, sort fields, and raw
+SQL are SQL code, so dynamic identifiers must be allowlisted and raw SQL must
+come only from trusted application code. SimpleQuery never interpolates values
+into executable SQL and never retries an uncertain write or commit.
+
+Each `Connection` and its builders/cursors belong to one request, job, or
+execution unit. Do not share them between concurrent workers or coroutines.
+
+## Documentation
+
+Start here:
+
+- [Getting started](docs/getting-started.md) — SQLite first query, then MySQL/MariaDB
+- [Examples](examples/README.md) — small runnable programs, ordered for beginners
+- [Query builder](docs/query-builder.md) — filtering, joins, ordering, and compilation
+- [Results and writes](docs/results-and-writes.md) — reads, cursors, aggregates, and writes
+- [Transactions](docs/transactions.md) — callback ownership and nested savepoints
+
+More guides:
+
+- [Raw SQL and security](docs/raw-sql-and-security.md)
+- [Database support](docs/database-support.md)
+- [Testing applications](docs/testing-applications.md)
+- [Migrating from Pixie](docs/migrating-from-pixie.md)
+- [Complete documentation index](docs/index.md)
+
+## Development
 
 ```bash
 composer install
 composer check
-composer examples:check
-composer probe:sqlite
-composer probe:execution -- sqlite
-composer probe:transaction -- sqlite
-composer probe:migration -- sqlite
-composer migration:check
-bash tools/database-probes/run-services.sh
+composer test:coverage
+composer coverage:check
 ```
 
-Until `0.1.0`, do not depend on the repository as a working query-builder
-library.
-
-## Documentation
-
-- [Documentation index](docs/index.md)
-- [Getting started](docs/getting-started.md)
-- [Query builder contract](docs/query-builder.md)
-- [Results and writes](docs/results-and-writes.md)
-- [Raw SQL and security](docs/raw-sql-and-security.md)
-- [Transactions](docs/transactions.md)
-- [Database support](docs/database-support.md)
-- [Concurrency and workers](docs/concurrency-and-workers.md)
-- [Testing applications](docs/testing-applications.md)
-- [Migrating from Pixie](docs/migrating-from-pixie.md)
-- [Migration validation](docs/migration-validation.md)
-- [Architecture](docs/architecture.md)
-- [Public API contract](docs/public-api.md)
-- [Testing architecture](docs/testing-architecture.md)
-- [Compatibility evidence](docs/evidence/README.md)
-- [Roadmap](docs/roadmap.md)
-- [Architecture decisions](docs/adr/README.md)
-
-## Project policies
-
-- [Support policy](SUPPORT.md)
-- [Security policy](SECURITY.md)
-- [Contributing](CONTRIBUTING.md)
-- [Changelog](CHANGELOG.md)
-- [Upgrading](docs/upgrading.md)
-
-## Scope
-
-SimpleQuery deliberately does not provide ORM entities, relationships,
-repositories, schema migrations, read/write routing, connection pooling,
-transparent retries, query caching, arbitrary class hydration, middleware,
-compiler plugins, or third-party dialect extensions.
-
-PostgreSQL, SQL Server, Oracle Database, and other engines are outside the
-current product scope. Raw SQL may still happen to execute elsewhere, but that
-does not constitute support.
+See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md),
+[SUPPORT.md](SUPPORT.md), and [CHANGELOG.md](CHANGELOG.md) for project policy.
 
 ## License
 

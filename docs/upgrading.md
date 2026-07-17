@@ -1,7 +1,7 @@
 # Upgrading
 
-No release has been published yet. This guide will record actionable steps for
-moving between SimpleQuery release lines.
+This guide records actionable steps for moving between SimpleQuery release
+lines. The first public release is `0.1.0`.
 
 ## ZeroVer expectations
 
@@ -25,7 +25,18 @@ For each future upgrade:
 7. review generated SQL for raw or dialect-specific queries;
 8. deploy through the application's normal staged rollout.
 
-## Planned sections
+## Installing 0.1.0
+
+```bash
+composer require oeltimacreation/php-simplequery:^0.1
+```
+
+`0.1.0` requires PHP 8.2+, `ext-pdo`, and either `pdo_sqlite` or `pdo_mysql`.
+Select `Driver::MariaDb`, `Driver::MySql`, or `Driver::Sqlite` explicitly. See
+[getting started](getting-started.md) for connection examples and
+[database support](database-support.md) for engine floors.
+
+## Future upgrade sections
 
 Version-specific instructions will be added under headings such as:
 

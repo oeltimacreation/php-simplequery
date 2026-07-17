@@ -1,8 +1,5 @@
 # Testing applications
 
-Status: compiler testing utilities, SQLite execution support, and the bounded
-recording observer are implemented.
-
 SimpleQuery is designed so application query contracts can be tested without a
 network database, while database-specific behavior remains covered by live
 integration tests.

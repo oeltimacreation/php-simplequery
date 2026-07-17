@@ -66,6 +66,9 @@
         "benchmark": "php benchmarks/run.php",
         "benchmark:migration": "php benchmarks/migration.php",
         "examples:check": [
+            "php examples/beginner/first-query.php",
+            "php examples/beginner/filter-and-update.php",
+            "php examples/beginner/transaction.php",
             "php examples/compiler-assertions.php",
             "php examples/query-building.php",
             "php examples/sqlite-compiler-smoke.php",

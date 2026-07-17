@@ -1,7 +1,5 @@
 # Results and writes
 
-Status: implemented Phase 2 contract.
-
 ## Object results
 
 Object hydration is the default:

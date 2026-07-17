@@ -1,7 +1,5 @@
 # Query builder
 
-Status: compiler clauses and Phase 2 execution terminals are implemented.
-
 ## Lifecycle
 
 `Connection::table()` creates a fresh builder. Clause methods mutate and return

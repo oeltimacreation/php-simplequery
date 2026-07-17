@@ -1,8 +1,5 @@
 # Migration validation
 
-Status: complete audit-grounded synthetic migration spike for the target
-`0.1.0` contract.
-
 This validation uses library-owned synthetic recreations grounded in a
 read-only scan and manual review of nine Pecee Pixie 4.15.8/4.16.3 consumer
 checkouts. It does not copy or modify an application repository, publish

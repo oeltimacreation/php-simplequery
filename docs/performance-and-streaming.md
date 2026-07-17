@@ -1,7 +1,5 @@
 # Performance and streaming
 
-Status: streaming/batch implementation complete; expanded benchmark plan open.
-
 Database and network execution normally dominate latency, but compilation,
 hydration, and memory behavior still matter in high-throughput applications.
 
@@ -48,8 +46,8 @@ Optimization requires a profile and a benchmark showing a meaningful benefit.
 ## Benchmark suite
 
 The executable PDO-only control and compiler predicate-scaling method are
-documented in [benchmarking](benchmarking.md). Executor measurements remain
-pending.
+documented in [benchmarking](benchmarking.md). Executor benchmarks are added
+when a proposed performance change needs an evidence-based comparison.
 
 The maintained benchmark plan covers:
 

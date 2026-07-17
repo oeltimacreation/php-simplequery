@@ -1,7 +1,5 @@
 # Observability
 
-Status: implemented Phase 2 contract.
-
 SimpleQuery provides one narrow optional post-attempt observer. It does not
 provide mutable events, middleware, a global registry, or a logging dependency.
 

@@ -1,14 +1,12 @@
 # Database support
 
-Status: target `0.1.0` support matrix; no combination is certified yet.
-
 Support means compiler coverage, live integration tests, a documented minimum
 version, and an ongoing maintenance commitment. Similar protocol behavior or a
 successful simple query does not imply support.
 
-## Target `0.1.0` matrix
+## Supported matrix
 
-| Capability | MariaDB 11.8 LTS | MySQL 8 | SQLite 3.39.2+ |
+| Capability | MariaDB 11.8.8+ | MySQL 8.0.45+ | SQLite 3.39.2+ |
 | --- | --- | --- | --- |
 | Basic CRUD compilation | Implemented | Implemented | Implemented |
 | Inner/left joins | Implemented | Implemented | Implemented |
@@ -20,9 +18,9 @@ successful simple query does not imply support.
 | Generic upsert | Deferred | Deferred | Deferred |
 | Generic DML returning | Deferred | Unsupported shape | Deferred |
 
-Exact MySQL 8 and proxy patch baselines will be published before `0.1.0` after
-the reproducible compatibility matrix is complete. The SQLite minimum is
-checked at runtime with `sqlite_version()`.
+The released fixture baselines are MariaDB 11.8.8, MySQL 8.0.45, ProxySQL
+3.0.1, and MaxScale 23.02.17-2. The SQLite minimum is checked at runtime with
+`sqlite_version()`.
 
 ## MariaDB and MySQL
 
@@ -89,9 +87,11 @@ SimpleQuery does not configure routing, discover topology, select replicas, or
 guarantee causal consistency. A write or commit interrupted by transport loss
 has an unknown outcome and is never retried automatically.
 
-Certified proxy versions and fixture settings will be published in the support
-matrix before release. Operators should run maintained proxy versions and
-review vendor security advisories independently of this library.
+The maintained proxy compatibility fixtures are ProxySQL 3.0.1 and MaxScale
+23.02.17-2. They validate the documented single-backend configurations; they
+do not certify arbitrary proxy topology or routing policy. Operators should
+run maintained proxy versions and review vendor security advisories
+independently of this library.
 
 ## Unsupported engines
 

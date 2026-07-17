@@ -8,7 +8,18 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-07-17
+
 ### Added
+
+- First public release of the deterministic PDO query builder for MariaDB,
+  MySQL, and SQLite.
+- Fluent query construction, typed positional bindings, PDO execution, result
+  hydration, writes, cursors, managed transactions, and query observation.
+- Compile-only testing tools, live-engine compatibility probes, migration
+  validation, and runnable SQLite beginner examples.
+- Complete user guides, public API reference, database support matrix, release
+  process, and contributor instructions.
 
 - Public documentation foundation.
 - Initial architecture decision records.

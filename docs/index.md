@@ -1,38 +1,34 @@
 # Documentation
 
-> [!NOTE]
-> These documents define the target `0.1.0` contract while implementation is in
-> progress. A page marked as planned describes required behavior, not behavior
-> available from the current repository.
+PHP SimpleQuery is a focused PDO query builder for MariaDB, MySQL, and SQLite.
+Read the guides in this order when you are new to the library.
 
-## Using SimpleQuery
+## Start using SimpleQuery
 
-- [Getting started](getting-started.md)
-- [Query builder](query-builder.md)
-- [Results and writes](results-and-writes.md)
+1. [Getting started](getting-started.md) — install, run SQLite, and connect to MySQL/MariaDB.
+2. [Examples](../examples/README.md) — small runnable programs from first query to transactions.
+3. [Query builder](query-builder.md) — sources, filters, joins, sorting, and compilation.
+4. [Results and writes](results-and-writes.md) — result shapes, inserts, updates, deletes, and cursors.
+5. [Transactions](transactions.md) — safe callback transactions and savepoints.
+
+## Use it safely in an application
+
 - [Raw SQL and security](raw-sql-and-security.md)
-- [Transactions](transactions.md)
+- [Database support](database-support.md)
 - [Observability](observability.md)
 - [Performance and streaming](performance-and-streaming.md)
 - [Concurrency and workers](concurrency-and-workers.md)
-- [Database support](database-support.md)
 - [Testing applications](testing-applications.md)
 - [Migrating from Pixie](migrating-from-pixie.md)
-- [Migration validation](migration-validation.md)
 - [Upgrading](upgrading.md)
 
-## Project design and maintenance
+## Reference and maintenance
 
-- [Architecture](architecture.md)
 - [Public API signature contract](public-api.md)
-- [Roadmap and release gates](roadmap.md)
+- [Architecture](architecture.md)
 - [PDO, engine, and proxy quirks](pdo-engine-proxy-quirks.md)
-- [Compatibility evidence records](evidence/README.md)
-- [Technical references](references.md)
-- [Maintainer notes](maintainer-notes.md)
-- [Test strategy](testing-strategy.md)
-- [Testing architecture and commands](testing-architecture.md)
+- [Migration validation](migration-validation.md)
 - [Benchmark harness](benchmarking.md)
-- [Release process](release-process.md)
-- [Security review checklist](security-review-checklist.md)
-- [Architecture decision records](adr/README.md)
+- [Test strategy](testing-strategy.md) and [testing architecture](testing-architecture.md)
+- [Release process](release-process.md) and [maintainer notes](maintainer-notes.md)
+- [Compatibility evidence](evidence/README.md) and [architecture decisions](adr/README.md)

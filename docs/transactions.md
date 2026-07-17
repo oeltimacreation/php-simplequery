@@ -1,7 +1,5 @@
 # Transactions
 
-Status: implemented `0.1.0` contract.
-
 ## Callback API
 
 ```php

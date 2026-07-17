@@ -2,7 +2,6 @@
 
 Thank you for your interest in PHP SimpleQuery.
 
-The project is currently establishing its `0.1.0` contracts and implementation.
 Before opening a large change, start a discussion or issue so the proposed work
 can be checked against the documented scope and architecture decisions.
 
@@ -43,7 +42,8 @@ The required quality baseline is:
 - PHPStan level 9 or stricter;
 - PHP_CodeSniffer 4 with PSR-12 and Slevomat rules;
 - independent MariaDB, MySQL, and SQLite integration coverage;
-- documentation and changelog updates for public behavior changes.
+- documentation, examples where useful, and changelog updates for public
+  behavior changes.
 
 ## Pull requests
 

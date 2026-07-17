@@ -86,7 +86,10 @@ compatibility layer.
 
 ## Phase 5: `0.1.0`
 
-Release requires:
+Status: release-ready as of 2026-07-17. The following release gates are
+complete; publishing still requires the release-branch review, immutable tag,
+GitHub release, and Packagist installation verification described in
+[release process](release-process.md):
 
 - PHP 8.2-current CI and strict quality checks;
 - independent MariaDB, MySQL, and SQLite live coverage;
@@ -95,7 +98,7 @@ Release requires:
 - characterized binding order, hydration, writes, transactions, and cursors;
 - public security, support, migration, quirks, and maintainer documentation;
 - acceptable benchmark baselines;
-- verified package metadata, release automation, and immutable tagging.
+- verified package metadata and release automation.
 
 ## Stabilization and `1.0.0`
 

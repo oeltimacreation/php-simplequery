@@ -1,34 +1,95 @@
 # Getting started
 
-Status: compiler, execution, result, cursor, observation, and managed
-transaction APIs are available from the development checkout. Migration
-validation and a package release remain pending.
+This guide starts with SQLite because it needs no database server. After that,
+the same query-builder calls work with MariaDB and MySQL.
 
-## Requirements
+## 1. Install the package
 
-- PHP 8.2 or later;
-- PDO;
-- one supported PDO driver: `pdo_mysql` or `pdo_sqlite`;
-- a supported MariaDB, MySQL, or SQLite runtime.
+```bash
+composer require oeltimacreation/php-simplequery:^0.1
+php -m | grep -E 'PDO|pdo_sqlite'
+```
 
-## Wrap an existing PDO
+For MariaDB or MySQL, ensure `pdo_mysql` is enabled instead of—or in addition
+to—`pdo_sqlite`.
 
-Injected PDO is the canonical construction path:
+## 2. Create your first database and query
+
+Create `first-query.php` in a Composer project:
 
 ```php
+<?php
+
+declare(strict_types=1);
+
 use Oeltima\SimpleQuery\Connection;
 use Oeltima\SimpleQuery\Driver;
 
-$pdo = new PDO($dsn, $username, $password, $pdoOptions);
-$db = Connection::fromPdo($pdo, Driver::MariaDb);
+require __DIR__ . '/vendor/autoload.php';
+
+$db = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
+$db->query(
+    'CREATE TABLE tasks (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, completed INTEGER NOT NULL)',
+)->execute();
+
+$id = $db->table('tasks')->insertGetId([
+    'title' => 'Try PHP SimpleQuery',
+    'completed' => false,
+]);
+
+$task = $db->table('tasks')->where('id', (int) $id)->firstAssociative();
+var_dump($task);
 ```
 
-The driver is explicit. `pdo_mysql` alone cannot reliably distinguish MariaDB
-from MySQL, especially through a proxy.
+Run it with `php first-query.php`. The result is an associative array with the
+row you inserted. `insertGetId()` returns a string because database generated
+IDs may be wider than PHP's integer range.
 
-## Connect from a DSN
+The equivalent source-checkout example is
+[`examples/beginner/first-query.php`](../examples/beginner/first-query.php).
 
-The convenience factory creates and owns PDO:
+## 3. Filter, sort, and fetch many rows
+
+Fluent clause calls mutate the builder. Read terminals do not, so you can
+compile or execute the same builder repeatedly while its clauses are unchanged.
+
+```php
+$openTasks = $db
+    ->table('tasks')
+    ->select('id', 'title')
+    ->where('completed', false)
+    ->orderBy('id')
+    ->getAssociative();
+```
+
+Values such as `false` are bound safely. Do not pass request input directly as
+a table, column, or sort field; those are identifiers, not values. Allowlist
+them first. See [raw SQL and security](raw-sql-and-security.md).
+
+## 4. Use a transaction for related writes
+
+`transaction()` commits the callback result, or rolls back and rethrows when
+the callback throws. Nested callbacks use savepoints.
+
+```php
+$db->transaction(function (Connection $connection): void {
+    $projectId = $connection->table('projects')->insertGetId(['name' => 'Website']);
+    $connection->table('tasks')->insert([
+        'project_id' => (int) $projectId,
+        'title' => 'Publish',
+        'completed' => false,
+    ]);
+});
+```
+
+SimpleQuery will not adopt a transaction that another library started. Keep
+open cursors out of transaction boundaries. The full rules are in
+[transactions](transactions.md).
+
+## 5. Connect to MariaDB or MySQL
+
+Choose the driver explicitly. PDO's `mysql` driver alone cannot reliably tell
+MariaDB from MySQL, especially through a proxy.
 
 ```php
 $db = Connection::connect(
@@ -39,74 +100,15 @@ $db = Connection::connect(
 );
 ```
 
-The factory defaults to exception mode, native prepares, buffered MySQL-family
-queries, changed-row counts, non-persistent connections, and explicit fetch
-modes. MariaDB/MySQL DSNs must specify `charset=utf8mb4`.
+Use `Driver::MySql` for MySQL. The default connection policy uses exceptions,
+native prepares, buffered MySQL-family queries, changed-row counts,
+non-persistent connections, and `utf8mb4`. For an existing PDO connection use
+`Connection::fromPdo($pdo, Driver::MariaDb)`.
 
-SQLite connections enable and verify foreign keys and default to a configurable
-5,000 ms busy timeout. Journal and synchronous modes are never changed
-silently.
+## Next steps
 
-## Build a query
-
-```php
-$compiled = $db
-    ->table('users')
-    ->select('id', 'email')
-    ->where('active', true)
-    ->orderBy('id')
-    ->compile();
-```
-
-Execution terminals such as `get()`, `getAssociative()`, aggregates, and writes
-prepare and explicitly bind the compiled query on the same connection.
-
-Every `table()` call returns a fresh mutable builder. Fluent clause methods
-mutate that builder, while `compile()`, `get()`, `first()`, aggregates, and
-writes do not mutate its clause state.
-
-## Run related work atomically
-
-```php
-$accountId = $db->transaction(function (Connection $connection): string {
-    $id = $connection->table('accounts')->insertGetId(['name' => 'primary']);
-    $connection->table('audit_log')->insert(['account_id' => $id]);
-
-    return $id;
-});
-```
-
-The outer callback owns the physical transaction. Nested callbacks use
-savepoints, and callback failures are rethrown unchanged after successful
-rollback. SimpleQuery rejects an already-active external transaction rather
-than adopting it. See [transactions](transactions.md) for cursor and failure
-rules.
-
-## Compile without execution
-
-```php
-$compiled = $db
-    ->table('users')
-    ->where('status', 'active')
-    ->compile();
-
-$compiled->sql;
-$compiled->bindings;
-```
-
-Compiled SQL plus ordered typed bindings is canonical. Interpolated debug SQL
-is never used for execution.
-
-## Deterministic close
-
-```php
-$db->close();
-```
-
-Closing rejects active transactions and tracked cursors. Destructor cleanup is
-best effort; applications should close at a deterministic lifecycle boundary
-when cleanup guarantees matter.
-
-Continue with the [query builder](query-builder.md),
-[results and writes](results-and-writes.md), [transactions](transactions.md),
-and [raw SQL security](raw-sql-and-security.md) guides.
+- Run the [beginner examples](../examples/README.md).
+- Learn complex filters and joins in the [query builder guide](query-builder.md).
+- Check engine-specific limits in [database support](database-support.md).
+- Add compile assertions to your application tests with
+  [testing applications](testing-applications.md).

@@ -1,9 +1,5 @@
 # Public API contract
 
-Status: query construction, compilation, PDO execution, results, cursors,
-observation, and managed transactions are implemented for the target `0.1.0`
-contract.
-
 This is the signature index for the public surface. The linked topic guides
 define overloads, mutation rules, validation, result shapes, and dialect
 limits. A semantic change requires an ADR and synchronized fixture update.

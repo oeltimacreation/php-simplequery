@@ -2,7 +2,9 @@
 
 ## Before release
 
-1. Confirm all required CI and scheduled database/proxy jobs are green.
+1. Create `release/<version>` from the default branch; never cut a stable
+   release directly from a feature branch.
+2. Confirm all required CI and scheduled database/proxy jobs are green.
 2. Review the public database support matrix and tested minimums.
 3. Run the complete test, coverage, static-analysis, style, audit, example, and
    no-dev consumer suites.
@@ -15,12 +17,29 @@
 
 ## Publishing
 
-1. Prepare a release branch and pull request.
-2. Merge only through required CI and review.
-3. Tag the default-branch commit with immutable `vX.Y.Z`.
-4. Publish a GitHub release containing actual release notes.
-5. Verify Packagist metadata and a clean consumer installation.
-6. Never move a published tag; issue a patch release for corrections.
+1. Open a pull request from `release/<version>` and merge only through required
+   CI and review.
+2. Fetch the resulting default-branch commit and tag it with immutable
+   `vX.Y.Z`.
+3. Publish a GitHub release titled `vX.Y.Z` containing the matching changelog
+   section as its notes.
+4. Verify Packagist exposes the normalized non-prefixed version `X.Y.Z` and a
+   clean no-dev consumer installation resolves the tagged commit.
+5. Never move a published tag; issue a patch release for corrections.
+
+```bash
+git switch -c release/<version> origin/<default-branch>
+composer validate --strict
+composer audit
+composer check
+composer test:coverage
+composer coverage:check
+
+# After merge and green CI:
+git fetch origin <default-branch> --tags
+git tag v<version> origin/<default-branch>
+git push origin v<version>
+```
 
 ## ZeroVer
 

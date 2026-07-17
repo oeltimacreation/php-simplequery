@@ -1,7 +1,5 @@
 # Concurrency and workers
 
-Status: target `0.1.0` contract.
-
 SimpleQuery is designed to remain low-overhead and isolated across independent
 PHP requests, processes, and workers. It does not make one PDO connection safe
 for concurrent use.

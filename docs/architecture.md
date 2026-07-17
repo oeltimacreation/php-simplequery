@@ -1,8 +1,5 @@
 # Architecture
 
-Status: compiler, executor, and managed transaction architecture implemented
-for the target `0.1.0` contract.
-
 PHP SimpleQuery separates query construction, compilation, and execution while
 keeping the replaceable surface deliberately small.
 
