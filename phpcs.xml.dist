@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<ruleset name="PHP SimpleQuery Coding Standards">
+    <description>PSR-12 plus the project strict typing baseline.</description>
+
+    <arg name="colors"/>
+    <arg name="extensions" value="php"/>
+    <arg name="parallel" value="80"/>
+
+    <file>src</file>
+    <file>tests</file>
+    <file>tools</file>
+    <file>scripts</file>
+    <file>benchmarks</file>
+
+    <exclude-pattern>tools/database-probes/results/*</exclude-pattern>
+    <exclude-pattern>benchmarks/results/*</exclude-pattern>
+
+    <rule ref="PSR12"/>
+    <rule ref="Generic.Files.LineLength">
+        <properties>
+            <property name="lineLimit" value="120"/>
+            <property name="absoluteLineLimit" value="180"/>
+        </properties>
+    </rule>
+    <rule ref="SlevomatCodingStandard.TypeHints.DeclareStrictTypes">
+        <properties>
+            <property name="spacesCountAroundEqualsSign" value="0"/>
+        </properties>
+    </rule>
+    <rule ref="SlevomatCodingStandard.Namespaces.UnusedUses"/>
+    <rule ref="SlevomatCodingStandard.Exceptions.DeadCatch"/>
+    <rule ref="SlevomatCodingStandard.Variables.UselessVariable"/>
+    <rule ref="SlevomatCodingStandard.ControlStructures.UselessTernaryOperator"/>
+</ruleset>

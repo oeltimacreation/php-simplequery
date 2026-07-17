@@ -1,0 +1,183 @@
+# Public API contract
+
+Status: accepted semantic contract for `0.1.0`; implementation is pending.
+
+This is the signature index for the public surface. The linked topic guides
+define overloads, mutation rules, validation, result shapes, and dialect
+limits. A semantic change requires an ADR and synchronized fixture update.
+
+## Connection and configuration
+
+```php
+Connection::fromPdo(
+    PDO $pdo,
+    Driver $driver,
+    ?ConnectionOptions $options = null,
+    ?QueryObserver $observer = null,
+): Connection
+
+Connection::connect(
+    Driver $driver,
+    string $dsn,
+    #[SensitiveParameter] ?string $username = null,
+    #[SensitiveParameter] ?string $password = null,
+    array $pdoOptions = [],
+    ?ConnectionOptions $connectionOptions = null,
+    ?QueryObserver $observer = null,
+): Connection
+
+Connection::table(string|Identifier|QueryBuilder $source, ?string $alias = null): QueryBuilder
+Connection::query(string $trustedSql, iterable $bindings = []): RawQuery
+Connection::transaction(Closure $callback): mixed
+Connection::pdo(): PDO
+Connection::close(): void
+```
+
+`Driver` has exactly `MariaDb`, `MySql`, and `Sqlite`. `ConnectionOptions` is a
+final readonly declaration with nullable prepare-emulation, buffering,
+`FOUND_ROWS`, persistence, SQLite busy-timeout, and connection-label fields.
+The executable construction cases are in
+[`connection-construction.json`](../tests/Fixtures/Contracts/connection-construction.json).
+
+Construction performs no environment lookup or topology discovery. Broad PDO
+driver mismatch, hard-invariant conflict, invalid/inapplicable options,
+missing MySQL-family `utf8mb4`, failed SQLite foreign-key verification, or an
+unsupported runtime throws `ConfigurationException`. Connection establishment
+failure throws `ConnectionException`. Credentials are never included in
+diagnostics.
+
+## Immutable public values
+
+| Type | Contract |
+| --- | --- |
+| `Driver` | Closed backed enum for MariaDB, MySQL, and SQLite. |
+| `SortDirection` | Closed enum with `Asc` and `Desc`. |
+| `ParameterType` | Closed PDO-independent binding type enum. |
+| `Binding` | Final readonly normalized value and explicit parameter type. |
+| `CompiledQuery` | Final readonly placeholder SQL and ordered `list<Binding>`. |
+| `Identifier` | Final immutable qualified/wildcard identifier with optional alias. |
+| `RawExpression` | Final immutable trusted SQL and ordered bindings. |
+| `ConnectionOptions` | Final readonly supported execution declarations. |
+| `QueryExecution` | Final readonly, redacted post-attempt observation. |
+
+These types are library-owned values, not extension points. Internal AST,
+compiler, executor, and transaction types are excluded from compatibility
+promises.
+
+## Builder clauses
+
+Clause methods mutate and return the same `QueryBuilder`. `Connection::table()`
+always returns a fresh builder. Cloning produces independent state and a child
+query is snapshotted when attached.
+
+```php
+select(string|Identifier|RawExpression ...$columns): self
+distinct(): self
+as(string $alias): self
+
+where(...): self
+orWhere(...): self
+whereNot(...): self
+orWhereNot(...): self
+whereIn(...): self
+orWhereIn(...): self
+whereNotIn(...): self
+orWhereNotIn(...): self
+whereBetween(...): self
+orWhereBetween(...): self
+whereNull(...): self
+orWhereNull(...): self
+whereNotNull(...): self
+orWhereNotNull(...): self
+
+join(...): self
+innerJoin(...): self
+leftJoin(...): self
+groupBy(string|Identifier|RawExpression ...$columns): self
+having(...): self
+orHaving(...): self
+orderBy(string|Identifier|RawExpression $column, SortDirection|string $direction = 'ASC'): self
+limit(int $limit): self
+offset(int $offset): self
+
+forUpdate(): self
+forShare(): self
+noWait(): self
+skipLocked(): self
+```
+
+Predicate overloads accept a complete trusted raw condition, a grouped
+closure, `(column, value)`, or `(column, operator, value)`. The finite operator
+set is `=`, `!=`, `<>`, `<`, `<=`, `>`, `>=`, `LIKE`, and `NOT LIKE`. Join
+`on()` operands are identifiers; `onValue()` is the value-binding form.
+
+Inner/left joins are supported on all three engines. Typed row locks are
+MariaDB/MySQL-only, require an active transaction at execution, and reject
+ambiguous query shapes. Right joins, unions, generic upserts, and DML returning
+are deferred.
+
+Invalid values or states throw `InvalidQueryException`. A valid concept that
+the selected engine or `0.1.0` shape does not support throws
+`UnsupportedFeatureException`. See [query builder](query-builder.md).
+
+## Terminals
+
+Terminals never mutate clause state.
+
+| Terminal | Return contract |
+| --- | --- |
+| `compile()` | Detached `CompiledQuery`. |
+| `get()` | `list<stdClass>`. |
+| `first()` | `stdClass|null`. |
+| `getAssociative()` | `list<array<string, mixed>>`. |
+| `firstAssociative()` | `array<string, mixed>|null`. |
+| `iterate()` / `iterateAssociative()` | One-shot final `Cursor`. |
+| `count()` | Range-checked non-negative `int`. |
+| `sum()` / `average()` | Preserved `int|float|string|null`. |
+| `min()` / `max()` | Preserved driver scalar or `null`. |
+| `insert()` / `insertMany()` | Affected rows as `int`. |
+| `insertGetId()` | Immediately captured generated ID as `string`. |
+| `update()` / `delete()` | Affected rows as `int`. |
+
+The aggregate scalar cases are executable data in
+[`aggregate-scalars.json`](../tests/Fixtures/Contracts/aggregate-scalars.json).
+Write shape and result rules are detailed in [results and writes](results-and-writes.md).
+
+`RawQuery` exposes the same appropriate object/associative/cursor terminals
+plus `execute(): int`; construction does not execute SQL. Raw SQL and bindings
+remain immutable for that query.
+
+## Transactions, cursors, and observation
+
+Managed outer transactions own physical completion; nested managed calls use
+savepoints. A pre-existing physical transaction is external and is never
+adopted. Every `Throwable` enters rollback handling. Live tracked cursors
+reject transaction/savepoint completion rather than being truncated. See
+[transactions](transactions.md).
+
+`QueryObserver::queryExecuted(QueryExecution $execution): void` is the only
+observation integration. It is post-attempt, connection-scoped, immutable,
+redacted, and non-interfering. Observer failures never change the database
+outcome or trigger replay. There is no global event or mutable last-query
+state. See [observability](observability.md).
+
+## Exceptions
+
+```text
+SimpleQueryException
+├── ConfigurationException
+├── InvalidQueryException
+├── UnsupportedFeatureException
+├── ConnectionException
+├── QueryExecutionException
+├── NumericOverflowException
+└── TransactionException
+    ├── ExternalTransactionException
+    └── TransactionStateException
+```
+
+Execution failures expose SQLSTATE, driver code when available, placeholder
+SQL, driver/connection identity, and the previous `PDOException`, without
+interpolated binding values. Domain exceptions retain identity when rollback
+succeeds. Pixie's broad vendor-normalized constraint subclass family is not
+part of `0.1.0`.

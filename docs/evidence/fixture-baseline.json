@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "collected_at": "2026-07-17",
+  "scope": "public disposable fixtures; not deployment certification",
+  "client": {
+    "php": "8.4.23",
+    "pdo_mysql": "mysqlnd 8.4.23",
+    "pdo_sqlite": "SQLite 3.45.1"
+  },
+  "reports": {
+    "count": 17,
+    "failed_observations": 0,
+    "modes": ["native-buffered", "native-unbuffered", "emulated-buffered", "emulated-unbuffered"]
+  },
+  "mysql_family_observations": {
+    "mariadb_backend_version": "11.8.8-MariaDB-ubu2404",
+    "mysql_version": "8.0.45",
+    "proxysql_reported_backend_version": "8.0.11",
+    "maxscale_reported_backend_version": "11.8.8-MariaDB-ubu2404",
+    "generated_id_php_type": "string",
+    "unchanged_update_row_count": 0,
+    "ddl_implicit_commit_observed": true,
+    "second_statement_with_buffered_active_cursor": true,
+    "second_statement_with_unbuffered_active_cursor": false,
+    "unique_prepared_statements_per_mode": 32,
+    "stable_connection_identity_during_transaction": true,
+    "session_variable_leaked_to_new_logical_connection": false
+  },
+  "sqlite_observations": {
+    "runtime": "3.45.1",
+    "meets_minimum_3_39_2": true,
+    "max_variable_number_compile_option": 250000,
+    "foreign_keys_after_enable": 1,
+    "default_probe_busy_timeout_ms": 5000,
+    "memory_database_wal_request_result": "memory",
+    "file_database_wal_result": "wal",
+    "foreign_keys_are_connection_local": true,
+    "strict_table_rejected_text_for_integer": true,
+    "writer_serialization_observed": true
+  }
+}

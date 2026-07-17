@@ -5,6 +5,11 @@ or consumer details. Dates remain evidence-based rather than calendar-driven.
 
 ## Phase 0: foundation
 
+Repository implementation status: complete. Deployment certification remains
+open until operations records the exact deployed MySQL, SQLite, ProxySQL, and
+MaxScale facts and attaches their probe output; see the
+[compatibility evidence records](evidence/README.md).
+
 - bootstrap Composer, PHP 8.2, strict types, tests, static analysis, style, and
   CI;
 - publish public API contracts, policies, ADRs, and test architecture;

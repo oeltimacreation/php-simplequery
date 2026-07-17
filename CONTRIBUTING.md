@@ -19,10 +19,23 @@ Contributions must preserve these boundaries:
 - internal compiler and AST types are not extension points;
 - public API additions require a demonstrated use case and documentation.
 
-## Development expectations
+## Development commands
 
-The implementation bootstrap will provide the exact commands. The required
-quality baseline is:
+```bash
+composer install
+composer check
+composer test:coverage
+composer coverage:check
+composer probe:sqlite
+bash tools/database-probes/run-services.sh
+```
+
+`composer check` is the fast, container-free clean-checkout contract. The
+service command runs exact disposable direct/proxy fixtures and removes their
+volumes. See [testing architecture](docs/testing-architecture.md) before adding
+a live fixture.
+
+The required quality baseline is:
 
 - PHP 8.2 or later;
 - `declare(strict_types=1)` in every PHP file;

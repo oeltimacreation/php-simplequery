@@ -12,5 +12,13 @@ with ZeroVer releases before `1.0.0`.
 
 - Public documentation foundation.
 - Initial architecture decision records.
+- Composer package and PHP 8.2 development bootstrap.
+- PHPUnit 11, PHPStan level 9 strict/deprecation rules, PHPCS 4/Slevomat,
+  coverage thresholds, and pinned CI workflows.
+- Versioned public API, aggregate, connection, migration, consumer-audit, and
+  deployment-evidence contracts.
+- Reproducible MariaDB, MySQL, SQLite, ProxySQL, and MaxScale PDO behavior
+  probes, including file-backed SQLite contention and affinity fixtures.
+- PDO SQLite benchmark control and release certification verifier.
 
 [Unreleased]: https://github.com/oeltimacreation/php-simplequery

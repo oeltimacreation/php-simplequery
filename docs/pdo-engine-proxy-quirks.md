@@ -1,8 +1,8 @@
 # PDO, engine, and proxy quirks
 
-This catalogue records portability boundaries. Exact tested versions and
-reproduction links will be added as the implementation matrix becomes
-executable.
+This catalogue records portability boundaries. Exact fixture/deployment
+inventory, primary-source dossiers, and executable matrices are maintained in
+the [compatibility evidence records](evidence/README.md).
 
 ## PDO
 

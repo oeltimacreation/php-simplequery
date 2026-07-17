@@ -10,6 +10,9 @@ information.
 - [Architecture decisions](adr/README.md)
 - [Roadmap and release gates](roadmap.md)
 - [Test strategy](testing-strategy.md)
+- [Testing architecture](testing-architecture.md)
+- [Compatibility evidence records](evidence/README.md)
+- [Benchmark method](benchmarking.md)
 - [PDO, engine, and proxy quirks](pdo-engine-proxy-quirks.md)
 - [Release process](release-process.md)
 - [Security review checklist](security-review-checklist.md)
@@ -51,3 +54,11 @@ query is not the better narrow solution.
 
 External interest alone does not justify ORM behavior, speculative database
 support, or public plugin interfaces.
+
+## Repository and release evidence
+
+`composer verify` checks the repository foundation. Release/deployment
+certification additionally runs `php scripts/verify-repository.php --certify` and
+must link real, non-secret deployment reports. A public Docker fixture version
+must never be copied into the deployment inventory merely to make that gate
+green.

@@ -1,0 +1,12 @@
+parameters:
+    level: 9
+    paths:
+        - src
+        - tests
+        - tools
+        - scripts
+        - benchmarks
+    tmpDir: .phpstan.cache
+    reportUnmatchedIgnoredErrors: true
+    checkMissingOverrideMethodAttribute: true
+    phpVersion: 80200

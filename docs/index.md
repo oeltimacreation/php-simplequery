@@ -23,11 +23,15 @@
 ## Project design and maintenance
 
 - [Architecture](architecture.md)
+- [Public API signature contract](public-api.md)
 - [Roadmap and release gates](roadmap.md)
 - [PDO, engine, and proxy quirks](pdo-engine-proxy-quirks.md)
+- [Compatibility evidence records](evidence/README.md)
 - [Technical references](references.md)
 - [Maintainer notes](maintainer-notes.md)
 - [Test strategy](testing-strategy.md)
+- [Testing architecture and commands](testing-architecture.md)
+- [Benchmark harness](benchmarking.md)
 - [Release process](release-process.md)
 - [Security review checklist](security-review-checklist.md)
 - [Architecture decision records](adr/README.md)

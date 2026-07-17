@@ -4,10 +4,10 @@ PHP SimpleQuery is a small, framework-agnostic PDO query builder and execution
 library for PHP 8.2 and later.
 
 > [!IMPORTANT]
-> This repository is in its documentation and foundation phase. No public
-> release or usable implementation exists yet. The documented API is the
-> target contract for `0.1.0` and will become installable only when the release
-> gates in the roadmap are complete.
+> The repository foundation and executable PDO/engine probe suite exist, but
+> no public query-builder implementation or release exists yet. The documented
+> API is the target contract for `0.1.0` and becomes usable only after the
+> implementation and release gates in the roadmap are complete.
 
 The project focuses on predictable SQL compilation, ordered typed bindings,
 explicit connection ownership, safe nested transactions, and honest database
@@ -37,8 +37,17 @@ License:          MIT
 First release:    0.1.0
 ```
 
-Installation instructions will be added when the first release is published.
-Until then, do not depend on the repository as a working library.
+Maintainers can bootstrap the development environment with:
+
+```bash
+composer install
+composer check
+composer probe:sqlite
+bash tools/database-probes/run-services.sh
+```
+
+Until `0.1.0`, do not depend on the repository as a working query-builder
+library.
 
 ## Documentation
 
@@ -53,6 +62,9 @@ Until then, do not depend on the repository as a working library.
 - [Testing applications](docs/testing-applications.md)
 - [Migrating from Pixie](docs/migrating-from-pixie.md)
 - [Architecture](docs/architecture.md)
+- [Public API contract](docs/public-api.md)
+- [Testing architecture](docs/testing-architecture.md)
+- [Compatibility evidence](docs/evidence/README.md)
 - [Roadmap](docs/roadmap.md)
 - [Architecture decisions](docs/adr/README.md)
 

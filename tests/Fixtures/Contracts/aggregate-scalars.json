@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "contract": "aggregate_scalars",
+  "cases": [
+    {
+      "terminal": "count",
+      "database_value": "0",
+      "expected_php_type": "int",
+      "expected_value": 0
+    },
+    {
+      "terminal": "count",
+      "database_value": "9223372036854775807",
+      "expected_php_type": "int_on_64_bit",
+      "expected_value": 9223372036854775807
+    },
+    {
+      "terminal": "count",
+      "database_value": "9223372036854775808",
+      "expected_exception": "NumericOverflowException"
+    },
+    {
+      "terminal": "sum",
+      "database_value": "1234567890.1234567890",
+      "expected_php_type": "string",
+      "expected_value": "1234567890.1234567890"
+    },
+    {
+      "terminal": "average",
+      "database_value": null,
+      "expected_php_type": "null"
+    },
+    {
+      "terminal": "min|max",
+      "database_value": "2026-07-17T00:00:00+00:00",
+      "expected_policy": "preserve_driver_scalar"
+    }
+  ]
+}

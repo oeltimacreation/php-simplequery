@@ -1,0 +1,39 @@
+name: Proxy compatibility probes
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * 1"
+  push:
+    branches: ["release/**"]
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: proxy-probes-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  proxy-matrix:
+    name: ProxySQL 3.0.1 / MaxScale 23.02.17-2
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - uses: shivammathur/setup-php@add91f08e1598a0b6ff470f1e389f9d652559bf0
+        with:
+          php-version: "8.2"
+          extensions: pdo, pdo_mysql, pdo_sqlite
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Run exact direct/proxy matrix
+        run: bash tools/database-probes/run-services.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: proxy-pdo-probe-reports
+          path: tools/database-probes/results/*.json
+          if-no-files-found: error
+          retention-days: 90

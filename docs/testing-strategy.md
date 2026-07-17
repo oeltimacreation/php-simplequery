@@ -76,10 +76,24 @@ assertions.
 
 ## Commands
 
-Repository bootstrap must provide one documented fast command that requires no
-containers and one complete service-backed command. CI commands must match
-local commands and report fixture driver, version, SQLSTATE, placeholder SQL,
-and setup context without leaking binding values.
+The fast command requires no containers:
+
+```bash
+composer check
+```
+
+The complete service-backed command uses exact, disposable fixtures:
+
+```bash
+bash tools/database-probes/run-services.sh
+```
+
+Coverage, the SQLite-only evidence probe, and benchmarks run with
+`composer test:coverage`, `composer coverage:check`,
+`composer probe:sqlite`, and `composer benchmark`. CI commands match local
+commands and report fixture driver, version, SQLSTATE, placeholder SQL, and
+setup context without leaking binding values. Naming, cleanup, and evidence
+formats are frozen in [testing architecture](testing-architecture.md).
 
 ## CI jobs
 

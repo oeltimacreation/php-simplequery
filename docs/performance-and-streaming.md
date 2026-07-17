@@ -47,6 +47,10 @@ Optimization requires a profile and a benchmark showing a meaningful benefit.
 
 ## Benchmark suite
 
+The executable PDO-only control and baseline method are documented in
+[benchmarking](benchmarking.md). It establishes the harness before compiler or
+executor measurements exist.
+
 The maintained benchmark plan covers:
 
 - simple and deeply conditional queries;
