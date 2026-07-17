@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "driver": "sqlite",
+  "cases": [
+    {
+      "id": "sqlite-null-empty-list",
+      "sql": "SELECT * FROM \"users\" WHERE \"deleted_at\" IS NULL AND 0 = 1",
+      "bindings": []
+    },
+    {
+      "id": "sqlite-subquery",
+      "sql": "SELECT * FROM \"users\" WHERE \"id\" IN (SELECT \"user_id\" FROM \"roles\" WHERE \"active\" = ?)",
+      "bindings": [1]
+    },
+    {
+      "id": "sqlite-delete",
+      "sql": "DELETE FROM \"users\" WHERE \"id\" = ?",
+      "bindings": [7]
+    }
+  ]
+}

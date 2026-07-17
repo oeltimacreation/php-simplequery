@@ -49,7 +49,7 @@ ADRs 005, 006, 008, 009, 011, and 017 own the affected product policies.
 - Portability consequence: no feature is accepted by MySQL analogy and raw
   MariaDB syntax remains a deliberate portability boundary.
 - Automated evidence: direct matrix, proxy matrix, DDL/savepoint/write/error
-  probes, and the planned golden/live compiler tests.
+  probes, and independent MariaDB golden compiler tests.
 
 ## MySQL 8.0
 
@@ -69,8 +69,8 @@ ADRs 005, 006, 008, 009, 011, and 017 own the affected product policies.
   behavior; transport loss makes a write/commit outcome ambiguous.
 - Portability consequence: MySQL and MariaDB retain independent golden/live
   tests even where emitted SQL happens to match.
-- Automated evidence: direct behavior matrix and the planned compiler/executor
-  live tests.
+- Automated evidence: direct behavior matrix, independent MySQL golden compiler
+  tests, and the planned executor live tests.
 
 ## SQLite
 

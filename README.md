@@ -4,28 +4,30 @@ PHP SimpleQuery is a small, framework-agnostic PDO query builder and execution
 library for PHP 8.2 and later.
 
 > [!IMPORTANT]
-> The repository foundation and executable PDO/engine probe suite exist, but
-> no public query-builder implementation or release exists yet. The documented
-> API is the target contract for `0.1.0` and becomes usable only after the
-> implementation and release gates in the roadmap are complete.
+> Deterministic query construction and compilation are implemented, alongside
+> the PDO/engine probe suite. Execution/result terminals, transaction handling,
+> and a package release remain pending; do not treat the checkout as a released
+> query execution library.
 
 The project focuses on predictable SQL compilation, ordered typed bindings,
 explicit connection ownership, safe nested transactions, and honest database
 support. It is not an ORM, schema manager, connection pool, retry engine, or
 general database abstraction platform.
 
-## Planned highlights
+## Compiler highlights
 
 - mutable fluent builders with private typed state;
 - a fresh builder for every `Connection::table()` call;
 - non-mutating terminal operations and deterministic compilation;
 - positional placeholders with ordered, explicitly typed bindings;
-- writable `stdClass` rows by default and associative alternatives;
-- affected-row writes and a separate generated-ID terminal;
-- savepoint-backed nested transactions with strict ownership checks;
+- independent MariaDB, MySQL, and SQLite compiler paths;
+- compiler-only testing connections and detached write-query fixtures;
 - explicit identifier, value, subquery, and trusted-raw-SQL boundaries;
-- first-class MariaDB 11.8 LTS, MySQL 8, and SQLite 3 support;
-- no global/default connection, hidden reconnect, or automatic write replay.
+- snapshotted subqueries, clone isolation, and deterministic ordered bindings.
+
+Result hydration, affected-row/generated-ID terminals, cursors, observers, and
+managed transactions remain part of the accepted `0.1.0` contract but are not
+implemented yet.
 
 ## Planned package
 
@@ -42,6 +44,7 @@ Maintainers can bootstrap the development environment with:
 ```bash
 composer install
 composer check
+composer examples:check
 composer probe:sqlite
 bash tools/database-probes/run-services.sh
 ```

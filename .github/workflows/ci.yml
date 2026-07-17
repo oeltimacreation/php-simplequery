@@ -117,6 +117,7 @@ jobs:
           coverage: none
       - run: composer install --no-dev --no-interaction --prefer-dist --no-progress
       - run: php -r 'require "vendor/autoload.php"; echo "autoload-ok", PHP_EOL;'
+      - run: php examples/compiler-assertions.php
 
   benchmark-control:
     name: PDO SQLite benchmark control

@@ -1,6 +1,7 @@
 # Query builder
 
-Status: target `0.1.0` contract.
+Status: compiler clauses are implemented; execution terminals remain the
+target `0.1.0` contract.
 
 ## Lifecycle
 
@@ -25,7 +26,7 @@ $query = $db
     ->distinct();
 ```
 
-The planned source/projection surface is:
+The implemented source/projection surface is:
 
 ```php
 Connection::table(
@@ -157,8 +158,8 @@ pagination, and locking:
 
 ## Locking reads
 
-`forUpdate()`, `forShare()`, `noWait()`, and `skipLocked()` are planned for
-MariaDB and MySQL. Execution requires an active transaction and InnoDB for the
+`forUpdate()`, `forShare()`, `noWait()`, and `skipLocked()` compile for
+MariaDB and MySQL. Future execution requires an active transaction and InnoDB for the
 documented guarantees. SQLite rejects lock clauses.
 
 Exactly one lock mode is allowed. `noWait()` and `skipLocked()` are mutually

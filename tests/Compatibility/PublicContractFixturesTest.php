@@ -47,8 +47,10 @@ final class PublicContractFixturesTest extends TestCase
     {
         $fixture = $this->readJson('tests/Fixtures/Migration/v1.json');
         $fixtures = $fixture['fixtures'] ?? null;
+        $differences = $fixture['intentional_differences'] ?? null;
 
         self::assertIsArray($fixtures);
+        self::assertIsArray($differences);
         self::assertGreaterThanOrEqual(8, count($fixtures));
         $encoded = json_encode($fixtures, JSON_THROW_ON_ERROR);
         $requiredCases = [
@@ -60,6 +62,8 @@ final class PublicContractFixturesTest extends TestCase
         foreach ($requiredCases as $case) {
             self::assertStringContainsString($case, $encoded);
         }
+        self::assertContains('empty_in_compiles_to_constant_false', $differences);
+        self::assertContains('update_or_insert_is_deferred', $differences);
     }
 
     /** @return iterable<string, array{string, string}> */

@@ -1,6 +1,7 @@
 # Testing applications
 
-Status: target `0.1.0` testing contract.
+Status: compiler testing utilities are implemented; recording execution support
+remains planned.
 
 SimpleQuery is designed so application query contracts can be tested without a
 network database, while database-specific behavior remains covered by live
@@ -23,8 +24,27 @@ self::assertSame(
 );
 ```
 
-The planned `CompiledQueryAssertions` helper will provide useful diffs without
-exposing internal compiler types.
+For a database-free dialect assertion, use the first-party compiler testing
+connection and assertion helper:
+
+```php
+use Oeltima\SimpleQuery\Driver;
+use Oeltima\SimpleQuery\Testing\CompiledQueryAssertions;
+use Oeltima\SimpleQuery\Testing\CompilerConnection;
+
+$db = CompilerConnection::for(Driver::MySql);
+$compiled = $db->table('users')->where('active', true)->compile();
+
+CompiledQueryAssertions::assertMatches(
+    $compiled,
+    'SELECT * FROM `users` WHERE `active` = ?',
+    [1],
+);
+```
+
+`CompiledWriteQuery` provides detached insert, batch-insert, update, and delete
+compilation until those execution terminals are available. It is a testing
+tool, not a second production query API.
 
 Compile tests are appropriate for clause composition, identifier quoting,
 binding order, snapshot behavior, and application-generated query shapes.
@@ -34,7 +54,8 @@ binding order, snapshot behavior, and application-generated query shapes.
 SQLite in-memory is useful for fast CRUD and result-shape tests:
 
 ```php
-$pdo = new PDO('sqlite::memory:');
+$pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+$pdo->exec('PRAGMA foreign_keys = ON');
 $db = Connection::fromPdo($pdo, Driver::Sqlite);
 ```
 

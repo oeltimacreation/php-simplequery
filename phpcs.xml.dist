@@ -11,6 +11,7 @@
     <file>tools</file>
     <file>scripts</file>
     <file>benchmarks</file>
+    <file>examples</file>
 
     <exclude-pattern>tools/database-probes/results/*</exclude-pattern>
     <exclude-pattern>benchmarks/results/*</exclude-pattern>

@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+use Oeltima\SimpleQuery\Driver;
+use Oeltima\SimpleQuery\Testing\CompilerConnection;
+
+require dirname(__DIR__) . '/vendor/autoload.php';
+
 if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {
     fwrite(STDERR, "The PDO SQLite benchmark control requires pdo_sqlite.\n");
     exit(1);
@@ -57,19 +62,52 @@ foreach ($sizes as $size) {
     ];
 }
 
+$compilerResults = [];
+foreach ([10, 100, 1_000] as $size) {
+    $samples = [];
+    for ($iteration = 0; $iteration < $iterations; ++$iteration) {
+        $connection = CompilerConnection::for(Driver::Sqlite);
+        $query = $connection->table('benchmark_rows')->select('id');
+
+        $started = hrtime(true);
+        for ($predicate = 0; $predicate < $size; ++$predicate) {
+            $query->where('id', '>=', $predicate);
+        }
+        $compiled = $query->compile();
+        $elapsedNanoseconds = hrtime(true) - $started;
+
+        if (count($compiled->bindings) !== $size || !str_starts_with($compiled->sql, 'SELECT "id"')) {
+            throw new RuntimeException('The compiler benchmark correctness check failed.');
+        }
+
+        $samples[] = $elapsedNanoseconds / 1_000_000;
+    }
+
+    sort($samples);
+    $compilerResults[] = [
+        'predicate_count' => $size,
+        'iterations' => $iterations,
+        'median_ms' => round($samples[2], 3),
+        'minimum_ms' => round($samples[0], 3),
+        'maximum_ms' => round($samples[4], 3),
+        'milliseconds_per_predicate_at_median' => round($samples[2] / $size, 6),
+    ];
+}
+
 fwrite(
     STDOUT,
     json_encode(
         [
             'schema_version' => 1,
             'benchmark' => 'pdo_sqlite_harness_control',
-            'purpose' => 'validate the harness and retain a PDO-only control for future SimpleQuery benchmarks',
+            'purpose' => 'retain a PDO control and measure deterministic compiler predicate scaling',
             'php_version' => PHP_VERSION,
             'sqlite_version' => $benchmarkQuery(
                 new PDO('sqlite::memory:'),
                 'SELECT sqlite_version()',
             )->fetchColumn(),
             'results' => $results,
+            'compiler_predicate_scaling' => $compilerResults,
         ],
         JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR,
     ) . PHP_EOL,

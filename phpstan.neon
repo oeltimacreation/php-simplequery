@@ -6,6 +6,7 @@ parameters:
         - tools
         - scripts
         - benchmarks
+        - examples
     tmpDir: .phpstan.cache
     reportUnmatchedIgnoredErrors: true
     checkMissingOverrideMethodAttribute: true

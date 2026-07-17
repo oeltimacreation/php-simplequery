@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "features": [
+    "aliases",
+    "between",
+    "clone_isolation",
+    "comparison_predicates",
+    "delete",
+    "derived_sources",
+    "distinct",
+    "empty_lists",
+    "grouped_predicates",
+    "grouping_and_having",
+    "identifiers_and_wildcards",
+    "inner_joins",
+    "insert",
+    "insert_many",
+    "left_joins",
+    "list_predicates",
+    "null_predicates",
+    "ordering_and_pagination",
+    "raw_expressions",
+    "row_locks",
+    "subquery_snapshots",
+    "update"
+  ]
+}

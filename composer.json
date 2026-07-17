@@ -59,12 +59,18 @@
         "probe:sqlite": "php tools/database-probes/run.php sqlite",
         "probe:matrix": "php tools/database-probes/run-matrix.php",
         "benchmark": "php benchmarks/run.php",
+        "examples:check": [
+            "php examples/compiler-assertions.php",
+            "php examples/query-building.php",
+            "php examples/sqlite-compiler-smoke.php"
+        ],
         "verify": "php scripts/verify-repository.php",
         "check": [
             "@lint",
             "@test",
             "@phpstan",
             "@cs:check",
+            "@examples:check",
             "@verify"
         ]
     },

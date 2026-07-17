@@ -22,6 +22,11 @@ deployment-sensitive policy has a public reproduction and accepted ADR.
 
 ## Phase 1: compiler vertical slice
 
+Repository implementation status: complete. Independent MariaDB, MySQL, and
+SQLite golden suites cover the advertised compiler features, executable
+examples exercise the public testing toolkit, SQLite runs an in-memory
+compile/execute smoke test, and the benchmark records predicate scaling.
+
 - implement public immutable values and typed private query state;
 - implement identifiers, projection, predicates, joins, grouping, ordering,
   pagination, locks, writes, raw expressions, subquery snapshots, and cloning;

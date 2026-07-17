@@ -1,6 +1,7 @@
 # Architecture
 
-Status: accepted target architecture for `0.1.0`.
+Status: compiler architecture implemented; executor and transaction layers are
+the accepted target architecture for `0.1.0`.
 
 PHP SimpleQuery separates query construction, compilation, and execution while
 keeping the replaceable surface deliberately small.
@@ -62,7 +63,7 @@ custom AST hooks, or middleware.
 9. Connection loss never triggers hidden replay.
 10. A dialect claim requires compiler and live tests.
 
-## Planned source layout
+## Source layout
 
 ```text
 src/

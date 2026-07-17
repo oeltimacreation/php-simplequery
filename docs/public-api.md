@@ -1,6 +1,8 @@
 # Public API contract
 
-Status: accepted semantic contract for `0.1.0`; implementation is pending.
+Status: query construction, immutable values, compilation, and the minimal
+injected-PDO connection are implemented. Execution and transaction portions
+remain the accepted target `0.1.0` contract.
 
 This is the signature index for the public surface. The linked topic guides
 define overloads, mutation rules, validation, result shapes, and dialect
@@ -27,11 +29,17 @@ Connection::connect(
 ): Connection
 
 Connection::table(string|Identifier|QueryBuilder $source, ?string $alias = null): QueryBuilder
+Connection::raw(string $trustedSql, array $bindings = []): RawExpression
 Connection::query(string $trustedSql, iterable $bindings = []): RawQuery
 Connection::transaction(Closure $callback): mixed
 Connection::pdo(): PDO
 Connection::close(): void
 ```
+
+`fromPdo()`, `table()`, `raw()`, `pdo()`, and detached compilation are
+implemented. `connect()`, raw-query execution, managed transactions, and
+closing lifecycle enforcement are scheduled with the execution/transaction
+layers.
 
 `Driver` has exactly `MariaDb`, `MySql`, and `Sqlite`. `ConnectionOptions` is a
 final readonly declaration with nullable prepare-emulation, buffering,
@@ -63,6 +71,16 @@ diagnostics.
 These types are library-owned values, not extension points. Internal AST,
 compiler, executor, and transaction types are excluded from compatibility
 promises.
+
+## Compiler testing toolkit
+
+`Testing\CompilerConnection::for(Driver)` creates a PDO-free connection for
+detached dialect assertions. `Testing\CompiledQueryAssertions::assertMatches()`
+checks SQL, ordered values, and optionally concrete parameter types.
+`Testing\CompiledWriteQuery` exposes detached insert, multi-row insert, update,
+and delete compilation until the corresponding production execution terminals
+are implemented. These utilities invoke the same closed internal compilers as
+production builders; they are not compiler extension points.
 
 ## Builder clauses
 

@@ -1,7 +1,7 @@
 # Getting started
 
-Status: planned `0.1.0` API. Installation is unavailable until the package is
-released.
+Status: compiler API available from the development checkout. Execution and
+result APIs remain planned for `0.1.0`; no package release exists yet.
 
 ## Requirements
 
@@ -27,6 +27,10 @@ from MySQL, especially through a proxy.
 
 ## Connect from a DSN
 
+`Connection::connect()` is part of the accepted execution-layer contract but
+is not implemented yet. Use an explicitly configured injected PDO while the
+project is unreleased.
+
 The convenience factory creates and owns PDO:
 
 ```php
@@ -46,19 +50,18 @@ SQLite connections enable and verify foreign keys and default to a configurable
 5,000 ms busy timeout. Journal and synchronous modes are never changed
 silently.
 
-## Build and fetch a query
+## Build a query
 
 ```php
-$users = $db
+$compiled = $db
     ->table('users')
     ->select('id', 'email')
     ->where('active', true)
     ->orderBy('id')
-    ->get();
+    ->compile();
 ```
 
-`get()` returns `list<stdClass>` by default. Use `getAssociative()` for
-`list<array<string, mixed>>`.
+Execution terminals such as `get()` and `getAssociative()` remain pending.
 
 Every `table()` call returns a fresh mutable builder. Fluent clause methods
 mutate that builder, while `compile()`, `get()`, `first()`, aggregates, and
@@ -79,7 +82,7 @@ $compiled->bindings;
 Compiled SQL plus ordered typed bindings is canonical. Interpolated debug SQL
 is never used for execution.
 
-## Close deterministically
+## Future deterministic close
 
 ```php
 $db->close();

@@ -45,7 +45,7 @@ final class RepositoryFoundationTest extends TestCase
     public static function phpFiles(): iterable
     {
         $root = dirname(__DIR__, 2);
-        foreach (['src', 'tests', 'tools', 'scripts', 'benchmarks'] as $directory) {
+        foreach (['src', 'tests', 'tools', 'scripts', 'benchmarks', 'examples'] as $directory) {
             $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root . '/' . $directory));
             foreach ($iterator as $file) {
                 if ($file instanceof SplFileInfo && $file->isFile() && $file->getExtension() === 'php') {

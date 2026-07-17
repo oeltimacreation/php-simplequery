@@ -10,13 +10,13 @@ successful simple query does not imply support.
 
 | Capability | MariaDB 11.8 LTS | MySQL 8 | SQLite 3.39.2+ |
 | --- | --- | --- | --- |
-| Basic CRUD | Planned | Planned | Planned |
-| Inner/left joins | Planned | Planned | Planned |
-| Group/order/pagination | Planned | Planned | Planned |
+| Basic CRUD compilation | Implemented | Implemented | Implemented |
+| Inner/left joins | Implemented | Implemented | Implemented |
+| Group/order/pagination | Implemented | Implemented | Implemented |
 | Savepoints | Required | Required | Required |
 | Generated IDs | Required | Required | Required |
-| Multi-row insert | Planned | Planned | Planned |
-| Lock clauses | Planned | Planned | Unsupported |
+| Multi-row insert compilation | Implemented | Implemented | Implemented |
+| Lock clauses | Implemented | Implemented | Unsupported |
 | Generic upsert | Deferred | Deferred | Deferred |
 | Generic DML returning | Deferred | Unsupported shape | Deferred |
 

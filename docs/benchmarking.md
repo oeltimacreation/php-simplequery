@@ -1,14 +1,15 @@
 # Benchmark harness and baselines
 
-Status: accepted methodology; no SimpleQuery implementation baseline exists yet.
+Status: accepted methodology with PDO control and compiler-scaling scenarios.
 
 `composer benchmark` runs a deterministic PDO SQLite control at 10, 100, 1,000,
 and 5,000 rows. It measures transaction inserts plus associative hydration,
 checks row-count correctness, and reports five-sample minimum, median, maximum,
-and median time per row as JSON. This validates the harness and preserves a
-PDO-only control before compiler/executor code exists.
+and median time per row as JSON. The same run compiles queries containing 10,
+100, and 1,000 ordered predicates, verifies binding counts and SQL shape, and
+reports median time per predicate as the initial linear-scaling signal.
 
-Compiler benchmarks add scenarios for simple selects, predicate counts, nested
+Additional compiler benchmarks add scenarios for simple selects, nested
 groups, joins, large `IN` lists, batch inserts, raw binding composition, and
 subquery snapshots. Executor benchmarks add object/associative hydration,
 cursor, batch, and observer-on/off scenarios. Each scenario must verify SQL,

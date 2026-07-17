@@ -25,6 +25,13 @@ $requiredFiles = [
     'tests/Fixtures/Contracts/aggregate-scalars.json',
     'tests/Fixtures/Contracts/connection-construction.json',
     'tests/Fixtures/Migration/v1.json',
+    'tests/Fixtures/Compiler/mariadb.json',
+    'tests/Fixtures/Compiler/mysql.json',
+    'tests/Fixtures/Compiler/sqlite.json',
+    'tests/Fixtures/Compiler/feature-coverage.json',
+    'examples/compiler-assertions.php',
+    'examples/query-building.php',
+    'examples/sqlite-compiler-smoke.php',
     'tools/database-probes/compose.yaml',
 ];
 
@@ -41,6 +48,10 @@ $jsonFiles = [
     'tests/Fixtures/Contracts/aggregate-scalars.json',
     'tests/Fixtures/Contracts/connection-construction.json',
     'tests/Fixtures/Migration/v1.json',
+    'tests/Fixtures/Compiler/mariadb.json',
+    'tests/Fixtures/Compiler/mysql.json',
+    'tests/Fixtures/Compiler/sqlite.json',
+    'tests/Fixtures/Compiler/feature-coverage.json',
 ];
 foreach ($jsonFiles as $jsonFile) {
     $contents = @file_get_contents($root . '/' . $jsonFile);

@@ -1,6 +1,15 @@
 {
   "schema_version": 1,
   "corpus_version": "1.0.0",
+  "intentional_differences": [
+    "empty_in_compiles_to_constant_false",
+    "empty_not_in_compiles_to_constant_true",
+    "aliases_are_explicit_and_case_preserving",
+    "named_placeholders_are_not_supported",
+    "update_or_insert_is_deferred",
+    "lock_modes_are_typed_and_sqlite_rejects_them",
+    "subqueries_are_snapshotted_instead_of_interpolated"
+  ],
   "fixtures": [
     {
       "id": "mutable-conditional-builder",
