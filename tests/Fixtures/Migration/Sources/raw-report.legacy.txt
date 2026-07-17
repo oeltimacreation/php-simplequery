@@ -1,0 +1,17 @@
+<?php
+use Pecee\Pixie\Connection;
+use Pecee\Pixie\QueryBuilder\QueryBuilderHandler;
+final class SyntheticReport
+{
+    public function __construct(private Connection $database) {}
+    private function db(): QueryBuilderHandler
+    {
+        return new QueryBuilderHandler($this->database);
+    }
+    public function totals(string $category): array
+    {
+        return $this->db()->query(
+            "SELECT category, SUM(amount) total FROM events WHERE category = '$category' GROUP BY category"
+        )->get();
+    }
+}

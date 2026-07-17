@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "driver": "mariadb",
+  "cases": [
+    {
+      "id": "mariadb-filter-order",
+      "sql": "SELECT `id`, `email` FROM `users` WHERE `active` = ? ORDER BY `id` DESC LIMIT 5",
+      "bindings": [1]
+    },
+    {
+      "id": "mariadb-shared-lock",
+      "sql": "SELECT * FROM `jobs` LOCK IN SHARE MODE NOWAIT",
+      "bindings": []
+    },
+    {
+      "id": "mariadb-insert",
+      "sql": "INSERT INTO `users` (`email`, `active`) VALUES (?, ?)",
+      "bindings": ["fixture@example.test", 1]
+    }
+  ]
+}

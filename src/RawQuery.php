@@ -1,0 +1,73 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Oeltima\SimpleQuery;
+
+use Oeltima\SimpleQuery\Internal\Executor;
+use stdClass;
+
+final readonly class RawQuery
+{
+    private CompiledQuery $query;
+
+    /**
+     * @internal
+     * @param array<array-key, mixed> $bindings
+     */
+    public function __construct(private Connection $connection, string $trustedSql, array $bindings = [])
+    {
+        if (!array_is_list($bindings)) {
+            throw new Exception\InvalidQueryException('Raw query bindings must be an ordered list.');
+        }
+
+        $normalized = [];
+        foreach ($bindings as $binding) {
+            $normalized[] = Binding::fromValue($binding);
+        }
+        $this->query = new CompiledQuery($trustedSql, $normalized);
+    }
+
+    /** @return list<stdClass> */
+    public function get(): array
+    {
+        return $this->executor()->getObjects($this->query);
+    }
+
+    public function first(): ?stdClass
+    {
+        return $this->executor()->firstObject($this->query);
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function getAssociative(): array
+    {
+        return $this->executor()->getAssociative($this->query);
+    }
+
+    /** @return array<string, mixed>|null */
+    public function firstAssociative(): ?array
+    {
+        return $this->executor()->firstAssociative($this->query);
+    }
+
+    public function iterate(): Cursor
+    {
+        return $this->executor()->cursor($this->query, false);
+    }
+
+    public function iterateAssociative(): Cursor
+    {
+        return $this->executor()->cursor($this->query, true);
+    }
+
+    public function execute(): int
+    {
+        return $this->executor()->affectedRows($this->query);
+    }
+
+    private function executor(): Executor
+    {
+        return new Executor($this->connection);
+    }
+}

@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-07-17",
+  "fixture_baselines": {
+    "mariadb": {
+      "image": "mariadb:11.8.8",
+      "engine": "MariaDB 11.8 LTS",
+      "pdo_driver": "pdo_mysql",
+      "configuration": "utf8mb4, InnoDB, native/emulated prepares, buffered/unbuffered probes"
+    },
+    "mysql": {
+      "image": "mysql:8.0.45",
+      "engine": "MySQL 8.0",
+      "pdo_driver": "pdo_mysql",
+      "configuration": "utf8mb4, InnoDB, native/emulated prepares, buffered/unbuffered probes"
+    },
+    "sqlite": {
+      "minimum": "3.39.2",
+      "engine": "linked SQLite runtime",
+      "pdo_driver": "pdo_sqlite",
+      "configuration": "foreign_keys verified, 5000 ms default busy timeout, file-backed and memory probes"
+    },
+    "proxysql": {
+      "image": "proxysql/proxysql:3.0.1-debian",
+      "version": "3.0.1",
+      "backend": "mariadb fixture",
+      "configuration": "single backend hostgroup, transaction_persistent=1, multiplexing defaults"
+    },
+    "maxscale": {
+      "image": "mariadb/maxscale:23.02.17-2",
+      "version": "23.02.17-2",
+      "backend": "mariadb fixture",
+      "configuration": "readwritesplit, one primary, transaction_replay=false, delayed_retry=false"
+    }
+  },
+  "deployments": {
+    "mariadb": {
+      "status": "inventory_required",
+      "version": null,
+      "php_version": null,
+      "pdo_client": null,
+      "non_secret_configuration": null,
+      "probe_artifact": null
+    },
+    "mysql": {
+      "status": "inventory_required",
+      "version": null,
+      "php_version": null,
+      "pdo_client": null,
+      "non_secret_configuration": null,
+      "probe_artifact": null
+    },
+    "sqlite": {
+      "status": "inventory_required",
+      "version": null,
+      "php_version": null,
+      "compile_options": null,
+      "probe_artifact": null
+    },
+    "proxysql": {
+      "status": "inventory_required",
+      "version": "3.0.1 reported baseline; deployment confirmation required",
+      "query_rules": null,
+      "transaction_persistence": null,
+      "multiplexing_and_session_settings": null,
+      "probe_artifact": null
+    },
+    "maxscale": {
+      "status": "inventory_required",
+      "version": "23.02.z reported baseline; exact patch required",
+      "router_settings": null,
+      "causal_reads": null,
+      "transaction_replay": null,
+      "delayed_retry": null,
+      "probe_artifact": null
+    }
+  }
+}

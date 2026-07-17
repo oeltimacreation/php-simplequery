@@ -1,0 +1,13 @@
+<?php
+use Oeltima\SimpleQuery\Connection;
+final class SyntheticReport
+{
+    public function __construct(private Connection $database) {}
+    public function totals(string $category): array
+    {
+        return $this->database->query(
+            'SELECT category, SUM(amount) total FROM events WHERE category = ? GROUP BY category',
+            [$category]
+        )->get();
+    }
+}

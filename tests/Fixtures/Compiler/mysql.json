@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "driver": "mysql",
+  "cases": [
+    {
+      "id": "mysql-list-filter",
+      "sql": "SELECT `u`.* FROM `users` AS `u` WHERE `u`.`status` IN (?, ?)",
+      "bindings": ["active", "pending"]
+    },
+    {
+      "id": "mysql-shared-lock",
+      "sql": "SELECT * FROM `jobs` FOR SHARE SKIP LOCKED",
+      "bindings": []
+    },
+    {
+      "id": "mysql-update",
+      "sql": "UPDATE `users` SET `active` = ? WHERE `id` = ?",
+      "bindings": [0, 7]
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "corpus_version": "3.0.0",
+  "collected_at": "2026-07-17",
+  "scope": "audit-grounded synthetic slices; no application repository modified or copied",
+  "slice_count": 5,
+  "slice_ids": [
+    "sqlite-importer-crud",
+    "injected-shared-model",
+    "raw-reporting-model",
+    "diagnostic-raw-join",
+    "complex-list-join"
+  ],
+  "engine_profiles": ["mariadb", "mysql", "sqlite"],
+  "measurements": {
+    "legacy_lines": 115,
+    "native_lines": 96,
+    "changed_lines": 91,
+    "import_only_edits": 5,
+    "insert_return_rewrites": 4,
+    "unsupported_methods": 0,
+    "raw_sql_findings": 7,
+    "safe_mechanical_edits": 5,
+    "manual_edits": 86,
+    "query_parity_cases": 31,
+    "result_parity_cases": 23
+  },
+  "automation": {
+    "safe": 1,
+    "refused": 7,
+    "reasons": {
+      "construction_context": 1,
+      "diagnostic_semantics": 1,
+      "import_only": 1,
+      "insert_return_semantics": 1,
+      "named_placeholder_contract": 1,
+      "raw_sql_security": 1,
+      "transaction_ownership": 1,
+      "unsupported_method": 1
+    }
+  },
+  "rollout_risk": {"low": 1, "medium": 3, "high": 1},
+  "runtime_compatibility_layer": false,
+  "unknown_blockers": [],
+  "status": "passed"
+}

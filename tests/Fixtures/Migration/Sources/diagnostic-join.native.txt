@@ -1,0 +1,16 @@
+<?php
+use Oeltima\SimpleQuery\Connection;
+use Oeltima\SimpleQuery\JoinClause;
+final class SyntheticDiagnosticQuery
+{
+    public function __construct(private Connection $database) {}
+    public function run(string $kind): array
+    {
+        $query = $this->database->table('users', 'u')
+            ->join('assignments', function (JoinClause $join) use ($kind): void {
+                $join->on($this->database->raw('a.user_id = u.id AND a.kind = ?', [$kind]));
+            });
+        log_placeholder_sql($query->compile()->sql);
+        return $query->get();
+    }
+}

@@ -1,0 +1,19 @@
+<?php
+use Oeltima\SimpleQuery\Connection;
+use Oeltima\SimpleQuery\Expression\Identifier;
+final class SyntheticImporter
+{
+    public function __construct(private Connection $database) {}
+    public function import(string $allowedTable, array $row): object
+    {
+        $table = Identifier::of($allowedTable);
+        $id = $this->database->table($table)->insertGetId($row);
+        $record = $this->database->table($table)->where('id', (int) $id)->first();
+        $record->imported = true;
+        return $record;
+    }
+    public function append(string $allowedTable, array $row): string
+    {
+        return $this->database->table(Identifier::of($allowedTable))->insertGetId($row);
+    }
+}

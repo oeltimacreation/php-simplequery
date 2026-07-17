@@ -1,0 +1,42 @@
+# Synthetic single-backend ProxySQL fixture.
+datadir="/var/lib/proxysql"
+
+admin_variables=
+{
+  admin_credentials="admin:simplequery-admin"
+  mysql_ifaces="0.0.0.0:6032"
+}
+
+mysql_variables=
+{
+  threads=2
+  interfaces="0.0.0.0:6033"
+  default_schema="simplequery"
+  monitor_username="simplequery_monitor"
+  monitor_password="simplequery-monitor"
+  monitor_connect_interval=2000
+  monitor_ping_interval=2000
+  commands_stats=true
+  sessions_sort=true
+}
+
+mysql_servers=
+(
+  {
+    address="mariadb"
+    port=3306
+    hostgroup=10
+    max_connections=200
+  }
+)
+
+mysql_users=
+(
+  {
+    username="simplequery"
+    password="simplequery"
+    default_hostgroup=10
+    transaction_persistent=1
+    active=1
+  }
+)

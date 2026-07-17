@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "benchmark": "representative_migration_list_query",
+  "collected_at": "2026-07-17",
+  "scope": "disposable local SQLite control; not a universal performance threshold",
+  "php_version": "8.4.23",
+  "sqlite_version": "3.45.1",
+  "fixture_rows": 500,
+  "result_rows": 100,
+  "iterations": 9,
+  "result_parity": true,
+  "result_digest": "cd99e103863ad6d13ecb1d37998043aea923068e02139d10b7ff12ec27d729b3",
+  "simplequery_median_ms": 0.1204,
+  "pdo_median_ms": 0.0507,
+  "simplequery_to_pdo_ratio": 2.375,
+  "policy": "correctness is gated; timing is an environment-specific review baseline"
+}

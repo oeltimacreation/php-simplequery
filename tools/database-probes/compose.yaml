@@ -1,0 +1,80 @@
+name: php-simplequery-database-probes
+
+services:
+  mariadb:
+    image: mariadb:11.8.8
+    environment:
+      MARIADB_ROOT_PASSWORD: simplequery-root
+      MARIADB_DATABASE: simplequery
+      MARIADB_USER: simplequery
+      MARIADB_PASSWORD: simplequery
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "13306:3306"
+    volumes:
+      - ./config/mariadb-init.sql:/docker-entrypoint-initdb.d/001-simplequery.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks: [probe]
+
+  mysql:
+    image: mysql:8.0.45
+    environment:
+      MYSQL_ROOT_PASSWORD: simplequery-root
+      MYSQL_DATABASE: simplequery
+      MYSQL_USER: simplequery
+      MYSQL_PASSWORD: simplequery
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+    ports:
+      - "13307:3306"
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks: [probe]
+
+  proxysql:
+    image: proxysql/proxysql:3.0.1-debian
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    ports:
+      - "16033:6033"
+      - "16032:6032"
+    volumes:
+      - ./config/proxysql.cnf:/etc/proxysql.cnf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "proxysql --version >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks: [probe]
+
+  maxscale:
+    image: mariadb/maxscale:23.02.17-2
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    ports:
+      - "14006:4006"
+      - "18989:8989"
+    volumes:
+      - ./config/maxscale.cnf:/etc/maxscale.cnf.d/simplequery.cnf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "maxctrl list services >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks: [probe]
+
+networks:
+  probe:
+    driver: bridge

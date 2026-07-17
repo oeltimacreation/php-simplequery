@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "corpus_version": "1.0.0",
+  "intentional_differences": [
+    "empty_in_compiles_to_constant_false",
+    "empty_not_in_compiles_to_constant_true",
+    "aliases_are_explicit_and_case_preserving",
+    "named_placeholders_are_not_supported",
+    "update_or_insert_is_deferred",
+    "lock_modes_are_typed_and_sqlite_rejects_them",
+    "subqueries_are_snapshotted_instead_of_interpolated"
+  ],
+  "fixtures": [
+    {
+      "id": "mutable-conditional-builder",
+      "consumer_style": "high-volume fluent application",
+      "required_contracts": ["fresh_builder", "mutable_clauses", "stable_terminals", "clone_isolation"]
+    },
+    {
+      "id": "object-result-mutation",
+      "consumer_style": "service and model layers",
+      "required_contracts": ["stdclass_default", "nullable_first", "writable_rows"]
+    },
+    {
+      "id": "raw-join-binding-order",
+      "consumer_style": "complex reporting queries",
+      "required_contracts": ["trusted_raw_sql", "ordered_bindings", "identifier_join_operands"]
+    },
+    {
+      "id": "sqlite-crud-and-generated-id",
+      "consumer_style": "embedded importer",
+      "required_contracts": ["sqlite_live", "insert_get_id_string", "affected_row_writes"]
+    },
+    {
+      "id": "direct-pdo-locking",
+      "consumer_style": "transactional backend",
+      "required_contracts": ["pdo_escape_hatch", "external_transaction_ownership", "typed_locks"]
+    },
+    {
+      "id": "raw-query-terminal",
+      "consumer_style": "legacy SQL-heavy application",
+      "required_contracts": ["deferred_raw_query", "object_and_associative_results", "redacted_errors"]
+    },
+    {
+      "id": "last-query-diagnostics-rewrite",
+      "consumer_style": "debug-instrumented backend",
+      "required_contracts": ["detached_compile", "recording_observer", "no_last_query_state"]
+    },
+    {
+      "id": "grouped-distinct-count",
+      "consumer_style": "analytics query",
+      "required_contracts": ["logical_row_count", "checked_integer", "terminal_non_mutation"]
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+<?php
+use Pecee\Pixie\Connection;
+use Pecee\Pixie\QueryBuilder\QueryBuilderHandler;
+final class SyntheticStaffModel
+{
+    public function __construct(private Connection $database) {}
+    private function db(): QueryBuilderHandler
+    {
+        return new QueryBuilderHandler($this->database);
+    }
+    public function active(): array
+    {
+        $db = $this->db();
+        return $db->table('staff', 's')
+            ->select(['s.id', $db->raw('UPPER(s.name) AS display')])
+            ->join('departments', 'd.id', '=', 's.department_id')
+            ->where('s.active', true)
+            ->get();
+    }
+    public function create(array $row): string
+    {
+        return $this->db()->table('staff')->insert($row);
+    }
+    public function pdo(): PDO
+    {
+        return $this->database->getPdoInstance();
+    }
+}

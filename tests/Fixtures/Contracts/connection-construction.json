@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "contract": "connection_construction",
+  "drivers": ["mariadb", "mysql", "sqlite"],
+  "paths": ["fromPdo", "connect"],
+  "hard_invariants": {
+    "error_mode": "exception",
+    "persistent": false,
+    "found_rows": false,
+    "mysql_charset": "utf8mb4",
+    "sqlite_foreign_keys": true
+  },
+  "defaults": {
+    "mysql_family_emulated_prepares": false,
+    "mysql_family_buffered_queries": true,
+    "sqlite_busy_timeout_milliseconds": 5000,
+    "stringify_fetches": "unchanged",
+    "wal": "application_owned",
+    "sql_mode": "application_owned",
+    "timezone": "application_owned"
+  },
+  "invalid_cases": [
+    "driver_and_pdo_driver_mismatch",
+    "mysql_dsn_without_utf8mb4",
+    "conflicting_hard_pdo_option",
+    "negative_sqlite_busy_timeout",
+    "driver_inapplicable_option",
+    "empty_connection_label",
+    "connection_label_with_control_character"
+  ],
+  "credential_parameters_are_sensitive": true,
+  "environment_lookup": false,
+  "automatic_reconnect": false
+}
