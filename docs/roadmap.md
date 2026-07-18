@@ -86,10 +86,8 @@ compatibility layer.
 
 ## Phase 5: `0.1.0`
 
-Status: release-ready as of 2026-07-17. The following release gates are
-complete; publishing still requires the release-branch review, immutable tag,
-GitHub release, and Packagist installation verification described in
-[release process](release-process.md):
+Status: released as immutable tag `v0.1.0` at
+`16c59bf5fbf2490e19bbd05aa7ccbb7c274ab0dc`. The release gates completed were:
 
 - PHP 8.2-current CI and strict quality checks;
 - independent MariaDB, MySQL, and SQLite live coverage;
@@ -99,6 +97,29 @@ GitHub release, and Packagist installation verification described in
 - public security, support, migration, quirks, and maintainer documentation;
 - acceptable benchmark baselines;
 - verified package metadata and release automation.
+
+## Phase 6: `0.2.0`
+
+Status: planned from the post-`0.1.0` correctness, profiling, performance, and
+quality audit. The detailed work packages, gates, and immutable comparison
+scorecard are in the [`0.2.0` release plan](0.2-release-plan.md); the accepted
+initial reference is the [`v0.1.0` performance and stability
+baseline](evidence/v0.1.0-performance-baseline.md).
+
+- reject ambiguous grouped scalar aggregate terminals;
+- quarantine uncertain cursor and transaction-control state;
+- make branch coverage an enforced Xdebug-backed CI gate;
+- establish reproducible compiler, hydration, observer, memory, and soak
+  comparisons;
+- optimize associative hydration only when same-run PDO controls prove a
+  material benefit;
+- tighten downstream type contracts and high-risk path tests without adding a
+  framework or runtime dependency.
+
+Gate: all correctness/resource blockers are closed, branch floors are actually
+enforced, direct/proxy tests pass, compiler scaling remains linear, soaks remain
+leak-free, and the final `v0.1.0`/`0.2.0` comparison has no unexplained material
+regression.
 
 ## Stabilization and `1.0.0`
 

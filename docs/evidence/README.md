@@ -33,6 +33,8 @@ Files:
 - [insert return audit](insert-return-audit.md);
 - [synthetic migration validation](migration-validation.json) and its
   [performance control](migration-benchmark.json);
+- [`v0.1.0` performance and stability baseline](v0.1.0-performance-baseline.md)
+  and its [machine-readable comparison data](v0.1.0-performance-baseline.json);
 - [edge-feature usage verification](feature-usage-verification.md).
 
 Generated reports belong in `tools/database-probes/results/`, are ignored by Git, and
