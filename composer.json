@@ -44,6 +44,7 @@
     },
     "autoload-dev": {
         "psr-4": {
+            "Oeltima\\SimpleQuery\\Benchmark\\": "benchmarks/",
             "Oeltima\\SimpleQuery\\Tests\\": "tests/",
             "Oeltima\\SimpleQuery\\Tools\\DatabaseProbe\\": "tools/database-probes/src/",
             "Oeltima\\SimpleQuery\\Tools\\Migration\\": "tools/migration/"
@@ -63,8 +64,11 @@
         "probe:migration": "php tools/database-probes/migration-smoke.php",
         "probe:matrix": "php tools/database-probes/run-matrix.php",
         "migration:check": "php tools/migration/report.php",
-        "benchmark": "php benchmarks/run.php",
+        "benchmark": "php benchmarks/run.php --suite=ci",
+        "benchmark:baseline": "php benchmarks/run.php --suite=baseline",
         "benchmark:migration": "php benchmarks/migration.php",
+        "benchmark:reference": "php benchmarks/run.php --suite=full --profile=reference --iterations=7 --warmups=2",
+        "benchmark:soak": "php benchmarks/run.php --suite=soak --profile=reference --iterations=7 --warmups=2",
         "examples:check": [
             "php examples/beginner/first-query.php",
             "php examples/beginner/filter-and-update.php",

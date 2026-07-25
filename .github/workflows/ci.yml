@@ -138,10 +138,12 @@ jobs:
       - run: php examples/sqlite-migration-slice.php
 
   benchmark-control:
-    name: PDO SQLite benchmark control
+    name: Reproducible SQLite benchmark suite
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          fetch-depth: 0
       - uses: shivammathur/setup-php@add91f08e1598a0b6ff470f1e389f9d652559bf0
         with:
           php-version: "8.5"
@@ -149,10 +151,21 @@ jobs:
           coverage: none
       - run: composer install --no-interaction --prefer-dist --no-progress
       - run: mkdir -p benchmarks/results
-      - run: composer benchmark > benchmarks/results/pdo-sqlite-control.json
+      - run: composer benchmark > benchmarks/results/sqlite-suite.json
+      - name: Compare v0.1.0 and candidate with the finalized runner
+        shell: bash
+        run: |
+          baseline_dir="${RUNNER_TEMP}/php-simplequery-v0.1.0"
+          git worktree add --detach "${baseline_dir}" v0.1.0
+          trap 'git worktree remove --force "${baseline_dir}"' EXIT
+          composer install --working-dir="${baseline_dir}" --no-interaction --prefer-dist --no-progress
+          php benchmarks/compare.php \
+            --baseline-autoload="${baseline_dir}/vendor/autoload.php" \
+            --candidate-autoload="${GITHUB_WORKSPACE}/vendor/autoload.php" \
+            > benchmarks/results/v0.1.0-comparison.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: benchmark-control
+          name: reproducible-benchmark-reports
           path: benchmarks/results/*.json
           if-no-files-found: error
           retention-days: 30

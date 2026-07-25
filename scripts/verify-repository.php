@@ -51,7 +51,13 @@ $requiredFiles = [
     'tools/database-probes/migration-smoke.php',
     'tools/audit-consumers.php',
     'tools/migration/report.php',
+    'benchmarks/Harness.php',
+    'benchmarks/ScenarioCatalog.php',
+    'benchmarks/compare.php',
+    'benchmarks/engine.php',
     'benchmarks/migration.php',
+    'benchmarks/run.php',
+    'benchmarks/worker.php',
 ];
 
 $errors = [];
