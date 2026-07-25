@@ -103,7 +103,8 @@ Coverage, the SQLite-only behavior/execution probes, and benchmarks run with
 `composer probe:sqlite`, `composer probe:execution -- sqlite`,
 `composer probe:transaction -- sqlite`, `composer probe:migration -- sqlite`,
 `composer migration:check`, `composer benchmark:migration`, and
-`composer benchmark`. CI commands match local
+`composer benchmark`. The scheduled service workflow also produces direct,
+proxy, and multiprocess-soak benchmark artifacts. CI commands match local
 commands and report fixture driver, version, SQLSTATE, placeholder SQL, and
 setup context without leaking binding values. Naming, cleanup, and evidence
 formats are frozen in [testing architecture](testing-architecture.md).

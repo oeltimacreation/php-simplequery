@@ -8,8 +8,22 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+### Added
+
+- Add a dependency-free, fresh-process benchmark runner with explicit setup,
+  warm-up, correctness digests, alternating direct-PDO controls, raw samples,
+  source/runtime/PDO metadata, PHP memory peaks, process RSS, and retained
+  memory/file-descriptor deltas.
+- Add executable compiler-shape, hydration/cursor, observer, batch, terminal,
+  transaction, lifecycle, migration, live direct/proxy, and multiprocess-soak
+  scenarios, plus an identical-runner `v0.1.0` comparison.
+- Archive deterministic SQLite benchmark reports in pull-request CI and live
+  engine/proxy/soak reports in scheduled and release workflows.
+
 ### Changed
 
+- Replace the legacy benchmark scripts and overstated planned matrix with the
+  exact schema-version-2 executable scenario and artifact contract.
 - `sum()`, `average()`, `min()`, and `max()` now reject `distinct()`, `GROUP
   BY`, and `HAVING` query shapes with `UnsupportedFeatureException`; use
   `count()` for supported logical grouped/distinct counts or select grouped

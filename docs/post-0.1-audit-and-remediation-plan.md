@@ -386,6 +386,12 @@ preferable to adding retries or reconnect behavior.
 
 ### P1 — Bring benchmark claims and implementation into agreement
 
+Status: **completed successfully in Phase 1 (2026-07-26)**. The dependency-
+free schema-version-2 runner executes the documented compiler, executor,
+observer, batch, transaction, lifecycle, migration, live-engine/proxy, and
+multiprocess-soak scenarios. Every timing is correctness-gated and emitted with
+raw samples, environment metadata, PHP peak allocation, and fresh-process RSS.
+
 Immediate documentation remediation should label existing versus planned
 scenarios. Then extend the small JSON harness rather than adding a benchmark
 framework dependency.
@@ -523,15 +529,17 @@ transactions, and migrations also passed.
 
 ### Phase 1 — Honest, reproducible performance baseline
 
+Status: **completed successfully (2026-07-26)**.
+
 Estimated size: one to two engineering days without a new dependency.
 
-1. Correct benchmark documentation to separate implemented and planned work.
-2. Refactor the current harness around a small scenario/measurement function.
-3. Add environment metadata, explicit warm-up, raw samples, correctness
+1. [x] Correct benchmark documentation to separate implemented and planned work.
+2. [x] Refactor the current harness around a small scenario/measurement function.
+3. [x] Add environment metadata, explicit warm-up, raw samples, correctness
    digests, peak PHP memory, and fresh-process RSS capture.
-4. Add compiler-shape, hydration/cursor, observer, batch, transaction, and
+4. [x] Add compiler-shape, hydration/cursor, observer, batch, transaction, and
    lifecycle scenarios.
-5. Preserve JSON artifacts in CI; run deterministic SQLite scenarios per CI
+5. [x] Preserve JSON artifacts in CI; run deterministic SQLite scenarios per CI
    and engine/proxy/soak scenarios on schedule and releases.
 
 Acceptance:
@@ -540,6 +548,14 @@ Acceptance:
 - timing and memory are separable by scenario and process;
 - repeated runs show approximately linear compiler growth;
 - the documented maintained matrix exactly matches executable scenarios.
+
+Acceptance result: **all Phase 1 criteria passed**. The 18-scenario CI profile
+passed with instrumentation disabled in timed workers; 10/100/1,000 predicate
+medians scaled approximately linearly. The identical finalized baseline suite
+produced matching correctness digests against `v0.1.0` and the candidate.
+MariaDB, MySQL, ProxySQL, MaxScale, and four concurrent soak workers passed;
+all soak compile/lifecycle workers reported zero retained allocated-memory and
+file-descriptor deltas.
 
 ### Phase 2 — Evidence-based lightweight optimization
 

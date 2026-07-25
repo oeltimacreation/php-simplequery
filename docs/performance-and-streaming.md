@@ -45,11 +45,8 @@ Optimization requires a profile and a benchmark showing a meaningful benefit.
 
 ## Benchmark suite
 
-The executable PDO-only control and compiler predicate-scaling method are
-documented in [benchmarking](benchmarking.md). Executor benchmarks are added
-when a proposed performance change needs an evidence-based comparison.
-
-The maintained benchmark plan covers:
+The executable fresh-process harness is documented in
+[benchmarking](benchmarking.md). Its maintained matrix covers:
 
 - simple and deeply conditional queries;
 - joins and raw expressions;
@@ -58,8 +55,13 @@ The maintained benchmark plan covers:
 - repeated deterministic compilation;
 - object and associative hydration;
 - cursor exhaustion and early close;
-- observer disabled/enabled overhead;
+- observer disabled, no-op, and bounded-recording overhead;
+- first/scalar/write terminals, managed transactions, and connection lifecycle;
 - direct versus supported proxy paths.
+
+Every scenario correctness-gates its raw samples, reports PHP peak allocation
+and subprocess RSS, and runs without active coverage/profiling instrumentation.
+Scheduled runs add four-process compile/lifecycle soak evidence.
 
 Release review compares wall time, peak memory, allocation data where
 available, correctness, and complexity growth. Fragile per-commit microsecond

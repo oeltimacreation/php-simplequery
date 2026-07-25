@@ -18,7 +18,9 @@ composer migration:check       # deterministic change/ambiguity report
 composer benchmark:migration   # direct-PDO result/timing comparison
 bash tools/database-probes/run-services.sh  # complete direct/proxy behavior and execution matrix
 php tools/database-probes/ambiguous-write.php proxysql  # operator-controlled failure window
-composer benchmark             # PDO-only control benchmark
+composer benchmark             # complete deterministic SQLite benchmark suite
+composer benchmark:reference   # reference-size fresh-process suite
+composer benchmark:soak        # repeated compile/lifecycle stress
 ```
 
 `composer check` is the clean-checkout contract. The service-backed command
@@ -85,9 +87,11 @@ percentages.
 ## CI mapping
 
 Pull-request CI runs PHP 8.2–8.5 SQLite tests, strict quality checks, a
-lowest-dependency job, MariaDB/MySQL direct probes, a no-dev installation, and
-the benchmark control. The scheduled/manual proxy workflow runs the exact
-ProxySQL and MaxScale fixtures and uploads redacted JSON artifacts. Release
+lowest-dependency job, MariaDB/MySQL direct probes, a no-dev installation, the
+18-scenario SQLite benchmark suite, and a fresh-process `v0.1.0` comparison.
+The scheduled/manual proxy workflow runs the exact direct/proxy fixtures plus
+live comparisons and four concurrent soak workers, then uploads redacted JSON
+artifacts. Release
 certification additionally runs:
 
 ```bash
