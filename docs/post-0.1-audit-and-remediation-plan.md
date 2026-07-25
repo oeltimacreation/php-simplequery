@@ -8,10 +8,11 @@ Worktree before the report: clean
 
 Decision: use the findings and accepted baseline to scope `0.2.0`; a redesign is not.
 
-Implementation update (2026-07-26): **Phases 0, 1, and 2 completed
+Implementation update (2026-07-26): **Phases 0, 1, 2, and 3 completed
 successfully** on `feature/0.2-candidate`. Correctness/resource safety, the
 reproducible baseline, and the evidence-gated associative hydration
-optimization passed their respective acceptance criteria.
+optimization plus type/test hardening passed their respective acceptance
+criteria.
 
 ## Executive summary
 
@@ -143,9 +144,10 @@ syntax snippets. No stale or failing example was found.
 | Compiler branch | 92.03% (277/301) | passes 90% floor under Xdebug |
 | Paths | 6.43% (463/7,197) | measured; no configured floor |
 
-Xdebug proves that the documented line and branch floors pass. CI still uses
-PCOV and its checker continues when branch metrics are absent, so ordinary CI
-does not enforce what this audit measured. The lowest meaningful branch areas
+At audit time, Xdebug proved that the documented line and branch floors passed,
+while CI still used PCOV and continued when branch metrics were absent. The
+Phase 3 implementation update above closes that enforcement gap. The lowest
+meaningful branch areas
 include `JoinClause` (76.47%), `CompiledQuery` (76.92%), `Connection` (83.33%),
 and `Executor` (86.21%). The low path percentage reflects combinatorial paths;
 high-risk behavior should be tested directly instead of introducing an
@@ -346,9 +348,14 @@ Smallest robust remediation:
 
 ### P1 — Wire the passing Xdebug branch baseline into CI
 
-Xdebug measured 89.47% overall and 92.03% compiler branch coverage, so both
-documented floors pass. PCOV does not emit branch metrics and the ordinary CI
-checker still continues on missing values.
+Status: **completed successfully in Phase 3 (2026-07-26)**. A dedicated
+Xdebug path/branch job enforces both configured branch floors from a separate
+Clover report, while PCOV remains the line-only fast job. Missing configured
+branch metrics now fail with executable checker coverage.
+
+At audit time, Xdebug measured 89.47% overall and 92.03% compiler branch
+coverage, while the PCOV-backed ordinary checker continued on missing branch
+values. The completed status above records the implemented correction.
 
 Preferred remediation:
 
@@ -450,8 +457,13 @@ measured overhead is smaller and the code preserves useful runtime validation.
 
 ### P2 — Tighten public static-analysis contracts
 
-PHPStan is clean, but several public annotations admit invalid calls or lose
-known result information:
+Status: **completed successfully in Phase 3 (2026-07-26)**. Public positional
+bindings, callback parameters, and cursor rows retain their precise downstream
+types; consumer-constructible values validate list members at runtime. The
+independent external-consumer fixture passes PHPStan level 9.
+
+At audit time PHPStan was clean, but several public annotations admitted
+invalid calls or lost known result information:
 
 - positional raw bindings are documented as keyed arrays in `Connection`,
   `RawExpression`, `RawQuery`, and `CompiledQuery` even though runtime requires
@@ -471,6 +483,11 @@ add a public type hierarchy solely for IDE inference. Add an external-consumer
 PHPStan fixture so package annotations are checked from the caller side.
 
 ### P2 — Fill behavior gaps rather than chase coverage percentage
+
+Status: **completed successfully in Phase 3 (2026-07-26)**. Focused tests and
+the direct-engine behavior matrix now execute every listed high-risk case. CI
+tests minimum/current MariaDB 11.8 and MySQL 8.0 fixtures and reports Xdebug
+path coverage without imposing an arbitrary path floor.
 
 Add focused tests for:
 
@@ -497,6 +514,10 @@ another PHP runtime to direct-engine probes only if it catches a distinct PDO
 behavior; avoid a combinatorial matrix without evidence.
 
 ### P3 — Clarify cursor observation and abandonment contracts
+
+Status: **completed successfully in Phase 3 (2026-07-26)**. Documentation and
+controlled tests freeze the one-event execute/hand-off contract, including no
+second event after a later fetch failure, and reiterate explicit cursor close.
 
 The observer records cursor success and duration when execution hands off a
 cursor, before rows are consumed. A later fetch/close failure does not emit a
@@ -595,13 +616,15 @@ See the [Phase 2 evidence](evidence/0.2-associative-hydration-experiment.md).
 
 ### Phase 3 — Type and test hardening
 
-1. Correct list and closure PHPDoc contracts and add boundary validation where
+Status: **completed successfully (2026-07-26)**.
+
+1. [x] Correct list and closure PHPDoc contracts and add boundary validation where
    consumers can construct invalid public values.
-2. Add external-consumer static-analysis fixtures and the missing behavior
+2. [x] Add external-consumer static-analysis fixtures and the missing behavior
    cases listed above.
-3. Add the proven Xdebug branch/path command to CI and fail on absent configured
+3. [x] Add the proven Xdebug branch/path command to CI and fail on absent configured
    branch metrics.
-4. Parameterize minimum/current engine fixtures and include engine PHPUnit
+4. [x] Parameterize minimum/current engine fixtures and include engine PHPUnit
    behavior in coverage or a separately reported behavior matrix.
 
 Acceptance:
@@ -611,6 +634,15 @@ Acceptance:
 - configured coverage thresholds cannot silently skip missing metrics;
 - versioned contract records are backed by executable tests;
 - supported engine-version claims match CI evidence.
+
+Acceptance result: **all Phase 3 criteria passed**. Internal and external-
+consumer PHPStan level 9 runs infer positional bindings, callbacks, and generic
+cursor rows. Xdebug measured 89.18% overall and 92.18% compiler branch coverage;
+configured missing branch metrics fail, while 6.75% path coverage remains
+reported without a floor. Focused SQLite and direct-engine cases cover the
+versioned contracts and missing high-risk behavior. MariaDB 11.8.2/11.8.8 and
+MySQL 8.0.11/8.0.46 are now separate minimum/current CI fixtures. See the
+[Phase 3 evidence](evidence/0.2-phase-3-hardening.md).
 
 ## Explicit non-goals
 

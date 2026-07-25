@@ -37,6 +37,8 @@ Files:
   and its [machine-readable comparison data](v0.1.0-performance-baseline.json);
 - [`0.2.0` associative hydration experiment](0.2-associative-hydration-experiment.md),
   including paired source-order and observer-profile decisions;
+- [`0.2.0` Phase 3 hardening evidence](0.2-phase-3-hardening.md), including
+  external types, branch/path coverage, behavior gaps, and engine versions;
 - [edge-feature usage verification](feature-usage-verification.md).
 
 Generated reports belong in `tools/database-probes/results/`, are ignored by Git, and

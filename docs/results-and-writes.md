@@ -29,6 +29,13 @@ $row = $query->firstAssociative();
 Fetch shape is selected by the terminal; there is no mutable global fetch
 mode. Arbitrary class hydration and `PDO::FETCH_CLASS` are excluded.
 
+PDO collapses duplicate result-column names before SimpleQuery receives the
+row; the last value is therefore retained for both object and associative
+hydration. Numeric column names are valid writable properties on object rows.
+PHP converts numeric-string array keys to integers, so associative terminals
+reject those rows to preserve their `array<string, mixed>` contract. Alias
+columns to unique, non-numeric names when associative hydration is required.
+
 ## Iteration
 
 ```php
@@ -43,7 +50,9 @@ try {
 }
 ```
 
-`Cursor` is final, one-shot, and non-rewindable. It closes its PDO statement on
+Static analysis exposes `Cursor<stdClass>` from `iterate()` and
+`Cursor<array<string, mixed>>` from `iterateAssociative()`. `Cursor` is final,
+one-shot, and non-rewindable. It closes its PDO statement on
 exhaustion, explicit idempotent `close()`, or generator cleanup. Destructor
 cleanup is only a non-throwing fallback. If PDO returns `false` or throws while
 closing the physical cursor, the connection is quarantined because its

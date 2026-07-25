@@ -99,6 +99,12 @@ not guess an inverse operator.
 - an empty closure group throws rather than broadening a query.
 - null inside a non-empty list retains normal SQL three-valued logic.
 
+In particular, `whereIn('x', [null, $value])` can match `$value` but does not
+match a null `x`; `whereNotIn()` with any null list member normally matches no
+row because the predicate becomes unknown rather than true. A null-only `IN`
+or `NOT IN` list likewise matches no row. Use explicit `whereNull()`/
+`whereNotNull()` groups when null membership is intended.
+
 ## Joins
 
 ```php

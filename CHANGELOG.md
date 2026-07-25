@@ -10,6 +10,13 @@ with ZeroVer releases before `1.0.0`.
 
 ### Added
 
+- Add an independent level-9 external-consumer PHPStan fixture for callback,
+  positional-binding, and generic cursor inference.
+- Add executable null-containing list, oversized integer string, duplicate/
+  numeric result-column, cursor-observation, connection-policy, and public
+  value-boundary tests.
+- Add a required Xdebug branch/path coverage job and minimum/current MariaDB
+  11.8 and MySQL 8.0 direct-engine fixture matrix.
 - Add a dependency-free, fresh-process benchmark runner with explicit setup,
   warm-up, correctness digests, alternating direct-PDO controls, raw samples,
   source/runtime/PDO metadata, PHP memory peaks, process RSS, and retained
@@ -22,6 +29,12 @@ with ZeroVer releases before `1.0.0`.
 
 ### Changed
 
+- Publish positional bindings as lists, infer typed join/condition callbacks,
+  and expose object/associative cursor row types through PHPDoc generics.
+- Validate consumer-constructed `CompiledQuery` binding members and
+  `QueryExecution` parameter types and numeric metadata at runtime.
+- Make configured branch thresholds fail when Clover omits branch metrics;
+  retain PCOV as the separate fast line-coverage gate.
 - Reduce associative full-result peak memory by validating rows in a one-pass
   fetch loop, and avoid copying already-validated associative cursor rows.
 - Add paired source-order hydration comparison and realistic observer binding-

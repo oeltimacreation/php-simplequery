@@ -36,6 +36,9 @@ Everything above is implemented. `close()` is idempotent after success and
 rejects active physical transactions or tracked cursors rather than silently
 completing or truncating them.
 
+The two raw-SQL binding parameters are PHPDoc `list<mixed>` contracts; keyed
+binding maps are rejected at runtime.
+
 `Driver` has exactly `MariaDb`, `MySql`, and `Sqlite`. `ConnectionOptions` is a
 final readonly declaration with nullable prepare-emulation, buffering,
 `FOUND_ROWS`, persistence, SQLite busy-timeout, and connection-label fields.
@@ -66,6 +69,11 @@ diagnostics.
 These types are library-owned values, not extension points. Internal AST,
 compiler, executor, and transaction types are excluded from compatibility
 promises.
+
+`CompiledQuery` rejects non-list/non-`Binding` input and automatic parameter
+types before exposing its state. Consumer-created `QueryExecution` values
+likewise validate parameter-type listness/members, non-empty SQL, finite
+non-negative duration, non-negative affected rows, and transaction depth.
 
 ## Compiler testing toolkit
 
@@ -119,8 +127,9 @@ noWait(): self
 skipLocked(): self
 ```
 
-Predicate overloads accept a complete trusted raw condition, a grouped
-closure, `(column, value)`, or `(column, operator, value)`. The finite operator
+Predicate overloads accept a complete trusted raw condition, a typed
+`Closure(ConditionGroup): mixed`, `(column, value)`, or `(column, operator,
+value)`. Join closures infer `Closure(JoinClause): mixed`. The finite operator
 set is `=`, `!=`, `<>`, `<`, `<=`, `>`, `>=`, `LIKE`, and `NOT LIKE`. Join
 `on()` operands are identifiers; `onValue()` is the value-binding form.
 
@@ -144,7 +153,8 @@ Terminals never mutate clause state.
 | `first()` | `stdClass|null`. |
 | `getAssociative()` | `list<array<string, mixed>>`. |
 | `firstAssociative()` | `array<string, mixed>|null`. |
-| `iterate()` / `iterateAssociative()` | One-shot final `Cursor`. |
+| `iterate()` | One-shot final `Cursor<stdClass>`. |
+| `iterateAssociative()` | One-shot final `Cursor<array<string, mixed>>`. |
 | `count()` | Range-checked non-negative `int`. |
 | `sum()` / `average()` | Preserved `int|float|string|null`; rejects distinct/grouped/HAVING shapes. |
 | `min()` / `max()` | Preserved driver scalar or `null`; rejects distinct/grouped/HAVING shapes. |

@@ -4,8 +4,8 @@ Status: fixture inventory complete; deployment certification intentionally open.
 
 | Target | Reproducible fixture | Deployment fact required before certification |
 | --- | --- | --- |
-| MariaDB | `mariadb:11.8.8` | Exact server patch, PHP/mysqlnd, SQL mode, charset/collation, timeouts, buffering, persistence. |
-| MySQL | `mysql:8.0.45` | Exact deployed 8.0 patch/minimum, PHP/mysqlnd, SQL mode, charset/collation, timeouts, buffering. |
+| MariaDB | `mariadb:11.8.2` / `mariadb:11.8.8` | Exact server patch, PHP/mysqlnd, SQL mode, charset/collation, timeouts, buffering, persistence. |
+| MySQL | `mysql:8.0.11` / `mysql:8.0.46` | Exact deployed 8.0 patch/minimum, PHP/mysqlnd, SQL mode, charset/collation, timeouts, buffering. |
 | SQLite | Runtime floor 3.39.2 | Every production/test linked runtime and relevant compile options. |
 | ProxySQL | `proxysql/proxysql:3.0.1-debian` | Exact deployment version, query rules, hostgroups, transaction persistence, multiplex/session-variable policy, upgrade review. |
 | MaxScale | `mariadb/maxscale:23.02.17-2` | Exact deployed `23.02.z`, readwritesplit/causal-read settings, replay, delayed retry, session history, failover policy. |

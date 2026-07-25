@@ -6,7 +6,7 @@ successful simple query does not imply support.
 
 ## Supported matrix
 
-| Capability | MariaDB 11.8.8+ | MySQL 8.0.45+ | SQLite 3.39.2+ |
+| Capability | MariaDB 11.8 | MySQL 8.0 | SQLite 3.39.2+ |
 | --- | --- | --- | --- |
 | Basic CRUD compilation | Implemented | Implemented | Implemented |
 | Inner/left joins | Implemented | Implemented | Implemented |
@@ -18,9 +18,10 @@ successful simple query does not imply support.
 | Generic upsert | Deferred | Deferred | Deferred |
 | Generic DML returning | Deferred | Unsupported shape | Deferred |
 
-The released fixture baselines are MariaDB 11.8.8, MySQL 8.0.45, ProxySQL
-3.0.1, and MaxScale 23.02.17-2. The SQLite minimum is checked at runtime with
-`sqlite_version()`.
+The direct fixture pairs are MariaDB 11.8.2/11.8.8 and MySQL 8.0.11/8.0.46,
+representing the minimum/current supported release within each declared engine
+line. ProxySQL 3.0.1 and MaxScale 23.02.17-2 run against the current MariaDB
+fixture. The SQLite minimum is checked at runtime with `sqlite_version()`.
 
 ## MariaDB and MySQL
 

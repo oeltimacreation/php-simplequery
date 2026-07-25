@@ -26,6 +26,13 @@ No notification is emitted for:
 - statements executed through `Connection::pdo()`;
 - PDO transaction-control or savepoint calls in `0.1.0`.
 
+Cursor statements emit their single notification after prepare/bind/execute
+and cursor hand-off, before row consumption. Its duration and success describe
+that statement attempt, not full iteration. A later fetch, validation, or
+close failure is reported to the cursor consumer and does not emit a second
+observer event. Call `close()` explicitly when abandoning a cursor; destructor
+cleanup remains best effort.
+
 ## Execution metadata
 
 Metadata includes:

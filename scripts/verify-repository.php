@@ -10,7 +10,9 @@ $requiredFiles = [
     'composer.json',
     'phpunit.xml.dist',
     'phpunit.coverage.xml.dist',
+    'phpunit.branch-coverage.xml.dist',
     'phpstan.neon',
+    'phpstan.consumer.neon',
     'phpcs.xml.dist',
     '.github/workflows/ci.yml',
     '.github/workflows/proxy-probes.yml',
@@ -27,6 +29,7 @@ $requiredFiles = [
     'docs/evidence/migration-validation.json',
     'docs/evidence/migration-benchmark.json',
     'docs/evidence/0.2-associative-hydration-experiment.md',
+    'docs/evidence/0.2-phase-3-hardening.md',
     'docs/migration-validation.md',
     'docs/benchmarking.md',
     'tests/Fixtures/Contracts/aggregate-scalars.json',
@@ -50,6 +53,7 @@ $requiredFiles = [
     'tools/database-probes/execution-smoke.php',
     'tools/database-probes/transaction-smoke.php',
     'tools/database-probes/migration-smoke.php',
+    'scripts/run-branch-coverage.php',
     'tools/audit-consumers.php',
     'tools/migration/report.php',
     'benchmarks/Harness.php',
@@ -59,6 +63,7 @@ $requiredFiles = [
     'benchmarks/migration.php',
     'benchmarks/run.php',
     'benchmarks/worker.php',
+    'tests/Fixtures/Consumer/static-analysis.php',
 ];
 
 $errors = [];

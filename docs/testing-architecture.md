@@ -8,7 +8,10 @@ Status: accepted test architecture.
 composer install
 composer check                 # fast; no containers or network database
 composer test:coverage         # writes Clover and HTML coverage
-composer coverage:check        # 90/80 overall, 95/90 compiler gates
+composer coverage:check        # PCOV: 90 overall and 95 compiler line gates
+composer test:coverage:branch  # Xdebug path/branch report
+composer coverage:check:branch # 80 overall and 90 compiler branch gates
+composer phpstan:consumer      # independent public-contract inference
 composer examples:check        # executable compiler and SQLite examples
 composer probe:sqlite          # JSON PDO/SQLite evidence
 composer probe:execution -- sqlite    # public executor smoke
@@ -29,7 +32,9 @@ starts only the exact synthetic Docker fixtures in
 buffered/unbuffered reports plus public execution and transaction smokes under
 the ignored `tools/database-probes/results/` directory. It also runs the
 library-owned migration slices through every target, prints a summary, and
-removes containers, networks, and volumes.
+removes containers, networks, and volumes. Direct CI supplies exact version
+variables for MariaDB 11.8.2/11.8.8 and MySQL 8.0.11/8.0.46 and archives each
+fixture pair separately; scheduled proxy runs use the current pair.
 
 ## Naming and placement
 
@@ -78,16 +83,18 @@ inventory entry is verified and linked to an archived report.
 ## Coverage
 
 Coverage is scoped to `src/`; probes and tests do not inflate product coverage.
-Before implementation PHP files exist, the checker confirms that thresholds
-are armed and exits successfully. Once source exists it enforces 90% line and
-80% branch overall, plus 95% line and 90% branch for `Internal/Compiler`. Every
-documented transaction state/failure edge remains mandatory regardless of
-percentages.
+PCOV enforces 90% line overall and 95% line for `Internal/Compiler`. A separate
+Xdebug path-coverage run enforces 80% branch overall and 90% compiler branch.
+When a threshold is configured, an absent Clover metric is a failure. Paths
+are reported for hotspot guidance without a percentage floor. Every documented
+transaction state/failure edge remains mandatory regardless of percentages.
 
 ## CI mapping
 
 Pull-request CI runs PHP 8.2–8.5 SQLite tests, strict quality checks, a
-lowest-dependency job, MariaDB/MySQL direct probes, a no-dev installation, the
+lowest-dependency job, minimum/current MariaDB/MySQL direct probes, a no-dev
+installation, an independent external-consumer PHPStan run, enforced Xdebug
+branch/path coverage, the
 18-scenario SQLite benchmark suite, and a fresh-process `v0.1.0` comparison.
 The scheduled/manual proxy workflow runs the exact direct/proxy fixtures plus
 live comparisons and four concurrent soak workers, then uploads redacted JSON
