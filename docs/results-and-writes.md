@@ -45,7 +45,11 @@ try {
 
 `Cursor` is final, one-shot, and non-rewindable. It closes its PDO statement on
 exhaustion, explicit idempotent `close()`, or generator cleanup. Destructor
-cleanup is only a fallback.
+cleanup is only a non-throwing fallback. If PDO returns `false` or throws while
+closing the physical cursor, the connection is quarantined because its
+statement state cannot be proven reusable. Explicit close or exhaustion
+reports that cleanup failure unless row fetching or validation already failed;
+in a dual failure, the original fetch/result failure remains authoritative.
 
 Buffered MySQL-family PDO may still buffer server results. An unbuffered cursor
 occupies its connection. Commit, rollback, savepoint release, and rollback to a
@@ -118,6 +122,13 @@ Values above `PHP_INT_MAX` throw `NumericOverflowException`.
 `sum()` and `average()` preserve the driver scalar as
 `int|float|string|null`, including exact decimal strings. `min()` and `max()`
 preserve the driver scalar/null without arbitrary coercion.
+
+`sum()`, `average()`, `min()`, and `max()` require a single scalar query shape.
+They reject builders containing `distinct()`, `groupBy()`, or `having()` with
+`UnsupportedFeatureException`; `distinct()` on the builder does not mean
+`SUM(DISTINCT column)`. Select an explicit aggregate expression and fetch rows
+when grouped aggregate results are required. `count()` continues to support
+distinct, grouped, and `HAVING` logical result shapes.
 
 ## Deferred write features
 

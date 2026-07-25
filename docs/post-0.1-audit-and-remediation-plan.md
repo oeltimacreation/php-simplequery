@@ -8,6 +8,10 @@ Worktree before the report: clean
 
 Decision: use the findings and accepted baseline to scope `0.2.0`; a redesign is not.
 
+Implementation update (2026-07-26): **Phase 0 completed successfully** on
+`feature/0.2-candidate`. The focused test suites, `composer check`, coverage,
+SQLite probe, and disposable MariaDB/MySQL/ProxySQL/MaxScale matrix passed.
+
 ## Executive summary
 
 The `0.1.0` release has a strong baseline. All repository quality gates, all
@@ -290,6 +294,11 @@ bounded-recording observers across binding counts.
 
 ### P0 — Reject grouped non-count scalar aggregates
 
+Status: **completed successfully (2026-07-26)**. Non-count scalar terminals
+reject distinct/grouped/HAVING shapes before execution; compiler and SQLite
+tests cover every terminal, supported joins/filters, empty results, grouped
+count, and builder-state preservation.
+
 `AbstractDialectCompiler::aggregate()` removes pagination and locking but
 retains grouping and `HAVING`. `Executor::scalar()` then calls one
 `fetchColumn()`. The audit reproduced the defect with two groups whose sums
@@ -310,6 +319,11 @@ larger public API expansion than the required correctness fix. A grouped
 aggregate result API can be considered only with a demonstrated use case.
 
 ### P0 — Quarantine uncertain cursor cleanup
+
+Status: **completed successfully (2026-07-26)**. Cursor finalization is
+idempotent, false/throwing physical cleanup quarantines the connection, an
+earlier fetch/result error remains primary, and explicit, exhaustion,
+generator, and destructor paths share the same finalizer.
 
 `Cursor::close()` marks the cursor closed and always releases connection
 ownership even if `closeCursor()` throws; it also ignores a `false` return.
@@ -346,6 +360,11 @@ Do not introduce a path-percentage floor from the initial 6.43% observation;
 path coverage should guide direct tests for critical state transitions.
 
 ### P1 — Fail closed after ambiguous begin/savepoint dispatch failures
+
+Status: **completed successfully in Phase 0 (2026-07-26)**. Failed begin is
+reusable only after verified inactivity (including recovery rollback when
+needed); uncertain nested savepoint creation quarantines the connection.
+Controlled tests cover failures before and after successful parent dispatch.
 
 Commit, rollback, and guard failures quarantine uncertain transaction state.
 In contrast, thrown `beginTransaction()` and nested `SAVEPOINT` creation are
@@ -478,14 +497,16 @@ lifecycle mechanism.
 
 ### Phase 0 — Correctness and resource safety
 
+Status: **completed successfully (2026-07-26)**.
+
 Estimated size: one focused patch per item; complete before performance work.
 
-1. Add failing grouped scalar aggregate tests, implement shape rejection, and
+1. [x] Add failing grouped scalar aggregate tests, implement shape rejection, and
    update aggregate docs/changelog.
-2. Add cursor false/dual-failure tests, implement connection quarantine and
+2. [x] Add cursor false/dual-failure tests, implement connection quarantine and
    deterministic exception precedence, then run SQLite and all unbuffered
    direct/proxy probes.
-3. Add post-dispatch transaction-control fault seams, make ambiguous begin/
+3. [x] Add post-dispatch transaction-control fault seams, make ambiguous begin/
    savepoint failures fail closed, and rerun transaction probes.
 
 Acceptance:
@@ -494,6 +515,11 @@ Acceptance:
 - no uncertain statement or transaction state is exposed as reusable;
 - original query/fetch failures remain authoritative when cleanup also fails;
 - `composer check`, coverage, SQLite probes, and the full service matrix pass.
+
+Acceptance result: **all Phase 0 criteria passed**. The complete disposable
+matrix covered MariaDB 11.8.8, MySQL 8.0.45, ProxySQL, and MaxScale with native
+and emulated buffered/unbuffered profiles; direct/proxy execution,
+transactions, and migrations also passed.
 
 ### Phase 1 — Honest, reproducible performance baseline
 

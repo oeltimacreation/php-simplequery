@@ -8,6 +8,23 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+### Changed
+
+- `sum()`, `average()`, `min()`, and `max()` now reject `distinct()`, `GROUP
+  BY`, and `HAVING` query shapes with `UnsupportedFeatureException`; use
+  `count()` for supported logical grouped/distinct counts or select grouped
+  aggregate rows explicitly.
+- Managed transaction startup now verifies physical inactivity after a failed
+  begin, and uncertain nested savepoint creation quarantines the connection.
+
+### Fixed
+
+- Prevent non-count scalar aggregates from silently returning the first value
+  of a multi-row grouped aggregate result.
+- Treat a false or throwing `PDOStatement::closeCursor()` as uncertain
+  connection state, quarantine the connection, and preserve an earlier
+  fetch/result failure as the primary exception when cleanup also fails.
+
 ## [0.1.0] - 2026-07-17
 
 ### Added

@@ -36,12 +36,25 @@ Select `Driver::MariaDb`, `Driver::MySql`, or `Driver::Sqlite` explicitly. See
 [getting started](getting-started.md) for connection examples and
 [database support](database-support.md) for engine floors.
 
+## Upgrading from 0.1 to 0.2
+
+Non-count scalar aggregate terminals no longer accept builders with
+`distinct()`, `groupBy()`, or `having()`. These shapes previously compiled and
+could silently return only the first aggregate row. Fetch explicit grouped
+aggregate projections when multiple results are intended; grouped/distinct
+`count()` remains supported.
+
+Treat cursor cleanup and transaction-control exceptions as connection-lifetime
+boundaries. A false or throwing PDO cursor close and an uncertain nested
+savepoint creation now quarantine the connection. Failed transaction begin is
+recoverable only when SimpleQuery can verify an inactive physical transaction.
+Discard a quarantined connection rather than retrying work on it.
+
 ## Future upgrade sections
 
 Version-specific instructions will be added under headings such as:
 
 ```text
-## Upgrading from 0.1 to 0.2
 ## Upgrading from 0.x to 1.0
 ```
 

@@ -146,8 +146,8 @@ Terminals never mutate clause state.
 | `firstAssociative()` | `array<string, mixed>|null`. |
 | `iterate()` / `iterateAssociative()` | One-shot final `Cursor`. |
 | `count()` | Range-checked non-negative `int`. |
-| `sum()` / `average()` | Preserved `int|float|string|null`. |
-| `min()` / `max()` | Preserved driver scalar or `null`. |
+| `sum()` / `average()` | Preserved `int|float|string|null`; rejects distinct/grouped/HAVING shapes. |
+| `min()` / `max()` | Preserved driver scalar or `null`; rejects distinct/grouped/HAVING shapes. |
 | `insert()` / `insertMany()` | Affected rows as `int`. |
 | `insertGetId()` | Immediately captured generated ID as `string`. |
 | `update()` / `delete()` | Affected rows as `int`. |
@@ -167,6 +167,10 @@ savepoints. A pre-existing physical transaction is external and is never
 adopted. Every `Throwable` enters rollback handling. Live tracked cursors
 reject transaction/savepoint completion rather than being truncated. See
 [transactions](transactions.md).
+
+A cursor close failure quarantines its connection. A failed transaction begin
+is reusable only after verified physical inactivity; uncertain nested
+savepoint creation also quarantines the connection.
 
 `QueryObserver::queryExecuted(QueryExecution $execution): void` is the only
 observation integration. It is post-attempt, connection-scoped, immutable,
