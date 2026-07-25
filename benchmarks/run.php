@@ -3,16 +3,16 @@
 declare(strict_types=1);
 
 use Oeltima\SimpleQuery\Benchmark\Harness;
+use Oeltima\SimpleQuery\Benchmark\BenchmarkSuite;
 use Oeltima\SimpleQuery\Benchmark\ScenarioCatalog;
 
-require __DIR__ . '/Harness.php';
-require __DIR__ . '/ScenarioCatalog.php';
+require __DIR__ . '/bootstrap.php';
 
 /** @var array<string, false|string> $options */
 $options = getopt('', ['suite:', 'scenario:', 'profile:', 'iterations:', 'warmups:', 'autoload:', 'list']);
 $environmentSuite = getenv('SIMPLEQUERY_BENCHMARK_DEFAULT_SUITE');
 $defaultSuite = is_string($environmentSuite) && $environmentSuite !== '' ? $environmentSuite : 'ci';
-$suite = is_string($options['suite'] ?? null) ? $options['suite'] : $defaultSuite;
+$suiteName = is_string($options['suite'] ?? null) ? $options['suite'] : $defaultSuite;
 $profile = is_string($options['profile'] ?? null) ? $options['profile'] : 'ci';
 $iterations = filter_var($options['iterations'] ?? 5, FILTER_VALIDATE_INT);
 $warmups = filter_var($options['warmups'] ?? 1, FILTER_VALIDATE_INT);
@@ -33,6 +33,8 @@ if (!is_file($autoload)) {
     throw new RuntimeException(sprintf('Benchmark autoloader does not exist: %s', $autoload));
 }
 
+$suite = BenchmarkSuite::tryFrom($suiteName)
+    ?? throw new RuntimeException(sprintf('Unknown benchmark suite "%s".', $suiteName));
 $scenarios = ScenarioCatalog::suite($suite);
 if (array_key_exists('list', $options)) {
     fwrite(STDOUT, implode(PHP_EOL, $scenarios) . PHP_EOL);
@@ -94,7 +96,7 @@ foreach ($reports as $report) {
     }
 }
 
-if ($suite === 'hydration-experiment') {
+if ($suite === BenchmarkSuite::HydrationExperiment) {
     $hydrationDigests = [];
     foreach ($reports as $report) {
         $correctness = $report['correctness'] ?? null;
@@ -131,7 +133,7 @@ $envelope = [
     'schema_version' => 2,
     'benchmark' => 'php-simplequery-reproducible-suite',
     'collected_at' => gmdate(DATE_ATOM),
-    'suite' => $suite,
+    'suite' => $suite->value,
     'profile' => $profile,
     'runner_environment' => $runnerEnvironment,
     'policy' => [

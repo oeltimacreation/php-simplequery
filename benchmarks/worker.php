@@ -2,8 +2,11 @@
 
 declare(strict_types=1);
 
+use Oeltima\SimpleQuery\Benchmark\BenchmarkProfile;
 use Oeltima\SimpleQuery\Benchmark\Harness;
 use Oeltima\SimpleQuery\Benchmark\ScenarioCatalog;
+use Oeltima\SimpleQuery\Benchmark\ScenarioName;
+use Oeltima\SimpleQuery\Benchmark\ScenarioRequest;
 
 /** @var array<string, false|string> $options */
 $options = getopt('', ['scenario:', 'profile:', 'iterations:', 'warmups:', 'autoload:']);
@@ -24,22 +27,25 @@ if (
 }
 
 require $autoload;
-require __DIR__ . '/Harness.php';
-require __DIR__ . '/ScenarioCatalog.php';
+require __DIR__ . '/bootstrap.php';
 
 $packageRoot = dirname($autoload, 2);
-$prepared = ScenarioCatalog::prepare($scenario, $profile);
-$environment = Harness::environment($packageRoot, $prepared['pdo'], 'sqlite');
+$scenarioName = ScenarioName::tryFrom($scenario)
+    ?? throw new RuntimeException(sprintf('Unknown benchmark scenario "%s".', $scenario));
+$benchmarkProfile = BenchmarkProfile::tryFrom($profile)
+    ?? throw new RuntimeException(sprintf('Unknown benchmark profile "%s".', $profile));
+$prepared = ScenarioCatalog::prepare(new ScenarioRequest($scenarioName, $benchmarkProfile));
+$environment = Harness::environment($packageRoot, $prepared->pdo, 'sqlite');
 Harness::assertTimingInstrumentationDisabled($environment);
 $before = Harness::resourceSnapshot();
-$measurement = Harness::measure($prepared['operations'], $warmups, $iterations);
+$measurement = Harness::measure($prepared->operations, $warmups, $iterations);
 $after = Harness::resourceSnapshot();
 
 $report = [
     'schema_version' => 2,
     'scenario' => $scenario,
-    'profile' => $profile,
-    'dimensions' => $prepared['dimensions'],
+    'profile' => $benchmarkProfile->value,
+    'dimensions' => $prepared->dimensions,
     'environment' => $environment,
     'correctness' => $measurement['correctness'],
     'measurement' => $measurement['measurement'],

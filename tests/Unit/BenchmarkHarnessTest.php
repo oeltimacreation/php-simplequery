@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Oeltima\SimpleQuery\Tests\Unit;
 
+use Oeltima\SimpleQuery\Benchmark\BenchmarkSuite;
 use Oeltima\SimpleQuery\Benchmark\Harness;
 use Oeltima\SimpleQuery\Benchmark\ScenarioCatalog;
 use PHPUnit\Framework\TestCase;
@@ -60,7 +61,7 @@ final class BenchmarkHarnessTest extends TestCase
 
     public function testCatalogExposesEveryMaintainedCiScenario(): void
     {
-        $scenarios = ScenarioCatalog::suite('ci');
+        $scenarios = ScenarioCatalog::suite(BenchmarkSuite::Ci);
 
         self::assertCount(18, $scenarios);
         foreach (

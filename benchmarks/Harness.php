@@ -17,57 +17,12 @@ final class Harness
      */
     public static function measure(array $operations, int $warmups, int $iterations): array
     {
-        if ($operations === [] || $warmups < 1 || $iterations < 1 || $iterations % 2 === 0) {
-            throw new RuntimeException('Benchmarks require operations, a warm-up, and an odd sample count.');
-        }
-        $digests = [];
-        foreach ($operations as $name => $operation) {
-            $digests[$name] = self::digest(self::execute($operation));
-        }
-        $expectedDigest = reset($digests);
-        foreach ($digests as $name => $digest) {
-            if ($digest !== $expectedDigest) {
-                throw new RuntimeException(sprintf('Correctness parity failed for operation %s.', $name));
-            }
-        }
-
-        for ($warmup = 0; $warmup < $warmups; ++$warmup) {
-            foreach ($operations as $name => $operation) {
-                if (self::digest(self::execute($operation)) !== $expectedDigest) {
-                    throw new RuntimeException(sprintf('Warm-up correctness failed for operation %s.', $name));
-                }
-            }
-        }
-
-        /** @var array<string, list<float>> $samples */
-        $samples = array_fill_keys(array_keys($operations), []);
-        $names = array_keys($operations);
-        for ($iteration = 0; $iteration < $iterations; ++$iteration) {
-            $orderedNames = $iteration % 2 === 0 ? $names : array_reverse($names);
-            foreach ($orderedNames as $name) {
-                $started = hrtime(true);
-                $result = self::execute($operations[$name]);
-                $elapsed = (hrtime(true) - $started) / 1_000_000;
-                if (self::digest($result) !== $expectedDigest) {
-                    throw new RuntimeException(sprintf('Timed correctness failed for operation %s.', $name));
-                }
-                $samples[$name][] = $elapsed;
-                unset($result);
-            }
-        }
-
-        $summaries = [];
-        foreach ($samples as $name => $rawSamples) {
-            $sorted = $rawSamples;
-            sort($sorted);
-            $summaries[$name] = [
-                'samples_ms' => array_map(static fn (float $sample): float => round($sample, 6), $rawSamples),
-                'minimum_ms' => round($sorted[0], 6),
-                'median_ms' => round($sorted[intdiv(count($sorted), 2)], 6),
-                'maximum_ms' => round($sorted[count($sorted) - 1], 6),
-                'correctness_digest' => $digests[$name],
-            ];
-        }
+        self::validateMeasurementArguments($operations, $warmups, $iterations);
+        $digests = self::operationDigests($operations);
+        $expectedDigest = self::assertDigestParity($digests);
+        self::warmUp($operations, $warmups, $expectedDigest);
+        $samples = self::sample($operations, $iterations, $expectedDigest);
+        $summaries = self::summarize($samples, $digests);
 
         return [
             'correctness' => [
@@ -82,6 +37,143 @@ final class Harness
                 'sample_order' => count($operations) > 1 ? 'alternating-forward-reverse' : 'single-operation',
                 'operations' => $summaries,
             ],
+        ];
+    }
+
+    /** @param array<non-empty-string, Closure(): mixed> $operations */
+    private static function validateMeasurementArguments(array $operations, int $warmups, int $iterations): void
+    {
+        if ($operations === []) {
+            throw new RuntimeException('Benchmarks require operations, a warm-up, and an odd sample count.');
+        }
+        if ($warmups < 1) {
+            throw new RuntimeException('Benchmarks require operations, a warm-up, and an odd sample count.');
+        }
+        if ($iterations < 1 || $iterations % 2 === 0) {
+            throw new RuntimeException('Benchmarks require operations, a warm-up, and an odd sample count.');
+        }
+    }
+
+    /**
+     * @param array<non-empty-string, Closure(): mixed> $operations
+     * @return array<non-empty-string, string>
+     */
+    private static function operationDigests(array $operations): array
+    {
+        $digests = [];
+        foreach ($operations as $name => $operation) {
+            $digests[$name] = self::digest(self::execute($operation));
+        }
+
+        return $digests;
+    }
+
+    /** @param array<non-empty-string, string> $digests */
+    private static function assertDigestParity(array $digests): string
+    {
+        $expectedDigest = reset($digests);
+        if (!is_string($expectedDigest)) {
+            throw new RuntimeException('Benchmark operations produced no correctness digest.');
+        }
+        foreach ($digests as $name => $digest) {
+            if ($digest !== $expectedDigest) {
+                throw new RuntimeException(sprintf('Correctness parity failed for operation %s.', $name));
+            }
+        }
+
+        return $expectedDigest;
+    }
+
+    /** @param array<non-empty-string, Closure(): mixed> $operations */
+    private static function warmUp(array $operations, int $warmups, string $expectedDigest): void
+    {
+        for ($warmup = 0; $warmup < $warmups; ++$warmup) {
+            foreach ($operations as $name => $operation) {
+                self::assertOperationDigest($operation, $expectedDigest, 'Warm-up', $name);
+            }
+        }
+    }
+
+    /**
+     * @param array<non-empty-string, Closure(): mixed> $operations
+     * @return array<non-empty-string, non-empty-list<float>>
+     */
+    private static function sample(array $operations, int $iterations, string $expectedDigest): array
+    {
+        /** @var array<non-empty-string, list<float>> $samples */
+        $samples = array_fill_keys(array_keys($operations), []);
+        $names = array_keys($operations);
+        for ($iteration = 0; $iteration < $iterations; ++$iteration) {
+            $orderedNames = $iteration % 2 === 0 ? $names : array_reverse($names);
+            foreach ($orderedNames as $name) {
+                $samples[$name][] = self::timeOperation($operations[$name], $expectedDigest, $name);
+            }
+        }
+
+        /** @var array<non-empty-string, non-empty-list<float>> $samples */
+        return $samples;
+    }
+
+    private static function assertOperationDigest(
+        Closure $operation,
+        string $expectedDigest,
+        string $phase,
+        string $name,
+    ): void {
+        self::assertResultDigest(self::execute($operation), $expectedDigest, $phase, $name);
+    }
+
+    private static function timeOperation(Closure $operation, string $expectedDigest, string $name): float
+    {
+        $started = hrtime(true);
+        $result = self::execute($operation);
+        $elapsed = (hrtime(true) - $started) / 1_000_000;
+        self::assertResultDigest($result, $expectedDigest, 'Timed', $name);
+
+        return $elapsed;
+    }
+
+    private static function assertResultDigest(
+        mixed $result,
+        string $expectedDigest,
+        string $phase,
+        string $name,
+    ): void {
+        if (self::digest($result) !== $expectedDigest) {
+            throw new RuntimeException(sprintf('%s correctness failed for operation %s.', $phase, $name));
+        }
+    }
+
+    /**
+     * @param array<non-empty-string, non-empty-list<float>> $samples
+     * @param array<non-empty-string, string> $digests
+     * @return array<non-empty-string, array<string, mixed>>
+     */
+    private static function summarize(array $samples, array $digests): array
+    {
+        $summaries = [];
+        foreach ($samples as $name => $rawSamples) {
+            $summaries[$name] = self::summarizeOperation($rawSamples, $digests[$name]);
+        }
+
+        return $summaries;
+    }
+
+    /**
+     * @param non-empty-list<float> $rawSamples
+     * @return array<string, mixed>
+     */
+    private static function summarizeOperation(array $rawSamples, string $digest): array
+    {
+        $sorted = $rawSamples;
+        sort($sorted);
+
+        return [
+            'samples_ms' => array_map(static fn (float $sample): float => round($sample, 6), $rawSamples),
+            'minimum_ms' => round($sorted[0], 6),
+            'median_ms' => round($sorted[intdiv(count($sorted), 2)], 6),
+            'maximum_ms' => round($sorted[count($sorted) - 1], 6),
+            'correctness_digest' => $digest,
         ];
     }
 

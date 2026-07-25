@@ -1,0 +1,62 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Oeltima\SimpleQuery\Benchmark;
+
+use PDO;
+
+final class ControlScenarios implements ScenarioFactory
+{
+    #[\Override]
+    public function prepare(ScenarioRequest $request): ?PreparedScenario
+    {
+        return match ($request->name) {
+            ScenarioName::PdoControl10,
+            ScenarioName::PdoControl100,
+            ScenarioName::PdoControl1000,
+            ScenarioName::PdoControl5000 => $this->pdoControl($request),
+            default => null,
+        };
+    }
+
+    private function pdoControl(ScenarioRequest $request): PreparedScenario
+    {
+        $rows = $request->name->dimension() ?? throw new \LogicException('Missing row dimension.');
+        $pdo = $this->pdo();
+        $pdo->exec('CREATE TABLE benchmark_rows (id INTEGER PRIMARY KEY, value_text TEXT NOT NULL)');
+        $insert = $pdo->prepare('INSERT INTO benchmark_rows (id, value_text) VALUES (?, ?)');
+        $generation = 0;
+
+        $operation = static function () use ($pdo, $insert, $rows, &$generation): array {
+            ++$generation;
+            $base = $generation * $rows;
+            $pdo->beginTransaction();
+            for ($row = 1; $row <= $rows; ++$row) {
+                $insert->execute([$base + $row, 'value-' . $row]);
+            }
+            $pdo->commit();
+            $statement = $pdo->prepare(
+                'SELECT id, value_text FROM benchmark_rows WHERE id > ? AND id <= ? ORDER BY id',
+            );
+            $statement->execute([$base, $base + $rows]);
+            $result = $statement->fetchAll();
+
+            return [
+                'row_count' => count($result),
+                'first_value' => $result[0]['value_text'] ?? null,
+                'last_value' => $result[$rows - 1]['value_text'] ?? null,
+            ];
+        };
+
+        return new PreparedScenario(['pdo' => $operation], $pdo, ['rows' => $rows]);
+    }
+
+    private function pdo(): PDO
+    {
+        return new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        ]);
+    }
+}

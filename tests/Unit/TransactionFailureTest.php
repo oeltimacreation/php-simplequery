@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Oeltima\SimpleQuery\Tests\Unit;
 
+use Closure;
 use Oeltima\SimpleQuery\Connection;
 use Oeltima\SimpleQuery\ConnectionOptions;
 use Oeltima\SimpleQuery\Driver;
@@ -75,15 +76,14 @@ final class TransactionFailureTest extends TestCase
         $pdo->failBeginAfterDispatch = true;
         $pdo->failRollback = true;
 
-        try {
-            $connection->transaction(static fn (): string => 'not-called');
-            self::fail('The unrecoverable post-dispatch begin failure unexpectedly succeeded.');
-        } catch (TransactionException $exception) {
-            self::assertSame('begin', $exception->operation);
-            self::assertInstanceOf(PDOException::class, $exception->controlFailure);
-            self::assertInstanceOf(PDOException::class, $exception->recoveryFailure);
-            self::assertTrue($exception->connectionUnusable);
-        }
+        $exception = $this->captureTransactionFailure(
+            static fn () => $connection->transaction(static fn (): string => 'not-called'),
+            'The unrecoverable post-dispatch begin failure unexpectedly succeeded.',
+        );
+        self::assertSame('begin', $exception->operation);
+        self::assertInstanceOf(PDOException::class, $exception->controlFailure);
+        self::assertInstanceOf(PDOException::class, $exception->recoveryFailure);
+        self::assertTrue($exception->connectionUnusable);
 
         $this->assertQuarantined($connection);
         $pdo->failRollback = false;
@@ -226,61 +226,57 @@ final class TransactionFailureTest extends TestCase
 
     public function testNestedSavepointCreationFailureQuarantinesManagedTransaction(): void
     {
-        [$pdo, $connection] = $this->connection();
-
-        try {
-            $connection->transaction(function (Connection $database) use ($pdo): void {
-                $pdo->failControlPrefix = 'SAVEPOINT simplequery_nested_';
-                $database->transaction(static fn (): null => null);
-            });
-            self::fail('The controlled nested savepoint failure unexpectedly succeeded.');
-        } catch (TransactionException $exception) {
-            self::assertSame('savepoint', $exception->operation);
-            self::assertTrue($exception->connectionUnusable);
-        }
-
-        $this->assertQuarantined($connection);
-        $pdo->failControlPrefix = null;
-        $pdo->rollBack();
-        $connection->close();
+        $this->assertNestedSavepointFailure(afterDispatch: false);
     }
 
     public function testPostDispatchNestedSavepointFailureQuarantinesManagedTransaction(): void
     {
-        [$pdo, $connection] = $this->connection();
-
-        try {
-            $connection->transaction(function (Connection $database) use ($pdo): void {
-                $pdo->failControlAfterDispatchPrefix = 'SAVEPOINT simplequery_nested_';
-                $database->transaction(static fn (): null => null);
-            });
-            self::fail('The controlled post-dispatch savepoint failure unexpectedly succeeded.');
-        } catch (TransactionException $exception) {
-            self::assertSame('savepoint', $exception->operation);
-            self::assertInstanceOf(PDOException::class, $exception->controlFailure);
-            self::assertTrue($exception->connectionUnusable);
-        }
-
-        $this->assertQuarantined($connection);
-        $pdo->failControlAfterDispatchPrefix = null;
-        $pdo->rollBack();
-        $connection->close();
+        $this->assertNestedSavepointFailure(afterDispatch: true);
     }
 
     public function testNestedReleaseFailureQuarantinesConnection(): void
     {
-        [$pdo, $connection] = $this->connection();
+        $this->assertNestedReleaseFailure();
+    }
 
-        try {
-            $connection->transaction(function (Connection $database) use ($pdo): void {
-                $pdo->failControlPrefix = 'RELEASE SAVEPOINT simplequery_nested_';
-                $database->transaction(static fn (): null => null);
-            });
-            self::fail('The controlled nested release failure unexpectedly succeeded.');
-        } catch (TransactionException $exception) {
-            self::assertSame('release_savepoint', $exception->operation);
-            self::assertTrue($exception->connectionUnusable);
+    private function assertNestedSavepointFailure(bool $afterDispatch): void
+    {
+        [$pdo, $connection] = $this->connection();
+        if ($afterDispatch) {
+            $pdo->failControlAfterDispatchPrefix = 'SAVEPOINT simplequery_nested_';
+        } else {
+            $pdo->failControlPrefix = 'SAVEPOINT simplequery_nested_';
         }
+
+        $exception = $this->captureNestedTransactionFailure(
+            $connection,
+            'The controlled nested savepoint failure unexpectedly succeeded.',
+        );
+        self::assertSame('savepoint', $exception->operation);
+        self::assertTrue($exception->connectionUnusable);
+        if ($afterDispatch) {
+            self::assertInstanceOf(PDOException::class, $exception->controlFailure);
+            $pdo->failControlAfterDispatchPrefix = null;
+        } else {
+            $pdo->failControlPrefix = null;
+        }
+
+        $this->assertQuarantined($connection);
+        $pdo->rollBack();
+        $connection->close();
+    }
+
+    private function assertNestedReleaseFailure(): void
+    {
+        [$pdo, $connection] = $this->connection();
+        $pdo->failControlPrefix = 'RELEASE SAVEPOINT simplequery_nested_';
+
+        $exception = $this->captureNestedTransactionFailure(
+            $connection,
+            'The controlled nested release failure unexpectedly succeeded.',
+        );
+        self::assertSame('release_savepoint', $exception->operation);
+        self::assertTrue($exception->connectionUnusable);
 
         $pdo->failControlPrefix = null;
         $pdo->rollBack();
@@ -371,6 +367,31 @@ final class TransactionFailureTest extends TestCase
         } catch (TransactionStateException $exception) {
             self::assertTrue($exception->connectionUnusable);
         }
+    }
+
+    /** @param Closure(): mixed $operation */
+    private function captureTransactionFailure(Closure $operation, string $failureMessage): TransactionException
+    {
+        try {
+            $operation();
+            self::fail($failureMessage);
+        } catch (TransactionException $exception) {
+            return $exception;
+        }
+    }
+
+    private function captureNestedTransactionFailure(
+        Connection $connection,
+        string $failureMessage,
+    ): TransactionException {
+        return $this->captureTransactionFailure(
+            static function () use ($connection): void {
+                $connection->transaction(static function (Connection $database): void {
+                    $database->transaction(static fn (): null => null);
+                });
+            },
+            $failureMessage,
+        );
     }
 
     private function throwFailure(\Throwable $failure): void

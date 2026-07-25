@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Oeltima\SimpleQuery\Tests\Unit;
 
+use Closure;
 use Oeltima\SimpleQuery\Connection;
 use Oeltima\SimpleQuery\ConnectionOptions;
 use Oeltima\SimpleQuery\Driver;
@@ -12,6 +13,7 @@ use Oeltima\SimpleQuery\Exception\ConnectionException;
 use Oeltima\SimpleQuery\Exception\TransactionStateException;
 use PDO;
 use PDOStatement;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
@@ -110,26 +112,52 @@ final class ConnectionLifecycleTest extends TestCase
         }
     }
 
-    public function testConnectRejectsDsnAndPdoOptionConflictsBeforeConnecting(): void
+    #[DataProvider('invalidConnectionConfigurations')]
+    public function testConnectRejectsDsnAndPdoOptionConflictsBeforeConnecting(Closure $operation): void
     {
-        $cases = [
+        $this->expectException(ConfigurationException::class);
+
+        $operation();
+    }
+
+    /** @return iterable<string, array{Closure(): mixed}> */
+    public static function invalidConnectionConfigurations(): iterable
+    {
+        yield from self::invalidSqliteConfigurations();
+        yield from self::invalidMySqlConfigurations();
+    }
+
+    /** @return iterable<string, array{Closure(): mixed}> */
+    private static function invalidSqliteConfigurations(): iterable
+    {
+        yield 'sqlite driver with mysql DSN' => [
             static fn () => Connection::connect(Driver::Sqlite, 'mysql:host=localhost;charset=utf8mb4'),
+        ];
+        yield 'mysql driver without charset' => [
             static fn () => Connection::connect(Driver::MySql, 'mysql:host=localhost;dbname=test'),
+        ];
+        yield 'non-exception error mode' => [
             static fn () => Connection::connect(
                 Driver::Sqlite,
                 'sqlite::memory:',
                 pdoOptions: [PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT],
             ),
+        ];
+        yield 'persistent connection' => [
             static fn () => Connection::connect(
                 Driver::Sqlite,
                 'sqlite::memory:',
                 pdoOptions: [PDO::ATTR_PERSISTENT => true],
             ),
+        ];
+        yield 'native prepares for sqlite' => [
             static fn () => Connection::connect(
                 Driver::Sqlite,
                 'sqlite::memory:',
                 pdoOptions: [PDO::ATTR_EMULATE_PREPARES => false],
             ),
+        ];
+        yield 'non-integer PDO attribute' => [
             static fn () => (new ReflectionMethod(Connection::class, 'connect'))->invoke(
                 null,
                 Driver::Sqlite,
@@ -138,35 +166,54 @@ final class ConnectionLifecycleTest extends TestCase
                 null,
                 ['not-an-attribute' => true],
             ),
+        ];
+    }
+
+    /** @return iterable<string, array{Closure(): mixed}> */
+    private static function invalidMySqlConfigurations(): iterable
+    {
+        yield 'found rows enabled' => [
             static fn () => Connection::connect(
                 Driver::MySql,
                 'mysql:host=localhost;dbname=test;charset=utf8mb4',
                 pdoOptions: [PDO::MYSQL_ATTR_FOUND_ROWS => true],
             ),
+        ];
+        yield 'non-boolean emulate prepares' => [
             static fn () => Connection::connect(
                 Driver::MySql,
                 'mysql:host=localhost;dbname=test;charset=utf8mb4',
                 pdoOptions: [PDO::ATTR_EMULATE_PREPARES => 1],
             ),
+        ];
+        yield 'conflicting emulate prepares options' => [
             static fn () => Connection::connect(
                 Driver::MySql,
                 'mysql:host=localhost;dbname=test;charset=utf8mb4',
                 pdoOptions: [PDO::ATTR_EMULATE_PREPARES => true],
                 connectionOptions: new ConnectionOptions(emulatePrepares: false),
             ),
+        ];
+        yield 'duplicate charset' => [
             static fn () => Connection::connect(
                 Driver::MariaDb,
                 'mysql:host=localhost;dbname=test;charset=utf8mb4;charset=utf8mb4',
             ),
+        ];
+        yield 'unsupported charset' => [
             static fn () => Connection::connect(
                 Driver::MySql,
                 'mysql:host=localhost;dbname=test;charset=latin1',
             ),
+        ];
+        yield 'non-boolean buffered query option' => [
             static fn () => Connection::connect(
                 Driver::MySql,
                 'mysql:host=localhost;dbname=test;charset=utf8mb4',
                 pdoOptions: [PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => 1],
             ),
+        ];
+        yield 'conflicting buffered query options' => [
             static fn () => Connection::connect(
                 Driver::MariaDb,
                 'mysql:host=localhost;dbname=test;charset=utf8mb4',
@@ -174,17 +221,6 @@ final class ConnectionLifecycleTest extends TestCase
                 connectionOptions: new ConnectionOptions(bufferedQueries: true),
             ),
         ];
-
-        $rejections = 0;
-        foreach ($cases as $operation) {
-            try {
-                $operation();
-                self::fail('An invalid connection configuration unexpectedly succeeded.');
-            } catch (ConfigurationException) {
-                ++$rejections;
-            }
-        }
-        self::addToAssertionCount($rejections);
     }
 
     public function testCredentialParametersAreMarkedSensitive(): void
