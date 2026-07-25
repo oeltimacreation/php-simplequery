@@ -2,7 +2,7 @@ name: php-simplequery-database-probes
 
 services:
   mariadb:
-    image: mariadb:11.8.8
+    image: mariadb:${MARIADB_VERSION:-11.8.8}
     environment:
       MARIADB_ROOT_PASSWORD: simplequery-root
       MARIADB_DATABASE: simplequery
@@ -23,7 +23,7 @@ services:
     networks: [probe]
 
   mysql:
-    image: mysql:8.0.45
+    image: mysql:${MYSQL_VERSION:-8.0.46}
     environment:
       MYSQL_ROOT_PASSWORD: simplequery-root
       MYSQL_DATABASE: simplequery
@@ -35,7 +35,7 @@ services:
     ports:
       - "13307:3306"
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      test: ["CMD-SHELL", "MYSQL_PWD=$$MYSQL_ROOT_PASSWORD mysql -h 127.0.0.1 -uroot -Nse 'SELECT 1'"]
       interval: 5s
       timeout: 5s
       retries: 30

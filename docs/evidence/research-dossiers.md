@@ -58,7 +58,8 @@ ADRs 005, 006, 008, 009, 011, and 017 own the affected product policies.
   [SQL modes](https://dev.mysql.com/doc/refman/8.0/en/sql-mode.html),
   [implicit commits](https://dev.mysql.com/doc/refman/8.0/en/implicit-commit.html),
   and [savepoints](https://dev.mysql.com/doc/refman/8.0/en/savepoint.html).
-- Runtime/configuration: exact public fixture `mysql:8.0.45`, InnoDB,
+- Runtime/configuration: exact public fixtures `mysql:8.0.11` and
+  `mysql:8.0.46`, InnoDB,
   `utf8mb4`, changed-row counts, native/emulated prepares, and
   buffered/unbuffered PDO. The deployed minimum patch remains inventory.
 - Reproduction: direct `mysql` target in `run-services.sh`.

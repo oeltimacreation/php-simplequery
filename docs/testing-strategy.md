@@ -100,10 +100,12 @@ bash tools/database-probes/run-services.sh
 
 Coverage, the SQLite-only behavior/execution probes, and benchmarks run with
 `composer test:coverage`, `composer coverage:check`,
+`composer test:coverage:branch`, `composer coverage:check:branch`,
 `composer probe:sqlite`, `composer probe:execution -- sqlite`,
 `composer probe:transaction -- sqlite`, `composer probe:migration -- sqlite`,
 `composer migration:check`, `composer benchmark:migration`, and
-`composer benchmark`. CI commands match local
+`composer benchmark`. The scheduled service workflow also produces direct,
+proxy, and multiprocess-soak benchmark artifacts. CI commands match local
 commands and report fixture driver, version, SQLSTATE, placeholder SQL, and
 setup context without leaking binding values. Naming, cleanup, and evidence
 formats are frozen in [testing architecture](testing-architecture.md).
@@ -113,8 +115,8 @@ formats are frozen in [testing architecture](testing-architecture.md).
 The CI surface includes:
 
 1. PHP 8.2 through the current supported PHP release;
-2. live MariaDB at the minimum/current supported versions;
-3. live MySQL at the minimum/current supported versions;
+2. live MariaDB 11.8.2 and 11.8.8 fixtures;
+3. live MySQL 8.0.11 and 8.0.46 fixtures;
 4. PDO SQLite on each PHP runtime with linked SQLite version reporting;
 5. scheduled/release ProxySQL and MaxScale compatibility jobs;
 6. Composer validation/audit, PHPUnit, PHPStan, PHPCS, and coverage;

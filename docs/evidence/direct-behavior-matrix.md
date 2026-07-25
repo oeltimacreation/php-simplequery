@@ -2,10 +2,11 @@
 
 Status: executable fixture matrix; deployment columns require archived reports.
 
-The public fixtures are MariaDB 11.8.8, MySQL 8.0.45, and the linked SQLite
-runtime (minimum 3.39.2). Every MariaDB/MySQL row is run with native/emulated
-prepares and buffered/unbuffered queries. JSON retains concrete values and PHP
-types instead of flattening differences into a false portable result.
+The public direct fixtures pair MariaDB 11.8.2/11.8.8 and MySQL
+8.0.11/8.0.46, plus the linked SQLite runtime (minimum 3.39.2). Every
+MariaDB/MySQL row is run with native/emulated prepares and buffered/unbuffered
+queries. JSON retains concrete values and PHP types instead of flattening
+differences into a false portable result.
 
 The 2026-07-17 bootstrap run completed all 17 reports with no failed probe
 observations. On the MariaDB/MySQL controls, generated IDs arrived as strings,
@@ -13,6 +14,11 @@ unchanged updates returned zero, DDL ended the physical transaction, buffered
 connections allowed the active-cursor second-statement probe, and unbuffered
 connections rejected it. The redacted values are retained in
 [`fixture-baseline.json`](fixture-baseline.json).
+
+The 2026-07-26 Phase 3 run repeated the complete direct profile, execution,
+transaction, and migration matrix on all four minimum/current versions. Each
+version produced 48 observed profile cases, 17 passed execution cases, 15
+passed transaction cases, and 8 passed migration cases.
 
 Phase 2 adds separate native-buffered public executor smokes for SQLite,
 MariaDB, and MySQL. They cover DSN construction, explicit bindings, object and
@@ -27,8 +33,8 @@ external ownership rejection, direct-PDO state loss, DDL behavior, observer
 depth, every tracked-cursor completion boundary, replacement, and lifecycle.
 Controlled PDO tests inject begin, savepoint, release, rollback-to, commit, and
 rollback failures that cannot be induced deterministically on a live server.
-All 15 checks passed on SQLite 3.45.1, MariaDB 11.8.8, and MySQL 8.0.45 in the
-2026-07-17 fixture run.
+All 15 checks passed on SQLite 3.45.1 and on both exact MariaDB/MySQL versions
+in the maintained direct matrix.
 
 The synthetic migration smoke adds eight checks for CRUD/write returns,
 injected-model joins, deferred raw reports, vendor date expressions, direct

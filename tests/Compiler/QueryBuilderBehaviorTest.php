@@ -9,6 +9,7 @@ use Oeltima\SimpleQuery\Driver;
 use Oeltima\SimpleQuery\Exception\InvalidQueryException;
 use Oeltima\SimpleQuery\Exception\UnsupportedFeatureException;
 use Oeltima\SimpleQuery\Expression\Identifier;
+use Oeltima\SimpleQuery\Internal\Compiler\CompilerFactory;
 use Oeltima\SimpleQuery\JoinClause;
 use Oeltima\SimpleQuery\Testing\CompiledQueryAssertions;
 use Oeltima\SimpleQuery\Testing\CompiledWriteQuery;
@@ -29,6 +30,32 @@ final class QueryBuilderBehaviorTest extends TestCase
         self::assertNotSame($first, $second);
         self::assertEquals($first, $second);
         self::assertSame('SELECT * FROM "users" WHERE "active" = ? ORDER BY "id" ASC LIMIT 5', $first->sql);
+    }
+
+    public function testAmbiguousNonCountScalarAggregateShapesAreRejectedWithoutMutatingBuilder(): void
+    {
+        $db = CompilerConnection::for(Driver::Sqlite);
+        $compiler = CompilerFactory::for(Driver::Sqlite);
+        $queries = [
+            $db->table('payments')->distinct(),
+            $db->table('payments')->groupBy('account_id'),
+            $db->table('payments')->having('amount', '>', 0),
+        ];
+
+        foreach ($queries as $query) {
+            foreach (['SUM', 'AVG', 'MIN', 'MAX'] as $function) {
+                try {
+                    $compiler->aggregate($query->snapshotForCompilation(), $function, Identifier::of('amount'));
+                    self::fail(sprintf('%s unexpectedly accepted an ambiguous scalar shape.', $function));
+                } catch (UnsupportedFeatureException) {
+                    self::addToAssertionCount(1);
+                }
+            }
+        }
+
+        self::assertSame('SELECT DISTINCT * FROM "payments"', $queries[0]->compile()->sql);
+        self::assertSame('SELECT * FROM "payments" GROUP BY "account_id"', $queries[1]->compile()->sql);
+        self::assertSame('SELECT * FROM "payments" HAVING "amount" > ?', $queries[2]->compile()->sql);
     }
 
     public function testFreshBuildersAndClonesHaveIndependentState(): void

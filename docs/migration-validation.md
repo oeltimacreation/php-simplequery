@@ -22,8 +22,10 @@ and its deterministic summary is
 | Complex list/join | Mutable filters, grouped predicate, inner/left joins, pagination, logical count | Direct PDO query/result parity on every live target | Medium / medium |
 
 All five slices pass. The service matrix adds eight migration observations for
-each of SQLite 3.45.1, MariaDB 11.8.8, MySQL 8.0.45, ProxySQL 3.0.1, and
-MaxScale 23.02.17-2: 40 passed observations and no failures.
+each current SQLite, MariaDB, MySQL, ProxySQL, and MaxScale target. Direct CI
+also runs the same eight cases on minimum MariaDB 11.8.2 and MySQL 8.0.11
+fixtures. The 2026-07-26 direct minimum/current run passed all 32 engine-version
+cases without failure.
 
 ## Change and ambiguity measurements
 

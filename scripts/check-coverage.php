@@ -8,7 +8,8 @@ $arguments = $_SERVER['argv'] ?? [];
 if (count($arguments) < 2) {
     fwrite(
         STDERR,
-        "Usage: check-coverage.php <clover.xml> --line=90 --branch=80 --compiler-line=95 --compiler-branch=90\n",
+        "Usage: check-coverage.php <clover.xml> --line=90 [--branch=80] "
+        . "--compiler-line=95 [--compiler-branch=90]\n",
     );
     exit(2);
 }
@@ -16,9 +17,9 @@ if (count($arguments) < 2) {
 $reportPath = $arguments[1];
 $thresholds = [
     'line' => 90.0,
-    'branch' => 80.0,
+    'branch' => null,
     'compiler-line' => 95.0,
-    'compiler-branch' => 90.0,
+    'compiler-branch' => null,
 ];
 
 foreach (array_slice($arguments, 2) as $argument) {
@@ -99,23 +100,26 @@ foreach ($compilerMetrics as $metrics) {
     }
 }
 
-$checks = [
-    ['Overall line', $percentage($overall, 'lines', 'covered_lines'), $thresholds['line']],
-    ['Overall branch', $percentage($overall, 'branches', 'covered_branches'), $thresholds['branch']],
-];
+$checks = [['Overall line', $percentage($overall, 'lines', 'covered_lines'), $thresholds['line']]];
+if ($thresholds['branch'] !== null) {
+    $checks[] = ['Overall branch', $percentage($overall, 'branches', 'covered_branches'), $thresholds['branch']];
+}
 if ($compiler['lines'] > 0) {
     $checks[] = ['Compiler line', $percentage($compiler, 'lines', 'covered_lines'), $thresholds['compiler-line']];
-    $checks[] = [
-        'Compiler branch',
-        $percentage($compiler, 'branches', 'covered_branches'),
-        $thresholds['compiler-branch'],
-    ];
+    if ($thresholds['compiler-branch'] !== null) {
+        $checks[] = [
+            'Compiler branch',
+            $percentage($compiler, 'branches', 'covered_branches'),
+            $thresholds['compiler-branch'],
+        ];
+    }
 }
 
 $failed = false;
 foreach ($checks as [$label, $actual, $minimum]) {
     if ($actual === null) {
-        printf("%s coverage is not reported by this driver.\n", $label);
+        printf("%s coverage is required but not reported.\n", $label);
+        $failed = true;
         continue;
     }
 

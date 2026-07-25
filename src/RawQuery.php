@@ -13,19 +13,11 @@ final readonly class RawQuery
 
     /**
      * @internal
-     * @param array<array-key, mixed> $bindings
+     * @param list<mixed> $bindings
      */
     public function __construct(private Connection $connection, string $trustedSql, array $bindings = [])
     {
-        if (!array_is_list($bindings)) {
-            throw new Exception\InvalidQueryException('Raw query bindings must be an ordered list.');
-        }
-
-        $normalized = [];
-        foreach ($bindings as $binding) {
-            $normalized[] = Binding::fromValue($binding);
-        }
-        $this->query = new CompiledQuery($trustedSql, $normalized);
+        $this->query = new CompiledQuery($trustedSql, self::normalizedBindings($bindings));
     }
 
     /** @return list<stdClass> */
@@ -51,14 +43,16 @@ final readonly class RawQuery
         return $this->executor()->firstAssociative($this->query);
     }
 
+    /** @return Cursor<stdClass> */
     public function iterate(): Cursor
     {
-        return $this->executor()->cursor($this->query, false);
+        return $this->executor()->objectCursor($this->query);
     }
 
+    /** @return Cursor<array<string, mixed>> */
     public function iterateAssociative(): Cursor
     {
-        return $this->executor()->cursor($this->query, true);
+        return $this->executor()->associativeCursor($this->query);
     }
 
     public function execute(): int
@@ -69,5 +63,18 @@ final readonly class RawQuery
     private function executor(): Executor
     {
         return new Executor($this->connection);
+    }
+
+    /**
+     * @param array<mixed> $bindings
+     * @return list<Binding>
+     */
+    private static function normalizedBindings(array $bindings): array
+    {
+        if (!array_is_list($bindings)) {
+            throw new Exception\InvalidQueryException('Raw query bindings must be an ordered list.');
+        }
+
+        return array_map(Binding::fromValue(...), $bindings);
     }
 }

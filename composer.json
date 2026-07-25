@@ -44,6 +44,7 @@
     },
     "autoload-dev": {
         "psr-4": {
+            "Oeltima\\SimpleQuery\\Benchmark\\": "benchmarks/",
             "Oeltima\\SimpleQuery\\Tests\\": "tests/",
             "Oeltima\\SimpleQuery\\Tools\\DatabaseProbe\\": "tools/database-probes/src/",
             "Oeltima\\SimpleQuery\\Tools\\Migration\\": "tools/migration/"
@@ -52,8 +53,11 @@
     "scripts": {
         "test": "phpunit --no-coverage",
         "test:coverage": "php scripts/run-coverage.php",
-        "coverage:check": "php scripts/check-coverage.php coverage/clover.xml --line=90 --branch=80 --compiler-line=95 --compiler-branch=90",
+        "test:coverage:branch": "php scripts/run-branch-coverage.php",
+        "coverage:check": "php scripts/check-coverage.php coverage/clover.xml --line=90 --compiler-line=95",
+        "coverage:check:branch": "php scripts/check-coverage.php coverage/xdebug-clover.xml --line=90 --branch=80 --compiler-line=95 --compiler-branch=90",
         "phpstan": "phpstan analyse --no-progress",
+        "phpstan:consumer": "phpstan analyse --no-progress --configuration=phpstan.consumer.neon",
         "cs:check": "phpcs",
         "cs:fix": "phpcbf",
         "lint": "php scripts/lint-php.php",
@@ -63,8 +67,13 @@
         "probe:migration": "php tools/database-probes/migration-smoke.php",
         "probe:matrix": "php tools/database-probes/run-matrix.php",
         "migration:check": "php tools/migration/report.php",
-        "benchmark": "php benchmarks/run.php",
+        "benchmark": "php benchmarks/run.php --suite=ci",
+        "benchmark:baseline": "php benchmarks/run.php --suite=baseline",
+        "benchmark:hydration": "php benchmarks/run.php --suite=hydration-experiment --profile=reference --iterations=7 --warmups=2",
         "benchmark:migration": "php benchmarks/migration.php",
+        "benchmark:observer": "php benchmarks/run.php --suite=observer-profile --profile=reference --iterations=7 --warmups=2",
+        "benchmark:reference": "php benchmarks/run.php --suite=full --profile=reference --iterations=7 --warmups=2",
+        "benchmark:soak": "php benchmarks/run.php --suite=soak --profile=reference --iterations=7 --warmups=2",
         "examples:check": [
             "php examples/beginner/first-query.php",
             "php examples/beginner/filter-and-update.php",
@@ -81,6 +90,7 @@
             "@lint",
             "@test",
             "@phpstan",
+            "@phpstan:consumer",
             "@cs:check",
             "@examples:check",
             "@migration:check",

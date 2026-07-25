@@ -115,12 +115,9 @@ abstract class AbstractDialectCompiler implements DialectCompiler
         string $function,
         Identifier|RawExpression $column,
     ): CompiledQuery {
-        if (!in_array($function, ['SUM', 'AVG', 'MIN', 'MAX'], true)) {
-            throw new InvalidQueryException('Unknown aggregate function.');
-        }
-        if ($column instanceof Identifier && ($column->wildcard || $column->alias !== null)) {
-            throw new InvalidQueryException('Aggregate columns cannot be wildcards or aliases.');
-        }
+        $this->validateAggregateFunction($function);
+        $this->validateAggregateColumn($column);
+        $this->validateScalarAggregateShape($state);
 
         $expressionContext = new CompilationContext();
         $columnSql = $this->expression($column, $expressionContext);
@@ -131,6 +128,34 @@ abstract class AbstractDialectCompiler implements DialectCompiler
         )];
 
         return $this->select($aggregateState);
+    }
+
+    private function validateAggregateFunction(string $function): void
+    {
+        if (!in_array($function, ['SUM', 'AVG', 'MIN', 'MAX'], true)) {
+            throw new InvalidQueryException('Unknown aggregate function.');
+        }
+    }
+
+    private function validateAggregateColumn(Identifier|RawExpression $column): void
+    {
+        if (!$column instanceof Identifier) {
+            return;
+        }
+        if ($column->wildcard || $column->alias !== null) {
+            throw new InvalidQueryException('Aggregate columns cannot be wildcards or aliases.');
+        }
+    }
+
+    private function validateScalarAggregateShape(QueryState $state): void
+    {
+        if (!$state->distinct && $state->groups === [] && $state->having->isEmpty()) {
+            return;
+        }
+
+        throw new UnsupportedFeatureException(
+            'Non-count scalar aggregates do not support distinct, grouping, or HAVING clauses.',
+        );
     }
 
     #[\Override]

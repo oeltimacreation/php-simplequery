@@ -1,0 +1,8 @@
+parameters:
+    level: 9
+    paths:
+        - tests/Fixtures/Consumer/static-analysis.php
+    bootstrapFiles:
+        - vendor/autoload.php
+    tmpDir: .phpstan.consumer.cache
+    phpVersion: 80200

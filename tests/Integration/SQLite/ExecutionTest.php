@@ -12,9 +12,11 @@ use Oeltima\SimpleQuery\Exception\ConnectionException;
 use Oeltima\SimpleQuery\Exception\InvalidQueryException;
 use Oeltima\SimpleQuery\Exception\QueryExecutionException;
 use Oeltima\SimpleQuery\Exception\TransactionStateException;
+use Oeltima\SimpleQuery\Exception\UnsupportedFeatureException;
 use Oeltima\SimpleQuery\Observability\QueryExecution;
 use Oeltima\SimpleQuery\Observability\QueryObserver;
 use Oeltima\SimpleQuery\ParameterType;
+use Oeltima\SimpleQuery\QueryBuilder;
 use Oeltima\SimpleQuery\Testing\RecordingQueryObserver;
 use PDOException;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
@@ -149,6 +151,43 @@ final class ExecutionTest extends TestCase
         self::assertNull($this->connection->table('users')->where('id', '<', 0)->average('score'));
     }
 
+    public function testNonCountScalarAggregatesRejectMultiRowAndDistinctShapes(): void
+    {
+        $this->seedUsers();
+        $terminals = [
+            'sum' => static fn (QueryBuilder $query): mixed => $query->sum('score'),
+            'average' => static fn (QueryBuilder $query): mixed => $query->average('score'),
+            'min' => static fn (QueryBuilder $query): mixed => $query->min('score'),
+            'max' => static fn (QueryBuilder $query): mixed => $query->max('score'),
+        ];
+        $builders = [
+            'distinct' => fn () => $this->connection->table('users')->distinct(),
+            'grouped' => fn () => $this->connection->table('users')->groupBy('category'),
+            'having' => fn () => $this->connection->table('users')->having('score', '>', 0),
+        ];
+
+        foreach ($terminals as $terminal) {
+            foreach ($builders as $builder) {
+                try {
+                    $terminal($builder());
+                    self::fail('An ambiguous non-count scalar aggregate unexpectedly executed.');
+                } catch (UnsupportedFeatureException) {
+                    self::addToAssertionCount(1);
+                }
+            }
+        }
+
+        self::assertSame(
+            40.5,
+            $this->connection
+                ->table('users', 'u')
+                ->join('users', 'users.id', '=', 'u.id')
+                ->where('u.active', true)
+                ->sum('u.score'),
+        );
+        self::assertSame(3, $this->connection->table('users')->groupBy('category')->count());
+    }
+
     public function testEveryConcreteBindingTypeIsBoundExplicitly(): void
     {
         $this->connection->pdo()->exec(
@@ -206,7 +245,6 @@ final class ExecutionTest extends TestCase
         $cursor = $this->connection->query('SELECT * FROM users ORDER BY id')->iterateAssociative();
         $names = [];
         foreach ($cursor as $associativeRow) {
-            self::assertIsArray($associativeRow);
             $names[] = $associativeRow['name'];
         }
         self::assertSame(['Ada', 'Grace', 'Linus', 'Margaret'], $names);
@@ -222,7 +260,7 @@ final class ExecutionTest extends TestCase
         $early = $this->connection->query('SELECT * FROM users ORDER BY id')->iterate();
         try {
             foreach ($early as $objectRow) {
-                self::assertInstanceOf(stdClass::class, $objectRow);
+                self::assertSame('Ada', $objectRow->name);
                 break;
             }
         } finally {

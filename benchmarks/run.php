@@ -2,113 +2,149 @@
 
 declare(strict_types=1);
 
-use Oeltima\SimpleQuery\Driver;
-use Oeltima\SimpleQuery\Testing\CompilerConnection;
+use Oeltima\SimpleQuery\Benchmark\Harness;
+use Oeltima\SimpleQuery\Benchmark\BenchmarkSuite;
+use Oeltima\SimpleQuery\Benchmark\EnvironmentRequest;
+use Oeltima\SimpleQuery\Benchmark\ScenarioCatalog;
 
-require dirname(__DIR__) . '/vendor/autoload.php';
+require __DIR__ . '/bootstrap.php';
 
-if (!in_array('sqlite', PDO::getAvailableDrivers(), true)) {
-    fwrite(STDERR, "The PDO SQLite benchmark control requires pdo_sqlite.\n");
-    exit(1);
+/** @var array<string, false|string> $options */
+$options = getopt('', ['suite:', 'scenario:', 'profile:', 'iterations:', 'warmups:', 'autoload:', 'list']);
+$environmentSuite = getenv('SIMPLEQUERY_BENCHMARK_DEFAULT_SUITE');
+$defaultSuite = is_string($environmentSuite) && $environmentSuite !== '' ? $environmentSuite : 'ci';
+$suiteName = is_string($options['suite'] ?? null) ? $options['suite'] : $defaultSuite;
+$profile = is_string($options['profile'] ?? null) ? $options['profile'] : 'ci';
+$iterations = filter_var($options['iterations'] ?? 5, FILTER_VALIDATE_INT);
+$warmups = filter_var($options['warmups'] ?? 1, FILTER_VALIDATE_INT);
+$autoload = is_string($options['autoload'] ?? null)
+    ? $options['autoload']
+    : dirname(__DIR__) . '/vendor/autoload.php';
+
+if ($profile !== 'ci' && $profile !== 'reference') {
+    throw new RuntimeException('Benchmark profile must be ci or reference.');
+}
+if (!is_int($iterations) || $iterations < 1 || $iterations % 2 === 0) {
+    throw new RuntimeException('Benchmark iterations must be a positive odd integer.');
+}
+if (!is_int($warmups) || $warmups < 1) {
+    throw new RuntimeException('Benchmark warm-ups must be positive.');
+}
+if (!is_file($autoload)) {
+    throw new RuntimeException(sprintf('Benchmark autoloader does not exist: %s', $autoload));
 }
 
-$benchmarkQuery = static function (PDO $pdo, string $sql): PDOStatement {
-    $statement = $pdo->query($sql);
-    if (!$statement instanceof PDOStatement) {
-        throw new RuntimeException('The benchmark query did not return a statement.');
+$suite = BenchmarkSuite::tryFrom($suiteName)
+    ?? throw new RuntimeException(sprintf('Unknown benchmark suite "%s".', $suiteName));
+$scenarios = ScenarioCatalog::suite($suite);
+if (array_key_exists('list', $options)) {
+    fwrite(STDOUT, implode(PHP_EOL, $scenarios) . PHP_EOL);
+    exit(0);
+}
+if (is_string($options['scenario'] ?? null)) {
+    if (!in_array($options['scenario'], $scenarios, true)) {
+        throw new RuntimeException('Requested scenario is not part of the selected suite.');
     }
+    $scenarios = [$options['scenario']];
+}
 
-    return $statement;
-};
-
-$iterations = 5;
-$sizes = [10, 100, 1_000, 5_000];
-$results = [];
-
-foreach ($sizes as $size) {
-    $samples = [];
-    for ($iteration = 0; $iteration < $iterations; ++$iteration) {
-        $pdo = new PDO('sqlite::memory:', null, null, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        ]);
-        $pdo->exec('CREATE TABLE benchmark_rows (id INTEGER PRIMARY KEY, value_text TEXT NOT NULL)');
-        $insert = $pdo->prepare('INSERT INTO benchmark_rows (id, value_text) VALUES (?, ?)');
-
-        $started = hrtime(true);
-        $pdo->beginTransaction();
-        for ($row = 1; $row <= $size; ++$row) {
-            $insert->execute([$row, 'value-' . $row]);
-        }
-        $pdo->commit();
-        $rows = $benchmarkQuery($pdo, 'SELECT id, value_text FROM benchmark_rows ORDER BY id')->fetchAll();
-        $elapsedNanoseconds = hrtime(true) - $started;
-
-        if (count($rows) !== $size) {
-            throw new RuntimeException('The benchmark correctness check failed.');
-        }
-
-        $samples[] = $elapsedNanoseconds / 1_000_000;
-    }
-
-    sort($samples);
-    $results[] = [
-        'size' => $size,
-        'iterations' => $iterations,
-        'median_ms' => round($samples[2], 3),
-        'minimum_ms' => round($samples[0], 3),
-        'maximum_ms' => round($samples[4], 3),
-        'milliseconds_per_row_at_median' => round($samples[2] / $size, 6),
+$reports = [];
+foreach ($scenarios as $scenario) {
+    $command = [
+        PHP_BINARY,
+        '-d',
+        'pcov.enabled=0',
+        '-d',
+        'xdebug.mode=off',
+        __DIR__ . '/worker.php',
+        '--scenario=' . $scenario,
+        '--profile=' . $profile,
+        '--iterations=' . $iterations,
+        '--warmups=' . $warmups,
+        '--autoload=' . $autoload,
     ];
-}
-
-$compilerResults = [];
-foreach ([10, 100, 1_000] as $size) {
-    $samples = [];
-    for ($iteration = 0; $iteration < $iterations; ++$iteration) {
-        $connection = CompilerConnection::for(Driver::Sqlite);
-        $query = $connection->table('benchmark_rows')->select('id');
-
-        $started = hrtime(true);
-        for ($predicate = 0; $predicate < $size; ++$predicate) {
-            $query->where('id', '>=', $predicate);
-        }
-        $compiled = $query->compile();
-        $elapsedNanoseconds = hrtime(true) - $started;
-
-        if (count($compiled->bindings) !== $size || !str_starts_with($compiled->sql, 'SELECT "id"')) {
-            throw new RuntimeException('The compiler benchmark correctness check failed.');
-        }
-
-        $samples[] = $elapsedNanoseconds / 1_000_000;
+    $escaped = array_map('escapeshellarg', $command);
+    $output = [];
+    $status = 0;
+    exec(implode(' ', $escaped) . ' 2>&1', $output, $status);
+    $json = implode("\n", $output);
+    if ($status !== 0) {
+        throw new RuntimeException(sprintf('Scenario %s failed: %s', $scenario, $json));
     }
-
-    sort($samples);
-    $compilerResults[] = [
-        'predicate_count' => $size,
-        'iterations' => $iterations,
-        'median_ms' => round($samples[2], 3),
-        'minimum_ms' => round($samples[0], 3),
-        'maximum_ms' => round($samples[4], 3),
-        'milliseconds_per_predicate_at_median' => round($samples[2] / $size, 6),
-    ];
+    $report = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+    $correctness = is_array($report) ? ($report['correctness'] ?? null) : null;
+    if (!is_array($report) || !is_array($correctness) || ($correctness['accepted'] ?? false) !== true) {
+        throw new RuntimeException(sprintf('Scenario %s emitted no accepted correctness result.', $scenario));
+    }
+    $reports[] = $report;
 }
 
-fwrite(
-    STDOUT,
-    json_encode(
-        [
-            'schema_version' => 1,
-            'benchmark' => 'pdo_sqlite_harness_control',
-            'purpose' => 'retain a PDO control and measure deterministic compiler predicate scaling',
-            'php_version' => PHP_VERSION,
-            'sqlite_version' => $benchmarkQuery(
-                new PDO('sqlite::memory:'),
-                'SELECT sqlite_version()',
-            )->fetchColumn(),
-            'results' => $results,
-            'compiler_predicate_scaling' => $compilerResults,
-        ],
-        JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR,
-    ) . PHP_EOL,
-);
+$scaling = [];
+$predicateMedians = [];
+foreach ($reports as $report) {
+    $name = $report['scenario'] ?? null;
+    if (!is_string($name) || !str_starts_with($name, 'compiler_predicates_')) {
+        continue;
+    }
+    $dimensions = $report['dimensions'] ?? null;
+    $measurement = $report['measurement'] ?? null;
+    $operations = is_array($measurement) ? ($measurement['operations'] ?? null) : null;
+    $simpleQuery = is_array($operations) ? ($operations['simplequery'] ?? null) : null;
+    $predicates = is_array($dimensions) ? ($dimensions['predicates'] ?? null) : null;
+    $median = is_array($simpleQuery) ? ($simpleQuery['median_ms'] ?? null) : null;
+    if (is_int($predicates) && (is_int($median) || is_float($median))) {
+        $predicateMedians[$predicates] = (float) $median;
+    }
+}
+
+if ($suite === BenchmarkSuite::HydrationExperiment) {
+    $hydrationDigests = [];
+    foreach ($reports as $report) {
+        $correctness = $report['correctness'] ?? null;
+        $digest = is_array($correctness) ? ($correctness['common_digest'] ?? null) : null;
+        if (!is_string($digest)) {
+            throw new RuntimeException('Hydration experiment scenario has no correctness digest.');
+        }
+        $hydrationDigests[] = $digest;
+    }
+    if (count(array_unique($hydrationDigests)) !== 1) {
+        throw new RuntimeException('Hydration experiment modes produced different result digests.');
+    }
+}
+ksort($predicateMedians);
+$previousSize = null;
+$previousMedian = null;
+foreach ($predicateMedians as $size => $median) {
+    $scaling[] = [
+        'predicates' => $size,
+        'median_ms' => $median,
+        'milliseconds_per_predicate' => round($median / $size, 9),
+        'size_ratio_from_previous' => $previousSize === null ? null : $size / $previousSize,
+        'time_ratio_from_previous' => $previousMedian === null || $previousMedian === 0.0
+            ? null
+            : round($median / $previousMedian, 6),
+    ];
+    $previousSize = $size;
+    $previousMedian = $median;
+}
+
+$runnerRoot = dirname(__DIR__);
+$runnerEnvironment = Harness::environment(EnvironmentRequest::from(['package_root' => $runnerRoot]));
+$envelope = [
+    'schema_version' => 2,
+    'benchmark' => 'php-simplequery-reproducible-suite',
+    'collected_at' => gmdate(DATE_ATOM),
+    'suite' => $suite->value,
+    'profile' => $profile,
+    'runner_environment' => $runnerEnvironment,
+    'policy' => [
+        'correctness_required_before_timing_and_after_every_sample' => true,
+        'fixture_setup_excluded' => true,
+        'fresh_process_per_scenario' => true,
+        'absolute_timing_thresholds' => false,
+    ],
+    'compiler_scaling' => $scaling,
+    'scenarios' => $reports,
+];
+
+fwrite(STDOUT, json_encode($envelope, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . PHP_EOL);

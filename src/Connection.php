@@ -124,7 +124,7 @@ final class Connection
         return new RawExpression($trustedSql, $bindings);
     }
 
-    /** @param array<array-key, mixed> $bindings */
+    /** @param list<mixed> $bindings */
     public function query(string $trustedSql, array $bindings = []): RawQuery
     {
         $this->assertCanCreateQuery();
@@ -217,6 +217,12 @@ final class Connection
         if ($this->activeCursors > 0) {
             --$this->activeCursors;
         }
+    }
+
+    /** @internal */
+    public function quarantine(): void
+    {
+        $this->transactionManager->quarantine();
     }
 
     /** @internal */

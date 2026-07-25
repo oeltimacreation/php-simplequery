@@ -61,6 +61,12 @@ final class TransactionManager
         }
     }
 
+    /** @internal */
+    public function quarantine(): void
+    {
+        $this->markUnusable();
+    }
+
     /**
      * @template T
      * @param Closure(Connection): T $callback
@@ -68,43 +74,9 @@ final class TransactionManager
      */
     private function runOuter(PDO $pdo, Closure $callback): mixed
     {
-        if ($this->physicalTransactionActive($pdo, 'begin')) {
-            throw new ExternalTransactionException(
-                'SimpleQuery cannot adopt an externally started transaction.',
-                operation: 'begin',
-                driver: $this->connection->driver(),
-                connectionLabel: $this->connection->connectionOptions()->label,
-            );
-        }
-
-        try {
-            $this->begin($pdo);
-        } catch (Throwable $failure) {
-            throw $this->controlException('Could not begin the managed transaction.', 'begin', 0, $failure);
-        }
-
-        $guard = $this->nextSavepoint('root');
-        try {
-            $this->savepoint($pdo, $guard);
-        } catch (Throwable $failure) {
-            $recoveryFailure = $this->tryPhysicalRollback($pdo);
-            if ($recoveryFailure !== null) {
-                $this->markUnusable();
-            } else {
-                $this->resetManagedState();
-            }
-
-            throw new TransactionException(
-                'Could not establish the managed transaction ownership guard.',
-                operation: 'begin_guard',
-                managedDepth: 0,
-                driver: $this->connection->driver(),
-                connectionLabel: $this->connection->connectionOptions()->label,
-                controlFailure: $failure,
-                recoveryFailure: $recoveryFailure,
-                connectionUnusable: $recoveryFailure !== null,
-            );
-        }
+        $this->rejectExternalTransaction($pdo);
+        $this->beginOuterTransaction($pdo);
+        $guard = $this->establishOwnershipGuard($pdo);
 
         $this->depth = 1;
         $this->ownsPhysicalTransaction = true;
@@ -118,6 +90,76 @@ final class TransactionManager
         $this->completeOuterSuccess($pdo, $guard);
 
         return $result;
+    }
+
+    private function rejectExternalTransaction(PDO $pdo): void
+    {
+        if (!$this->physicalTransactionActive($pdo, 'begin')) {
+            return;
+        }
+
+        throw new ExternalTransactionException(
+            'SimpleQuery cannot adopt an externally started transaction.',
+            operation: 'begin',
+            driver: $this->connection->driver(),
+            connectionLabel: $this->connection->connectionOptions()->label,
+        );
+    }
+
+    private function beginOuterTransaction(PDO $pdo): void
+    {
+        try {
+            $this->begin($pdo);
+        } catch (Throwable $failure) {
+            $this->throwOuterStartFailure(
+                $pdo,
+                $failure,
+                'Could not begin the managed transaction.',
+                'begin',
+            );
+        }
+    }
+
+    private function establishOwnershipGuard(PDO $pdo): string
+    {
+        $guard = $this->nextSavepoint('root');
+        try {
+            $this->savepoint($pdo, $guard);
+        } catch (Throwable $failure) {
+            $this->throwOuterStartFailure(
+                $pdo,
+                $failure,
+                'Could not establish the managed transaction ownership guard.',
+                'begin_guard',
+            );
+        }
+
+        return $guard;
+    }
+
+    private function throwOuterStartFailure(
+        PDO $pdo,
+        Throwable $failure,
+        string $message,
+        string $operation,
+    ): never {
+        $recoveryFailure = $this->tryPhysicalRollback($pdo);
+        if ($recoveryFailure === null) {
+            $this->resetManagedState();
+        } else {
+            $this->markUnusable();
+        }
+
+        throw new TransactionException(
+            $message,
+            operation: $operation,
+            managedDepth: 0,
+            driver: $this->connection->driver(),
+            connectionLabel: $this->connection->connectionOptions()->label,
+            controlFailure: $failure,
+            recoveryFailure: $recoveryFailure,
+            connectionUnusable: $recoveryFailure !== null,
+        );
     }
 
     /**
@@ -135,11 +177,16 @@ final class TransactionManager
         try {
             $this->savepoint($pdo, $savepoint);
         } catch (Throwable $failure) {
-            throw $this->controlException(
+            $this->markUnusable();
+
+            throw new TransactionException(
                 'Could not create a nested transaction savepoint.',
-                'savepoint',
-                $scopeDepth,
-                $failure,
+                operation: 'savepoint',
+                managedDepth: $scopeDepth,
+                driver: $this->connection->driver(),
+                connectionLabel: $this->connection->connectionOptions()->label,
+                controlFailure: $failure,
+                connectionUnusable: true,
             );
         }
 
@@ -461,22 +508,6 @@ final class TransactionManager
         } catch (Throwable $failure) {
             return $failure;
         }
-    }
-
-    private function controlException(
-        string $message,
-        string $operation,
-        int $scopeDepth,
-        Throwable $controlFailure,
-    ): TransactionException {
-        return new TransactionException(
-            $message,
-            operation: $operation,
-            managedDepth: $scopeDepth,
-            driver: $this->connection->driver(),
-            connectionLabel: $this->connection->connectionOptions()->label,
-            controlFailure: $controlFailure,
-        );
     }
 
     private function stateException(

@@ -11,9 +11,7 @@ final readonly class CompiledQuery
     /** @var list<Binding> */
     public array $bindings;
 
-    /**
-     * @param array<array-key, Binding> $bindings
-     */
+    /** @param list<Binding> $bindings */
     public function __construct(
         public string $sql,
         array $bindings = [],
@@ -22,15 +20,32 @@ final readonly class CompiledQuery
             throw new InvalidQueryException('Compiled SQL cannot be empty.');
         }
 
-        if (!array_is_list($bindings)) {
-            throw new InvalidQueryException('Compiled bindings must be a list.');
-        }
-
-        $this->bindings = $bindings;
+        $this->bindings = self::validatedBindings($bindings);
         foreach ($this->bindings as $binding) {
             if ($binding->type === ParameterType::Auto) {
                 throw new InvalidQueryException('Compiled bindings must use concrete parameter types.');
             }
         }
+    }
+
+    /**
+     * @param array<mixed> $bindings
+     * @return list<Binding>
+     */
+    private static function validatedBindings(array $bindings): array
+    {
+        if (!array_is_list($bindings)) {
+            throw new InvalidQueryException('Compiled bindings must be a list.');
+        }
+
+        $validated = [];
+        foreach ($bindings as $binding) {
+            if (!$binding instanceof Binding) {
+                throw new InvalidQueryException('Every compiled binding must be a Binding.');
+            }
+            $validated[] = $binding;
+        }
+
+        return $validated;
     }
 }

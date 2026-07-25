@@ -13,10 +13,12 @@ use Oeltima\SimpleQuery\Exception\InvalidQueryException;
 use Oeltima\SimpleQuery\Expression\Identifier;
 use Oeltima\SimpleQuery\Expression\RawExpression;
 use Oeltima\SimpleQuery\ParameterType;
+use Oeltima\SimpleQuery\Observability\QueryExecution;
 use Oeltima\SimpleQuery\SortDirection;
 use Oeltima\SimpleQuery\Tests\Fixtures\TestStatus;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 final class PublicValuesTest extends TestCase
 {
@@ -129,7 +131,7 @@ final class PublicValuesTest extends TestCase
         self::assertSame('SELECT ?', $compiled->sql);
 
         try {
-            new RawExpression('SELECT ?', ['named' => 1]);
+            (new ReflectionClass(RawExpression::class))->newInstanceArgs(['SELECT ?', ['named' => 1]]);
             self::fail('Associative raw bindings should fail.');
         } catch (InvalidQueryException) {
             self::addToAssertionCount(1);
@@ -137,6 +139,47 @@ final class PublicValuesTest extends TestCase
 
         $this->expectException(InvalidQueryException::class);
         new CompiledQuery('SELECT ?', [new Binding(1)]);
+    }
+
+    public function testCompiledQueryRejectsNonBindingMembersAtTheRuntimeBoundary(): void
+    {
+        $this->expectException(InvalidQueryException::class);
+        (new ReflectionClass(CompiledQuery::class))->newInstanceArgs(['SELECT ?', ['not-a-binding']]);
+    }
+
+    /** @param list<mixed> $arguments */
+    #[DataProvider('invalidQueryExecutions')]
+    public function testQueryExecutionValidatesConsumerConstructedValues(array $arguments): void
+    {
+        $this->expectException(InvalidQueryException::class);
+        (new ReflectionClass(QueryExecution::class))->newInstanceArgs($arguments);
+    }
+
+    /** @return iterable<string, array{list<mixed>}> */
+    public static function invalidQueryExecutions(): iterable
+    {
+        $valid = ['SELECT ?', [ParameterType::Integer], 0.1, true, null, Driver::Sqlite, null, 0];
+
+        yield 'parameter types must be a list' => [[
+            'SELECT ?', ['first' => ParameterType::Integer], 0.1, true, null, Driver::Sqlite, null, 0,
+        ]];
+        yield 'parameter type members are validated' => [[
+            'SELECT ?', ['integer'], 0.1, true, null, Driver::Sqlite, null, 0,
+        ]];
+        yield 'SQL is not empty' => [[
+            ' ', [ParameterType::Integer], 0.1, true, null, Driver::Sqlite, null, 0,
+        ]];
+        yield 'duration is non-negative' => [[
+            'SELECT ?', [ParameterType::Integer], -0.1, true, null, Driver::Sqlite, null, 0,
+        ]];
+        yield 'duration is finite' => [[
+            'SELECT ?', [ParameterType::Integer], INF, true, null, Driver::Sqlite, null, 0,
+        ]];
+        yield 'affected rows are non-negative' => [[
+            'SELECT ?', [ParameterType::Integer], 0.1, true, -1, Driver::Sqlite, null, 0,
+        ]];
+        $valid[7] = -1;
+        yield 'transaction depth is non-negative' => [$valid];
     }
 
     public function testConnectionOptionsValidateProfileAndDriverApplicability(): void

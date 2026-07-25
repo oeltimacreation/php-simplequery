@@ -8,6 +8,56 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-26
+
+### Added
+
+- Add an independent level-9 external-consumer PHPStan fixture for callback,
+  positional-binding, and generic cursor inference.
+- Add executable null-containing list, oversized integer string, duplicate/
+  numeric result-column, cursor-observation, connection-policy, and public
+  value-boundary tests.
+- Add a required Xdebug branch/path coverage job and minimum/current MariaDB
+  11.8 and MySQL 8.0 direct-engine fixture matrix.
+- Add a dependency-free, fresh-process benchmark runner with explicit setup,
+  warm-up, correctness digests, alternating direct-PDO controls, raw samples,
+  source/runtime/PDO metadata, PHP memory peaks, process RSS, and retained
+  memory/file-descriptor deltas.
+- Add executable compiler-shape, hydration/cursor, observer, batch, terminal,
+  transaction, lifecycle, migration, live direct/proxy, and multiprocess-soak
+  scenarios, plus an identical-runner `v0.1.0` comparison.
+- Archive deterministic SQLite benchmark reports in pull-request CI and live
+  engine/proxy/soak reports in scheduled and release workflows.
+
+### Changed
+
+- Publish positional bindings as lists, infer typed join/condition callbacks,
+  and expose object/associative cursor row types through PHPDoc generics.
+- Validate consumer-constructed `CompiledQuery` binding members and
+  `QueryExecution` parameter types and numeric metadata at runtime.
+- Make configured branch thresholds fail when Clover omits branch metrics;
+  retain PCOV as the separate fast line-coverage gate.
+- Reduce associative full-result peak memory by validating rows in a one-pass
+  fetch loop, and avoid copying already-validated associative cursor rows.
+- Add paired source-order hydration comparison and realistic observer binding-
+  count/profile commands to the maintained performance harness.
+- Replace the legacy benchmark scripts and overstated planned matrix with the
+  exact schema-version-2 executable scenario and artifact contract.
+- `sum()`, `average()`, `min()`, and `max()` now reject `distinct()`, `GROUP
+  BY`, and `HAVING` query shapes with `UnsupportedFeatureException`; use
+  `count()` for supported logical grouped/distinct counts or select grouped
+  aggregate rows explicitly.
+- Managed transaction startup now verifies physical inactivity after a failed
+  begin, and uncertain nested savepoint creation quarantines the connection.
+
+### Fixed
+
+- Prevent non-count scalar aggregates from silently returning the first value
+  of a multi-row grouped aggregate result.
+- Treat a false or throwing `PDOStatement::closeCursor()` as uncertain
+  connection state, quarantine the connection, and preserve an earlier
+  fetch/result failure as the primary exception when cleanup also fails.
+
 ## [0.1.0] - 2026-07-17
 
 ### Added
@@ -60,4 +110,6 @@ with ZeroVer releases before `1.0.0`.
 - A repeatable direct-migration playbook and complete intentional-difference
   checklist without a runtime Pixie dependency or compatibility façade.
 
-[Unreleased]: https://github.com/oeltimacreation/php-simplequery
+[Unreleased]: https://github.com/oeltimacreation/php-simplequery/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/oeltimacreation/php-simplequery/releases/tag/v0.1.0

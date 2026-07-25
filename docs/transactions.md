@@ -59,6 +59,10 @@ rollback after a callback failure, both failures are retained in a
   connection unusable;
 - commit failure: throw `TransactionException` and attempt rollback only when
   PDO still reports an active transaction;
+- begin failure: inspect physical state, roll back an active transaction, and
+  permit reuse only after inactivity is verified;
+- nested savepoint creation failure: treat dispatch as ambiguous and
+  quarantine the connection because savepoint state cannot be proven;
 - implicit commit or manual transaction-state loss: throw
   `TransactionStateException`;
 - no callback retry, hidden reconnect, or automatic statement replay.

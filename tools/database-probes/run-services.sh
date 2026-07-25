@@ -60,4 +60,26 @@ for target in mariadb mysql proxysql maxscale; do
         --output="${result_dir}/${target}-migration-native-buffered.json"
 done
 
+if [[ "${RUN_BENCHMARKS:-false}" == "true" ]]; then
+    benchmark_result_dir="${project_dir}/benchmarks/results"
+    mkdir -p "${benchmark_result_dir}"
+    find "${benchmark_result_dir}" -mindepth 1 -maxdepth 1 -type f -name '*.json' -delete
+
+    for target in mariadb mysql proxysql maxscale; do
+        php -d pcov.enabled=0 -d xdebug.mode=off "${project_dir}/benchmarks/engine.php" "${target}" \
+            > "${benchmark_result_dir}/${target}.json"
+    done
+
+    soak_pids=()
+    for worker in 1 2 3 4; do
+        php -d pcov.enabled=0 -d xdebug.mode=off "${project_dir}/benchmarks/run.php" \
+            --suite=soak --profile=ci --iterations=5 --warmups=1 \
+            > "${benchmark_result_dir}/soak-${worker}.json" &
+        soak_pids+=("$!")
+    done
+    for soak_pid in "${soak_pids[@]}"; do
+        wait "${soak_pid}"
+    done
+fi
+
 php "${probe_dir}/summarize.php" "${result_dir}"

@@ -55,24 +55,45 @@ final readonly class Executor
             $query,
             false,
             false,
-            function (PDOStatement $statement) use ($query): array {
-                $rows = [];
-                foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $row) {
-                    $result = [];
-                    foreach ($row as $key => $value) {
-                        if (!is_string($key)) {
-                            throw $this->invalidResult('PDO returned a non-string column name.', $query);
-                        }
-                        $result[$key] = $value;
-                    }
-                    $rows[] = $result;
-                }
-
-                return $rows;
-            },
+            fn (PDOStatement $statement): array => $this->fetchAssociativeRows($statement, $query),
         );
 
         return $rows;
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function fetchAssociativeRows(PDOStatement $statement, CompiledQuery $query): array
+    {
+        $rows = [];
+        while (($row = $statement->fetch(PDO::FETCH_ASSOC)) !== false) {
+            $rows[] = $this->validateAssociativeRow($row, $query);
+        }
+
+        return $rows;
+    }
+
+    /** @return array<string, mixed> */
+    private function validateAssociativeRow(mixed $row, CompiledQuery $query): array
+    {
+        if (!is_array($row)) {
+            throw $this->invalidResult('PDO returned an invalid associative result row.', $query);
+        }
+        $this->assertStringKeys($row, $query);
+
+        return $row;
+    }
+
+    /**
+     * @param array<array-key, mixed> $row
+     * @phpstan-assert array<string, mixed> $row
+     */
+    private function assertStringKeys(array $row, CompiledQuery $query): void
+    {
+        foreach (array_keys($row) as $key) {
+            if (!is_string($key)) {
+                throw $this->invalidResult('PDO returned a non-string column name.', $query);
+            }
+        }
     }
 
     public function firstObject(CompiledQuery $query): ?stdClass
@@ -124,19 +145,38 @@ final readonly class Executor
         );
     }
 
-    public function cursor(CompiledQuery $query, bool $associative): Cursor
+    /** @return Cursor<stdClass> */
+    public function objectCursor(CompiledQuery $query): Cursor
     {
-        return $this->attempt(
+        $cursor = $this->attempt(
             $query,
             false,
             true,
-            fn (PDOStatement $statement): Cursor => new Cursor(
+            fn (PDOStatement $statement): Cursor => Cursor::objects(
                 $statement,
                 $this->connection,
                 $query,
-                $associative,
             ),
         );
+
+        return $cursor;
+    }
+
+    /** @return Cursor<array<string, mixed>> */
+    public function associativeCursor(CompiledQuery $query): Cursor
+    {
+        $cursor = $this->attempt(
+            $query,
+            false,
+            true,
+            fn (PDOStatement $statement): Cursor => Cursor::associative(
+                $statement,
+                $this->connection,
+                $query,
+            ),
+        );
+
+        return $cursor;
     }
 
     public function affectedRows(CompiledQuery $query): int
