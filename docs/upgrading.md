@@ -8,7 +8,7 @@ lines. The first public release is `0.1.0`.
 - `0.y.0` may contain documented breaking changes.
 - `0.y.z` patch releases should remain compatible within that minor line,
   except for urgent security or data-integrity fixes.
-- Consumers should pin a tested minor line such as `~0.1.0`.
+- Consumers should pin a tested minor line such as `~0.2.0`.
 - Changelog entries are not a substitute for migration instructions; every
   breaking change must be documented here.
 
@@ -25,13 +25,13 @@ For each future upgrade:
 7. review generated SQL for raw or dialect-specific queries;
 8. deploy through the application's normal staged rollout.
 
-## Installing 0.1.0
+## Installing 0.2.0
 
 ```bash
-composer require oeltimacreation/php-simplequery:^0.1
+composer require oeltimacreation/php-simplequery:^0.2
 ```
 
-`0.1.0` requires PHP 8.2+, `ext-pdo`, and either `pdo_sqlite` or `pdo_mysql`.
+`0.2.0` requires PHP 8.2+, `ext-pdo`, and either `pdo_sqlite` or `pdo_mysql`.
 Select `Driver::MariaDb`, `Driver::MySql`, or `Driver::Sqlite` explicitly. See
 [getting started](getting-started.md) for connection examples and
 [database support](database-support.md) for engine floors.

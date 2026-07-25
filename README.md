@@ -10,7 +10,7 @@ query builder—not an ORM, migration tool, connection pool, or retry layer.
 ## Install
 
 ```bash
-composer require oeltimacreation/php-simplequery:^0.1
+composer require oeltimacreation/php-simplequery:^0.2
 ```
 
 Your PHP installation also needs `ext-pdo` and the matching driver, such as
@@ -96,6 +96,10 @@ composer coverage:check
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md),
 [SUPPORT.md](SUPPORT.md), and [CHANGELOG.md](CHANGELOG.md) for project policy.
+
+## Acknowledgments
+
+PHP SimpleQuery takes inspiration from [Pecee Pixie](https://github.com/skipperbent/pecee-pixie) and the original [Pixie](https://github.com/usmanhalalit/pixie) query builder. We express our gratitude to their authors and contributors for their foundational work in PHP query builder design.
 
 ## License
 
