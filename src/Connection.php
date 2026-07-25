@@ -124,7 +124,7 @@ final class Connection
         return new RawExpression($trustedSql, $bindings);
     }
 
-    /** @param array<array-key, mixed> $bindings */
+    /** @param list<mixed> $bindings */
     public function query(string $trustedSql, array $bindings = []): RawQuery
     {
         $this->assertCanCreateQuery();

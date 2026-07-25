@@ -282,9 +282,6 @@ final class ScenarioCatalog
         $objects = static function () use ($connection): array {
             $result = [];
             foreach ($connection->table('benchmark_rows')->orderBy('id')->iterate() as $row) {
-                if (!is_object($row)) {
-                    throw new RuntimeException('Object cursor returned a non-object row.');
-                }
                 $result[] = get_object_vars($row);
             }
 
@@ -581,9 +578,6 @@ final class ScenarioCatalog
             'cursor_simplequery_object' => static function () use ($connection): array {
                 $result = [];
                 foreach ($connection->table('benchmark_rows')->orderBy('id')->iterate() as $row) {
-                    if (!is_object($row)) {
-                        throw new RuntimeException('Object cursor returned a non-object row.');
-                    }
                     $result[] = get_object_vars($row);
                 }
 

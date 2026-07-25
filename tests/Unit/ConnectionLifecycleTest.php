@@ -154,6 +154,25 @@ final class ConnectionLifecycleTest extends TestCase
                 pdoOptions: [PDO::ATTR_EMULATE_PREPARES => true],
                 connectionOptions: new ConnectionOptions(emulatePrepares: false),
             ),
+            static fn () => Connection::connect(
+                Driver::MariaDb,
+                'mysql:host=localhost;dbname=test;charset=utf8mb4;charset=utf8mb4',
+            ),
+            static fn () => Connection::connect(
+                Driver::MySql,
+                'mysql:host=localhost;dbname=test;charset=latin1',
+            ),
+            static fn () => Connection::connect(
+                Driver::MySql,
+                'mysql:host=localhost;dbname=test;charset=utf8mb4',
+                pdoOptions: [PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => 1],
+            ),
+            static fn () => Connection::connect(
+                Driver::MariaDb,
+                'mysql:host=localhost;dbname=test;charset=utf8mb4',
+                pdoOptions: [PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => false],
+                connectionOptions: new ConnectionOptions(bufferedQueries: true),
+            ),
         ];
 
         $rejections = 0;

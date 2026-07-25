@@ -76,6 +76,30 @@ final class AssociativeHydrationTest extends TestCase
         $connection->close();
     }
 
+    public function testCursorObservationEndsAtHandoffAndFetchFailureDoesNotEmitASecondEvent(): void
+    {
+        ControlledAssociativeStatement::$throwOnFetch = true;
+        [$connection, $observer] = $this->connection();
+
+        $cursor = $connection->query('SELECT 42 AS value')->iterateAssociative();
+        $handoffExecution = $observer->executions()[0] ?? null;
+        self::assertNotNull($handoffExecution);
+        self::assertTrue($handoffExecution->successful);
+
+        try {
+            foreach ($cursor as $_row) {
+            }
+            self::fail('The controlled cursor fetch failure unexpectedly succeeded.');
+        } catch (QueryExecutionException $exception) {
+            self::assertInstanceOf(PDOException::class, $exception->getPrevious());
+        }
+
+        self::assertCount(1, $observer->executions());
+        self::assertTrue($observer->executions()[0]->successful);
+        self::assertTrue(ControlledAssociativeStatement::$closed);
+        $connection->close();
+    }
+
     /** @return iterable<string, array{mixed}> */
     public static function invalidRows(): iterable
     {

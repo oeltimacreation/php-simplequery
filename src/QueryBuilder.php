@@ -72,6 +72,7 @@ final class QueryBuilder
         return $this;
     }
 
+    /** @param (Closure(JoinClause): mixed)|string|Identifier $conditionOrLeft */
     public function join(
         string|Identifier $table,
         Closure|string|Identifier $conditionOrLeft,
@@ -81,6 +82,7 @@ final class QueryBuilder
         return $this->addJoin('INNER', func_num_args(), $table, $conditionOrLeft, $operator, $right);
     }
 
+    /** @param (Closure(JoinClause): mixed)|string|Identifier $conditionOrLeft */
     public function innerJoin(
         string|Identifier $table,
         Closure|string|Identifier $conditionOrLeft,
@@ -90,6 +92,7 @@ final class QueryBuilder
         return $this->addJoin('INNER', func_num_args(), $table, $conditionOrLeft, $operator, $right);
     }
 
+    /** @param (Closure(JoinClause): mixed)|string|Identifier $conditionOrLeft */
     public function leftJoin(
         string|Identifier $table,
         Closure|string|Identifier $conditionOrLeft,
@@ -112,6 +115,7 @@ final class QueryBuilder
         return $this;
     }
 
+    /** @param RawExpression|(Closure(ConditionGroup): mixed)|string|Identifier $subject */
     public function having(
         RawExpression|Closure|string|Identifier $subject,
         mixed $operatorOrValue = null,
@@ -120,6 +124,7 @@ final class QueryBuilder
         return $this->addHaving(false, func_num_args(), $subject, $operatorOrValue, $value);
     }
 
+    /** @param RawExpression|(Closure(ConditionGroup): mixed)|string|Identifier $subject */
     public function orHaving(
         RawExpression|Closure|string|Identifier $subject,
         mixed $operatorOrValue = null,
@@ -209,14 +214,16 @@ final class QueryBuilder
         return $this->executor()->firstAssociative($this->compiledForExecution(true));
     }
 
+    /** @return Cursor<stdClass> */
     public function iterate(): Cursor
     {
-        return $this->executor()->cursor($this->compiledForExecution(), false);
+        return $this->executor()->objectCursor($this->compiledForExecution());
     }
 
+    /** @return Cursor<array<string, mixed>> */
     public function iterateAssociative(): Cursor
     {
-        return $this->executor()->cursor($this->compiledForExecution(), true);
+        return $this->executor()->associativeCursor($this->compiledForExecution());
     }
 
     public function count(): int
@@ -314,6 +321,7 @@ final class QueryBuilder
         return $this->state->where;
     }
 
+    /** @param (Closure(JoinClause): mixed)|string|Identifier $conditionOrLeft */
     private function addJoin(
         string $type,
         int $argumentCount,
@@ -345,6 +353,7 @@ final class QueryBuilder
         return $this;
     }
 
+    /** @param RawExpression|(Closure(ConditionGroup): mixed)|string|Identifier $subject */
     private function addHaving(
         bool $or,
         int $argumentCount,

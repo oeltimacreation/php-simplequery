@@ -125,19 +125,38 @@ final readonly class Executor
         );
     }
 
-    public function cursor(CompiledQuery $query, bool $associative): Cursor
+    /** @return Cursor<stdClass> */
+    public function objectCursor(CompiledQuery $query): Cursor
     {
-        return $this->attempt(
+        $cursor = $this->attempt(
             $query,
             false,
             true,
-            fn (PDOStatement $statement): Cursor => new Cursor(
+            fn (PDOStatement $statement): Cursor => Cursor::objects(
                 $statement,
                 $this->connection,
                 $query,
-                $associative,
             ),
         );
+
+        return $cursor;
+    }
+
+    /** @return Cursor<array<string, mixed>> */
+    public function associativeCursor(CompiledQuery $query): Cursor
+    {
+        $cursor = $this->attempt(
+            $query,
+            false,
+            true,
+            fn (PDOStatement $statement): Cursor => Cursor::associative(
+                $statement,
+                $this->connection,
+                $query,
+            ),
+        );
+
+        return $cursor;
     }
 
     public function affectedRows(CompiledQuery $query): int

@@ -1,6 +1,7 @@
 /vendor/
 /.phpunit.cache/
 /.phpstan.cache/
+/.phpstan.consumer.cache/
 /coverage/
 /build/
 /tools/database-probes/results/

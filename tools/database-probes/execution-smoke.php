@@ -130,6 +130,64 @@ try {
         && ($associative[1]['label'] ?? null) === 'phase2-two',
     );
 
+    $mixedIn = $connection
+        ->table('simplequery_phase2_probe')
+        ->select('label')
+        ->whereIn('decimal_value', [null, '20.5000000000'])
+        ->orderBy('id')
+        ->getAssociative();
+    $mixedNotIn = $connection
+        ->table('simplequery_phase2_probe')
+        ->whereNotIn('decimal_value', [null, '20.5000000000'])
+        ->getAssociative();
+    $nullOnlyIn = $connection
+        ->table('simplequery_phase2_probe')
+        ->whereIn('decimal_value', [null])
+        ->getAssociative();
+    $nullOnlyNotIn = $connection
+        ->table('simplequery_phase2_probe')
+        ->whereNotIn('decimal_value', [null])
+        ->getAssociative();
+    $record(
+        'null_containing_in_three_valued_logic',
+        array_column($mixedIn, 'label') === ['phase2-two']
+        && $mixedNotIn === []
+        && $nullOnlyIn === []
+        && $nullOnlyNotIn === [],
+    );
+
+    $oversizedInteger = '18446744073709551616000000000000000001';
+    $oversizedRow = $connection->query('SELECT ? AS oversized_value', [$oversizedInteger])->firstAssociative();
+    $record(
+        'oversized_integer_string_round_trip',
+        ($oversizedRow['oversized_value'] ?? null) === $oversizedInteger,
+    );
+
+    $duplicateObject = $connection->query(
+        'SELECT 1 AS duplicate_name, 2 AS duplicate_name',
+    )->first();
+    $duplicateAssociative = $connection->query(
+        'SELECT 1 AS duplicate_name, 2 AS duplicate_name',
+    )->firstAssociative();
+    $record(
+        'duplicate_result_column_last_value',
+        ($duplicateObject->duplicate_name ?? null) === 2
+        && $duplicateAssociative === ['duplicate_name' => 2],
+    );
+
+    $numericAlias = $driver === Driver::Sqlite ? '"0"' : '`0`';
+    $numericObject = $connection->query('SELECT 3 AS ' . $numericAlias)->first();
+    $numericAssociativeRejected = false;
+    try {
+        $connection->query('SELECT 3 AS ' . $numericAlias)->firstAssociative();
+    } catch (QueryExecutionException) {
+        $numericAssociativeRejected = true;
+    }
+    $record(
+        'numeric_result_column_policy',
+        ($numericObject->{'0'} ?? null) === 3 && $numericAssociativeRejected,
+    );
+
     $count = $connection->table('simplequery_phase2_probe')->orderBy('id')->limit(1)->count();
     $sum = $connection->table('simplequery_phase2_probe')->sum('decimal_value');
     $record(
@@ -158,7 +216,7 @@ try {
 
     $cursor = $connection->table('simplequery_phase2_probe')->orderBy('id')->iterateAssociative();
     foreach ($cursor as $row) {
-        $record('cursor_first_row', is_array($row) && ($row['label'] ?? null) === 'phase2-one');
+        $record('cursor_first_row', ($row['label'] ?? null) === 'phase2-one');
         break;
     }
     $cursor->close();

@@ -245,7 +245,6 @@ final class ExecutionTest extends TestCase
         $cursor = $this->connection->query('SELECT * FROM users ORDER BY id')->iterateAssociative();
         $names = [];
         foreach ($cursor as $associativeRow) {
-            self::assertIsArray($associativeRow);
             $names[] = $associativeRow['name'];
         }
         self::assertSame(['Ada', 'Grace', 'Linus', 'Margaret'], $names);
@@ -261,7 +260,7 @@ final class ExecutionTest extends TestCase
         $early = $this->connection->query('SELECT * FROM users ORDER BY id')->iterate();
         try {
             foreach ($early as $objectRow) {
-                self::assertInstanceOf(stdClass::class, $objectRow);
+                self::assertSame('Ada', $objectRow->name);
                 break;
             }
         } finally {

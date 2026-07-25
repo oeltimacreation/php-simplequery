@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Oeltima\SimpleQuery;
 
+use Closure;
 use Generator;
 use IteratorAggregate;
 use Oeltima\SimpleQuery\Exception\InvalidQueryException;
@@ -15,24 +16,65 @@ use stdClass;
 use Throwable;
 use Traversable;
 
-/** @implements IteratorAggregate<int, stdClass|array<string, mixed>> */
+/**
+ * @template-covariant TRow of stdClass|array<string, mixed>
+ * @implements IteratorAggregate<int, TRow>
+ */
 final class Cursor implements IteratorAggregate
 {
     private bool $started = false;
 
     private bool $closed = false;
 
-    /** @internal */
-    public function __construct(
+    /** @var Closure(self<TRow>): Traversable<int, TRow> */
+    private readonly Closure $rowsFactory;
+
+    /** @param Closure(self<TRow>): Traversable<int, TRow> $rowsFactory */
+    private function __construct(
         private readonly PDOStatement $statement,
         private readonly Connection $connection,
         private readonly CompiledQuery $query,
-        private readonly bool $associative,
+        Closure $rowsFactory,
     ) {
+        $this->rowsFactory = $rowsFactory;
         $this->connection->registerCursor();
     }
 
-    /** @return Traversable<int, stdClass|array<string, mixed>> */
+    /**
+     * @internal
+     * @return self<stdClass>
+     */
+    public static function objects(
+        PDOStatement $statement,
+        Connection $connection,
+        CompiledQuery $query,
+    ): self {
+        return new self(
+            $statement,
+            $connection,
+            $query,
+            self::objectRowsFor(...),
+        );
+    }
+
+    /**
+     * @internal
+     * @return self<array<string, mixed>>
+     */
+    public static function associative(
+        PDOStatement $statement,
+        Connection $connection,
+        CompiledQuery $query,
+    ): self {
+        return new self(
+            $statement,
+            $connection,
+            $query,
+            self::associativeRowsFor(...),
+        );
+    }
+
+    /** @return Traversable<int, TRow> */
     #[\Override]
     public function getIterator(): Traversable
     {
@@ -44,7 +86,7 @@ final class Cursor implements IteratorAggregate
         }
         $this->started = true;
 
-        return $this->rows();
+        return ($this->rowsFactory)($this);
     }
 
     public function close(): void
@@ -66,44 +108,21 @@ final class Cursor implements IteratorAggregate
         }
     }
 
-    /** @return Generator<int, stdClass|array<string, mixed>> */
-    private function rows(): Generator
+    /** @return Generator<int, stdClass, mixed, void> */
+    private function objectRows(): Generator
     {
         $primaryFailure = null;
 
         try {
             while (!$this->closed) {
                 try {
-                    $row = $this->statement->fetch($this->associative ? PDO::FETCH_ASSOC : PDO::FETCH_OBJ);
+                    $row = $this->statement->fetch(PDO::FETCH_OBJ);
                 } catch (PDOException $exception) {
                     throw $this->executionException($exception);
                 }
 
                 if ($row === false) {
                     return;
-                }
-                if ($this->associative) {
-                    if (!is_array($row)) {
-                        throw QueryExecutionException::invalidResult(
-                            'PDO returned an invalid associative cursor row.',
-                            $this->query->sql,
-                            $this->connection->driver(),
-                            $this->connection->connectionOptions()->label,
-                        );
-                    }
-                    foreach ($row as $key => $_value) {
-                        if (!is_string($key)) {
-                            throw QueryExecutionException::invalidResult(
-                                'PDO returned a cursor row with a non-string column name.',
-                                $this->query->sql,
-                                $this->connection->driver(),
-                                $this->connection->connectionOptions()->label,
-                            );
-                        }
-                    }
-
-                    yield $row;
-                    continue;
                 }
                 if (!$row instanceof stdClass) {
                     throw QueryExecutionException::invalidResult(
@@ -129,6 +148,76 @@ final class Cursor implements IteratorAggregate
                 }
             }
         }
+    }
+
+    /**
+     * @param self<stdClass> $cursor
+     * @return Traversable<int, stdClass>
+     */
+    private static function objectRowsFor(self $cursor): Traversable
+    {
+        return $cursor->objectRows();
+    }
+
+    /** @return Generator<int, array<string, mixed>, mixed, void> */
+    private function associativeRows(): Generator
+    {
+        $primaryFailure = null;
+
+        try {
+            while (!$this->closed) {
+                try {
+                    $row = $this->statement->fetch(PDO::FETCH_ASSOC);
+                } catch (PDOException $exception) {
+                    throw $this->executionException($exception);
+                }
+
+                if ($row === false) {
+                    return;
+                }
+                if (!is_array($row)) {
+                    throw QueryExecutionException::invalidResult(
+                        'PDO returned an invalid associative cursor row.',
+                        $this->query->sql,
+                        $this->connection->driver(),
+                        $this->connection->connectionOptions()->label,
+                    );
+                }
+                foreach ($row as $key => $_value) {
+                    if (!is_string($key)) {
+                        throw QueryExecutionException::invalidResult(
+                            'PDO returned a cursor row with a non-string column name.',
+                            $this->query->sql,
+                            $this->connection->driver(),
+                            $this->connection->connectionOptions()->label,
+                        );
+                    }
+                }
+
+                yield $row;
+            }
+        } catch (Throwable $failure) {
+            $primaryFailure = $failure;
+
+            throw $failure;
+        } finally {
+            try {
+                $this->finalize();
+            } catch (Throwable $cleanupFailure) {
+                if ($primaryFailure === null) {
+                    throw $cleanupFailure;
+                }
+            }
+        }
+    }
+
+    /**
+     * @param self<array<string, mixed>> $cursor
+     * @return Traversable<int, array<string, mixed>>
+     */
+    private static function associativeRowsFor(self $cursor): Traversable
+    {
+        return $cursor->associativeRows();
     }
 
     private function finalize(): void

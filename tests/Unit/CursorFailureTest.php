@@ -23,7 +23,7 @@ final class CursorFailureTest extends TestCase
     public function testClosedCursorCannotBeginIteration(): void
     {
         [$connection, $statement] = $this->statement();
-        $cursor = new Cursor($statement, $connection, new CompiledQuery('SELECT 1 AS value'), true);
+        $cursor = Cursor::associative($statement, $connection, new CompiledQuery('SELECT 1 AS value'));
         $cursor->close();
 
         $this->expectException(InvalidQueryException::class);
@@ -33,7 +33,7 @@ final class CursorFailureTest extends TestCase
     public function testCloseExceptionIsTranslatedAndQuarantinesConnection(): void
     {
         [$connection, $statement] = $this->statement(ThrowingCloseStatement::class);
-        $cursor = new Cursor($statement, $connection, new CompiledQuery('SELECT 1 AS value'), false);
+        $cursor = Cursor::objects($statement, $connection, new CompiledQuery('SELECT 1 AS value'));
 
         try {
             $cursor->close();
@@ -51,7 +51,7 @@ final class CursorFailureTest extends TestCase
     public function testFalseCloseReturnQuarantinesConnection(): void
     {
         [$connection, $statement] = $this->statement(FalseCloseStatement::class);
-        $cursor = new Cursor($statement, $connection, new CompiledQuery('SELECT 1 AS value'), false);
+        $cursor = Cursor::objects($statement, $connection, new CompiledQuery('SELECT 1 AS value'));
 
         try {
             $cursor->close();
@@ -69,7 +69,7 @@ final class CursorFailureTest extends TestCase
     public function testFetchFailureIsTranslatedAndClosesCursor(): void
     {
         [$connection, $statement] = $this->statement(ThrowingFetchStatement::class);
-        $cursor = new Cursor($statement, $connection, new CompiledQuery('SELECT 1 AS value'), false);
+        $cursor = Cursor::objects($statement, $connection, new CompiledQuery('SELECT 1 AS value'));
 
         try {
             foreach ($cursor as $_row) {
@@ -86,7 +86,7 @@ final class CursorFailureTest extends TestCase
     public function testFetchFailureRemainsPrimaryWhenCleanupAlsoFails(): void
     {
         [$connection, $statement] = $this->statement(ThrowingFetchAndCloseStatement::class);
-        $cursor = new Cursor($statement, $connection, new CompiledQuery('SELECT 1 AS value'), false);
+        $cursor = Cursor::objects($statement, $connection, new CompiledQuery('SELECT 1 AS value'));
 
         try {
             foreach ($cursor as $_row) {
@@ -105,7 +105,7 @@ final class CursorFailureTest extends TestCase
     public function testExhaustionCloseFailureIsReportedAndQuarantinesConnection(): void
     {
         [$connection, $statement] = $this->statement(ExhaustingThrowingCloseStatement::class);
-        $cursor = new Cursor($statement, $connection, new CompiledQuery('SELECT 1 AS value'), false);
+        $cursor = Cursor::objects($statement, $connection, new CompiledQuery('SELECT 1 AS value'));
 
         try {
             foreach ($cursor as $_row) {
@@ -124,7 +124,7 @@ final class CursorFailureTest extends TestCase
     public function testDestructorSuppressesCleanupFailureButStillQuarantinesConnection(): void
     {
         [$connection, $statement] = $this->statement(ThrowingCloseStatement::class);
-        $cursor = new Cursor($statement, $connection, new CompiledQuery('SELECT 1 AS value'), false);
+        $cursor = Cursor::objects($statement, $connection, new CompiledQuery('SELECT 1 AS value'));
 
         unset($cursor);
         gc_collect_cycles();
@@ -138,12 +138,10 @@ final class CursorFailureTest extends TestCase
     {
         ControlledFetchStatement::$row = $row;
         [$connection, $statement] = $this->statement(ControlledFetchStatement::class);
-        $cursor = new Cursor(
-            $statement,
-            $connection,
-            new CompiledQuery('SELECT 1 AS value'),
-            $associative,
-        );
+        $query = new CompiledQuery('SELECT 1 AS value');
+        $cursor = $associative
+            ? Cursor::associative($statement, $connection, $query)
+            : Cursor::objects($statement, $connection, $query);
 
         try {
             foreach ($cursor as $_row) {

@@ -17,6 +17,7 @@ use Oeltima\SimpleQuery\QueryBuilder;
 /** @internal */
 final class ConditionFactory
 {
+    /** @param RawExpression|(Closure(ConditionGroup): mixed)|string|Identifier $subject */
     public static function condition(
         Connection $connection,
         int $argumentCount,

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Oeltima\SimpleQuery\Tests\Compatibility;
 
+use Oeltima\SimpleQuery\Exception\NumericOverflowException;
+use Oeltima\SimpleQuery\Internal\AggregateResult;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -18,14 +20,36 @@ final class PublicContractFixturesTest extends TestCase
         self::assertSame($expectedContract, $fixture['contract'] ?? null);
     }
 
-    public function testAggregateContractCoversPrecisionAndOverflow(): void
+    public function testAggregateContractCountCasesExecuteAgainstTheRuntimePolicy(): void
     {
         $fixture = $this->readJson('tests/Fixtures/Contracts/aggregate-scalars.json');
-        $encoded = json_encode($fixture, JSON_THROW_ON_ERROR);
+        $cases = $fixture['cases'] ?? null;
+        self::assertIsArray($cases);
 
-        self::assertStringContainsString('NumericOverflowException', $encoded);
-        self::assertStringContainsString('1234567890.1234567890', $encoded);
-        self::assertStringContainsString('preserve_driver_scalar', $encoded);
+        $executed = 0;
+        foreach ($cases as $case) {
+            self::assertIsArray($case);
+            if (($case['terminal'] ?? null) !== 'count') {
+                continue;
+            }
+            $value = $case['database_value'] ?? null;
+            self::assertIsString($value);
+            ++$executed;
+
+            if (($case['expected_exception'] ?? null) === 'NumericOverflowException') {
+                try {
+                    AggregateResult::count($value);
+                    self::fail('The versioned overflow case unexpectedly succeeded.');
+                } catch (NumericOverflowException) {
+                    self::addToAssertionCount(1);
+                }
+                continue;
+            }
+
+            self::assertSame($case['expected_value'] ?? null, AggregateResult::count($value));
+        }
+
+        self::assertSame(3, $executed);
     }
 
     public function testConnectionContractFreezesRequiredDefaults(): void
