@@ -26,6 +26,7 @@ $requiredFiles = [
     'docs/evidence/insert-return-audit.md',
     'docs/evidence/migration-validation.json',
     'docs/evidence/migration-benchmark.json',
+    'docs/evidence/0.2-associative-hydration-experiment.md',
     'docs/migration-validation.md',
     'docs/benchmarking.md',
     'tests/Fixtures/Contracts/aggregate-scalars.json',

@@ -43,6 +43,14 @@ connection lifecycles.
 
 Optimization requires a profile and a benchmark showing a meaningful benefit.
 
+Associative full-result hydration now fetches and validates one row at a time
+into the final returned list. This avoids retaining PDO's complete `fetchAll()`
+array while constructing a second validated copy. Associative cursors likewise
+validate and yield the fetched row without rebuilding it. The
+[Phase 2 comparison](evidence/0.2-associative-hydration-experiment.md) records
+the paired `v0.1.0` evidence and acceptance decision; public return contracts
+and validation behavior are unchanged.
+
 ## Benchmark suite
 
 The executable fresh-process harness is documented in

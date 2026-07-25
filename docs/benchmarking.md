@@ -1,7 +1,7 @@
 # Benchmark harness and baselines
 
-Status: implemented reproducible harness; Phase 1 / package `0.2-A` completed
-2026-07-26.
+Status: implemented reproducible harness; Phase 1 / package `0.2-A` and the
+Phase 2 / package `0.2-E` hydration experiment completed 2026-07-26.
 
 ## Measurement contract
 
@@ -36,7 +36,9 @@ may still have extensions loaded because it does not perform timed work.
 ```bash
 composer benchmark             # all deterministic SQLite scenarios, CI sizes
 composer benchmark:baseline    # preserved v0.1.0 workload shapes
+composer benchmark:hydration   # standalone 100,000-row hydration/cursor modes
 composer benchmark:migration   # migration comparison only
+composer benchmark:observer    # observer off/no-op at 1, 10, and 50 bindings
 composer benchmark:reference   # full 100,000-row/reference-size profile
 composer benchmark:soak        # repeated compile and lifecycle stress
 ```
@@ -72,6 +74,19 @@ the `v0.1.0` workload shapes. `benchmarks/compare.php` runs that suite against
 separate `v0.1.0` and candidate autoloaders in fresh processes and rejects any
 cross-version correctness-digest mismatch.
 
+The `hydration-experiment` suite runs direct PDO associative hydration,
+SimpleQuery associative/object hydration, and both SimpleQuery cursor modes as
+separate processes so each mode has an attributable PHP peak and RSS. The
+runner also requires all five result digests to match. `benchmarks/compare.php`
+accepts `--suite=hydration-experiment` and `--source-order=baseline-first` or
+`candidate-first` for paired source-order review.
+
+The `observer-profile` suite compares observer-disabled and no-op-observer
+queries at 1, 10, and 50 positional bindings. `benchmarks/profile-observer.php`
+is an explicitly instrumented workload for Xdebug hotspot ranking; its numbers
+must not be mixed with timing results from workers, which reject active
+profiling.
+
 ## Live engines, proxies, and soak
 
 With services already available, `benchmarks/engine.php TARGET` compares the
@@ -92,6 +107,7 @@ archives live direct/proxy and multiprocess-soak JSON for 90 days. Raw outputs
 are ephemeral artifacts, not committed universal thresholds.
 
 The committed [`v0.1.0` evidence](evidence/v0.1.0-performance-baseline.md)
-remains the historical reference. Phase 2 may add an associative one-pass/no-
-copy experiment to the existing hydration scenario; that optimization is
-planned and is not represented as implemented behavior here.
+remains the historical reference. The accepted
+[`0.2.0` associative hydration experiment](evidence/0.2-associative-hydration-experiment.md)
+records both paired execution orders, the hard-gate decision, failure-path
+coverage, and the observer profiling decision.

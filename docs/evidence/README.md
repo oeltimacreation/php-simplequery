@@ -35,6 +35,8 @@ Files:
   [performance control](migration-benchmark.json);
 - [`v0.1.0` performance and stability baseline](v0.1.0-performance-baseline.md)
   and its [machine-readable comparison data](v0.1.0-performance-baseline.json);
+- [`0.2.0` associative hydration experiment](0.2-associative-hydration-experiment.md),
+  including paired source-order and observer-profile decisions;
 - [edge-feature usage verification](feature-usage-verification.md).
 
 Generated reports belong in `tools/database-probes/results/`, are ignored by Git, and

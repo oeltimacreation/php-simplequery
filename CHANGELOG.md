@@ -22,6 +22,10 @@ with ZeroVer releases before `1.0.0`.
 
 ### Changed
 
+- Reduce associative full-result peak memory by validating rows in a one-pass
+  fetch loop, and avoid copying already-validated associative cursor rows.
+- Add paired source-order hydration comparison and realistic observer binding-
+  count/profile commands to the maintained performance harness.
 - Replace the legacy benchmark scripts and overstated planned matrix with the
   exact schema-version-2 executable scenario and artifact contract.
 - `sum()`, `average()`, `min()`, and `max()` now reject `distinct()`, `GROUP

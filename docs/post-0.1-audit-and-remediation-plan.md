@@ -8,9 +8,10 @@ Worktree before the report: clean
 
 Decision: use the findings and accepted baseline to scope `0.2.0`; a redesign is not.
 
-Implementation update (2026-07-26): **Phase 0 completed successfully** on
-`feature/0.2-candidate`. The focused test suites, `composer check`, coverage,
-SQLite probe, and disposable MariaDB/MySQL/ProxySQL/MaxScale matrix passed.
+Implementation update (2026-07-26): **Phases 0, 1, and 2 completed
+successfully** on `feature/0.2-candidate`. Correctness/resource safety, the
+reproducible baseline, and the evidence-gated associative hydration
+optimization passed their respective acceptance criteria.
 
 ## Executive summary
 
@@ -423,9 +424,16 @@ microsecond limits.
 
 ### P1 — Optimize associative hydration only after the benchmark exists
 
+Status: **completed successfully in Phase 2 (2026-07-26)**. The accepted
+[comparison report](evidence/0.2-associative-hydration-experiment.md) shows a
+one-pass associative full-result peak of 78–80 MiB versus 116 MiB on `v0.1.0`
+and 78 MiB for same-run direct PDO. The separately measured no-copy
+associative cursor introduced no regression.
+
 The measured 100,000-row associative path took 1.896× direct PDO query time and
-used about 40 MiB more PHP peak allocation. The implementation fetches all rows
-and then constructs a second complete result set to validate string keys.
+used about 40 MiB more PHP peak allocation. The `v0.1.0` implementation fetches
+all rows and then constructs a second complete result set to validate string
+keys.
 
 Experiment in this order:
 
@@ -559,11 +567,13 @@ file-descriptor deltas.
 
 ### Phase 2 — Evidence-based lightweight optimization
 
-1. Prototype associative fetch-loop hydration without changing public API.
-2. Benchmark it against the `0.1.0` implementation for time, PHP peak memory,
+Status: **completed successfully (2026-07-26)**.
+
+1. [x] Prototype associative fetch-loop hydration without changing public API.
+2. [x] Benchmark it against the `0.1.0` implementation for time, PHP peak memory,
    RSS, and invalid-row/error paths.
-3. Merge only if the gain is reproducible and material; otherwise discard it.
-4. Profile observer parameter-type collection only if the maintained benchmark
+3. [x] Merge only if the gain is reproducible and material; otherwise discard it.
+4. [x] Profile observer parameter-type collection only if the maintained benchmark
    shows meaningful overhead under realistic binding counts.
 
 Acceptance target for associative hydration: reduce the 92.0 MiB PHP peak on
@@ -572,6 +582,16 @@ same-run direct PDO peak, without loss of key validation or a regression in
 other result modes greater than 10% under repeated paired AB/BA measurements.
 These are same-workstation goals; portable review uses same-run ratios and
 correctness digests.
+
+Acceptance result: **all Phase 2 hard criteria passed** in baseline-first and
+candidate-first runs. Associative full-result peak allocation fell from 116
+MiB to 78–80 MiB, or 1.00–1.03× the same-run 78 MiB direct-PDO peak, while
+median time improved by 19.6–20.8%. Exact digests matched and object/cursor
+modes had no greater than 10% regression. The 1.58–1.62× associative/direct
+time ratio missed the non-blocking 1.50× aspiration. A 1/10/50-binding observer
+sweep and 50-binding Xdebug profile found only 1.308 µs total no-op observer
+overhead per query at 50 bindings, so no observer runtime complexity was added.
+See the [Phase 2 evidence](evidence/0.2-associative-hydration-experiment.md).
 
 ### Phase 3 — Type and test hardening
 
