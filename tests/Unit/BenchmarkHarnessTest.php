@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Oeltima\SimpleQuery\Tests\Unit;
 
 use Oeltima\SimpleQuery\Benchmark\BenchmarkSuite;
+use Oeltima\SimpleQuery\Benchmark\EnvironmentRequest;
 use Oeltima\SimpleQuery\Benchmark\Harness;
+use Oeltima\SimpleQuery\Benchmark\MeasurementRequest;
 use Oeltima\SimpleQuery\Benchmark\ScenarioCatalog;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -14,10 +16,13 @@ final class BenchmarkHarnessTest extends TestCase
 {
     public function testMeasurementEmitsRawSamplesAndCorrectnessDigest(): void
     {
-        $result = Harness::measure([
-            'a' => static fn (): array => ['value' => 1],
-            'b' => static fn (): array => ['value' => 1],
-        ], 1, 3);
+        $result = Harness::measure(MeasurementRequest::from(
+            [
+                'a' => static fn (): array => ['value' => 1],
+                'b' => static fn (): array => ['value' => 1],
+            ],
+            ['warmups' => 1, 'iterations' => 3],
+        ));
 
         $correctness = $result['correctness'] ?? null;
         $measurement = $result['measurement'] ?? null;
@@ -46,17 +51,23 @@ final class BenchmarkHarnessTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Correctness parity failed');
 
-        Harness::measure([
-            'a' => static fn (): int => 1,
-            'b' => static fn (): int => 2,
-        ], 1, 3);
+        Harness::measure(MeasurementRequest::from(
+            [
+                'a' => static fn (): int => 1,
+                'b' => static fn (): int => 2,
+            ],
+            ['warmups' => 1, 'iterations' => 3],
+        ));
     }
 
     public function testMeasurementRejectsEvenSampleCount(): void
     {
         $this->expectException(RuntimeException::class);
 
-        Harness::measure(['operation' => static fn (): int => 1], 1, 2);
+        Harness::measure(MeasurementRequest::from(
+            ['operation' => static fn (): int => 1],
+            ['warmups' => 1, 'iterations' => 2],
+        ));
     }
 
     public function testCatalogExposesEveryMaintainedCiScenario(): void
@@ -83,7 +94,9 @@ final class BenchmarkHarnessTest extends TestCase
 
     public function testEnvironmentAndMemoryEnvelopeIsSerializable(): void
     {
-        $environment = Harness::environment(dirname(__DIR__, 2));
+        $environment = Harness::environment(EnvironmentRequest::from([
+            'package_root' => dirname(__DIR__, 2),
+        ]));
         $memory = Harness::memory();
         $php = $environment['php'] ?? null;
         $source = $environment['source'] ?? null;

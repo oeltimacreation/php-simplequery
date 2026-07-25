@@ -2,9 +2,14 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/Harness.php';
 require_once __DIR__ . '/BenchmarkProfile.php';
 require_once __DIR__ . '/BenchmarkSuite.php';
+require_once __DIR__ . '/BenchmarkOperation.php';
+require_once __DIR__ . '/CorrectnessDigest.php';
+require_once __DIR__ . '/EnvironmentRequest.php';
+require_once __DIR__ . '/MeasurementPhase.php';
+require_once __DIR__ . '/MeasurementRequest.php';
+require_once __DIR__ . '/Harness.php';
 require_once __DIR__ . '/ScenarioName.php';
 require_once __DIR__ . '/ScenarioRequest.php';
 require_once __DIR__ . '/PreparedScenario.php';

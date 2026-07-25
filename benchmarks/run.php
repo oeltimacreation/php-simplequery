@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Oeltima\SimpleQuery\Benchmark\Harness;
 use Oeltima\SimpleQuery\Benchmark\BenchmarkSuite;
+use Oeltima\SimpleQuery\Benchmark\EnvironmentRequest;
 use Oeltima\SimpleQuery\Benchmark\ScenarioCatalog;
 
 require __DIR__ . '/bootstrap.php';
@@ -128,7 +129,7 @@ foreach ($predicateMedians as $size => $median) {
 }
 
 $runnerRoot = dirname(__DIR__);
-$runnerEnvironment = Harness::environment($runnerRoot);
+$runnerEnvironment = Harness::environment(EnvironmentRequest::from(['package_root' => $runnerRoot]));
 $envelope = [
     'schema_version' => 2,
     'benchmark' => 'php-simplequery-reproducible-suite',

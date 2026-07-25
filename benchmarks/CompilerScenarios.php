@@ -14,13 +14,13 @@ final class CompilerScenarios implements ScenarioFactory
     #[\Override]
     public function prepare(ScenarioRequest $request): ?PreparedScenario
     {
-        return match ($request->name) {
-            ScenarioName::CompilerPredicates10,
-            ScenarioName::CompilerPredicates100,
-            ScenarioName::CompilerPredicates1000 => $this->predicates($request),
-            ScenarioName::CompilerShapes => $this->shapes($request),
-            ScenarioName::CompilerRepeated => $this->repeated($request),
-            ScenarioName::BatchCompile => $this->batch($request),
+        return match ($request->name->value()) {
+            ScenarioName::COMPILER_PREDICATES_10,
+            ScenarioName::COMPILER_PREDICATES_100,
+            ScenarioName::COMPILER_PREDICATES_1000 => $this->predicates($request),
+            ScenarioName::COMPILER_SHAPES => $this->shapes($request),
+            ScenarioName::COMPILER_REPEATED => $this->repeated($request),
+            ScenarioName::BATCH_COMPILE => $this->batch($request),
             default => null,
         };
     }

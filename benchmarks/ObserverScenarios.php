@@ -15,11 +15,11 @@ final class ObserverScenarios implements ScenarioFactory
     #[\Override]
     public function prepare(ScenarioRequest $request): ?PreparedScenario
     {
-        return match ($request->name) {
-            ScenarioName::Observer => $this->observer($request),
-            ScenarioName::ObserverBindings1,
-            ScenarioName::ObserverBindings10,
-            ScenarioName::ObserverBindings50 => $this->bindings($request),
+        return match ($request->name->value()) {
+            ScenarioName::OBSERVER => $this->observer($request),
+            ScenarioName::OBSERVER_BINDINGS_1,
+            ScenarioName::OBSERVER_BINDINGS_10,
+            ScenarioName::OBSERVER_BINDINGS_50 => $this->bindings($request),
             default => null,
         };
     }

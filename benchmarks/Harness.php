@@ -4,109 +4,91 @@ declare(strict_types=1);
 
 namespace Oeltima\SimpleQuery\Benchmark;
 
-use Closure;
 use JsonException;
 use PDO;
 use RuntimeException;
 
 final class Harness
 {
-    /**
-     * @param array<non-empty-string, Closure(): mixed> $operations
-     * @return array<string, mixed>
-     */
-    public static function measure(array $operations, int $warmups, int $iterations): array
+    /** @return array<string, mixed> */
+    public static function measure(MeasurementRequest $request): array
     {
-        self::validateMeasurementArguments($operations, $warmups, $iterations);
-        $digests = self::operationDigests($operations);
+        $digests = self::operationDigests($request);
         $expectedDigest = self::assertDigestParity($digests);
-        self::warmUp($operations, $warmups, $expectedDigest);
-        $samples = self::sample($operations, $iterations, $expectedDigest);
+        self::warmUp($request, $expectedDigest);
+        $samples = self::sample($request, $expectedDigest);
         $summaries = self::summarize($samples, $digests);
 
         return [
             'correctness' => [
                 'accepted' => true,
                 'digest_algorithm' => 'sha256-json',
-                'common_digest' => $expectedDigest,
+                'common_digest' => $expectedDigest->value(),
             ],
             'measurement' => [
                 'setup_timed' => false,
-                'warmup_iterations' => $warmups,
-                'sample_iterations' => $iterations,
-                'sample_order' => count($operations) > 1 ? 'alternating-forward-reverse' : 'single-operation',
+                'warmup_iterations' => $request->warmups(),
+                'sample_iterations' => $request->iterations(),
+                'sample_order' => $request->sampleOrder(),
                 'operations' => $summaries,
             ],
         ];
     }
 
-    /** @param array<non-empty-string, Closure(): mixed> $operations */
-    private static function validateMeasurementArguments(array $operations, int $warmups, int $iterations): void
-    {
-        if ($operations === []) {
-            throw new RuntimeException('Benchmarks require operations, a warm-up, and an odd sample count.');
-        }
-        if ($warmups < 1) {
-            throw new RuntimeException('Benchmarks require operations, a warm-up, and an odd sample count.');
-        }
-        if ($iterations < 1 || $iterations % 2 === 0) {
-            throw new RuntimeException('Benchmarks require operations, a warm-up, and an odd sample count.');
-        }
-    }
-
-    /**
-     * @param array<non-empty-string, Closure(): mixed> $operations
-     * @return array<non-empty-string, string>
-     */
-    private static function operationDigests(array $operations): array
+    /** @return array<non-empty-string, CorrectnessDigest> */
+    private static function operationDigests(MeasurementRequest $request): array
     {
         $digests = [];
-        foreach ($operations as $name => $operation) {
-            $digests[$name] = self::digest(self::execute($operation));
+        foreach ($request->operations() as $operation) {
+            $digests[$operation->name()] = CorrectnessDigest::fromResult($operation->execute());
         }
 
         return $digests;
     }
 
-    /** @param array<non-empty-string, string> $digests */
-    private static function assertDigestParity(array $digests): string
+    /** @param array<non-empty-string, CorrectnessDigest> $digests */
+    private static function assertDigestParity(array $digests): CorrectnessDigest
     {
         $expectedDigest = reset($digests);
-        if (!is_string($expectedDigest)) {
+        if (!$expectedDigest instanceof CorrectnessDigest) {
             throw new RuntimeException('Benchmark operations produced no correctness digest.');
         }
         foreach ($digests as $name => $digest) {
-            if ($digest !== $expectedDigest) {
-                throw new RuntimeException(sprintf('Correctness parity failed for operation %s.', $name));
+            if (!$expectedDigest->matches($digest)) {
+                throw new RuntimeException(sprintf(
+                    '%s failed for operation %s.',
+                    MeasurementPhase::Parity->value,
+                    $name,
+                ));
             }
         }
 
         return $expectedDigest;
     }
 
-    /** @param array<non-empty-string, Closure(): mixed> $operations */
-    private static function warmUp(array $operations, int $warmups, string $expectedDigest): void
+    private static function warmUp(MeasurementRequest $request, CorrectnessDigest $expectedDigest): void
     {
-        for ($warmup = 0; $warmup < $warmups; ++$warmup) {
-            foreach ($operations as $name => $operation) {
-                self::assertOperationDigest($operation, $expectedDigest, 'Warm-up', $name);
+        for ($warmup = 0; $warmup < $request->warmups(); ++$warmup) {
+            foreach ($request->operations() as $operation) {
+                self::assertOperationDigest($operation, $expectedDigest, MeasurementPhase::WarmUp);
             }
         }
     }
 
-    /**
-     * @param array<non-empty-string, Closure(): mixed> $operations
-     * @return array<non-empty-string, non-empty-list<float>>
-     */
-    private static function sample(array $operations, int $iterations, string $expectedDigest): array
+    /** @return array<non-empty-string, non-empty-list<float>> */
+    private static function sample(MeasurementRequest $request, CorrectnessDigest $expectedDigest): array
     {
         /** @var array<non-empty-string, list<float>> $samples */
-        $samples = array_fill_keys(array_keys($operations), []);
-        $names = array_keys($operations);
-        for ($iteration = 0; $iteration < $iterations; ++$iteration) {
-            $orderedNames = $iteration % 2 === 0 ? $names : array_reverse($names);
-            foreach ($orderedNames as $name) {
-                $samples[$name][] = self::timeOperation($operations[$name], $expectedDigest, $name);
+        $samples = [];
+        foreach ($request->operations() as $operation) {
+            $samples[$operation->name()] = [];
+        }
+        for ($iteration = 0; $iteration < $request->iterations(); ++$iteration) {
+            $operations = $iteration % 2 === 0
+                ? $request->operations()
+                : array_reverse($request->operations());
+            foreach ($operations as $operation) {
+                $samples[$operation->name()][] = self::timeOperation($operation, $expectedDigest);
             }
         }
 
@@ -115,38 +97,39 @@ final class Harness
     }
 
     private static function assertOperationDigest(
-        Closure $operation,
-        string $expectedDigest,
-        string $phase,
-        string $name,
+        BenchmarkOperation $operation,
+        CorrectnessDigest $expectedDigest,
+        MeasurementPhase $phase,
     ): void {
-        self::assertResultDigest(self::execute($operation), $expectedDigest, $phase, $name);
+        self::assertResultDigest($operation->execute(), $operation, $expectedDigest, $phase);
     }
 
-    private static function timeOperation(Closure $operation, string $expectedDigest, string $name): float
-    {
+    private static function timeOperation(
+        BenchmarkOperation $operation,
+        CorrectnessDigest $expectedDigest,
+    ): float {
         $started = hrtime(true);
-        $result = self::execute($operation);
+        $result = $operation->execute();
         $elapsed = (hrtime(true) - $started) / 1_000_000;
-        self::assertResultDigest($result, $expectedDigest, 'Timed', $name);
+        self::assertResultDigest($result, $operation, $expectedDigest, MeasurementPhase::Timed);
 
         return $elapsed;
     }
 
     private static function assertResultDigest(
         mixed $result,
-        string $expectedDigest,
-        string $phase,
-        string $name,
+        BenchmarkOperation $operation,
+        CorrectnessDigest $expectedDigest,
+        MeasurementPhase $phase,
     ): void {
-        if (self::digest($result) !== $expectedDigest) {
-            throw new RuntimeException(sprintf('%s correctness failed for operation %s.', $phase, $name));
+        if (!$expectedDigest->matches(CorrectnessDigest::fromResult($result))) {
+            throw new RuntimeException(sprintf('%s failed for operation %s.', $phase->value, $operation->name()));
         }
     }
 
     /**
      * @param array<non-empty-string, non-empty-list<float>> $samples
-     * @param array<non-empty-string, string> $digests
+     * @param array<non-empty-string, CorrectnessDigest> $digests
      * @return array<non-empty-string, array<string, mixed>>
      */
     private static function summarize(array $samples, array $digests): array
@@ -163,7 +146,7 @@ final class Harness
      * @param non-empty-list<float> $rawSamples
      * @return array<string, mixed>
      */
-    private static function summarizeOperation(array $rawSamples, string $digest): array
+    private static function summarizeOperation(array $rawSamples, CorrectnessDigest $digest): array
     {
         $sorted = $rawSamples;
         sort($sorted);
@@ -173,12 +156,12 @@ final class Harness
             'minimum_ms' => round($sorted[0], 6),
             'median_ms' => round($sorted[intdiv(count($sorted), 2)], 6),
             'maximum_ms' => round($sorted[count($sorted) - 1], 6),
-            'correctness_digest' => $digest,
+            'correctness_digest' => $digest->value(),
         ];
     }
 
     /** @return array<string, mixed> */
-    public static function environment(string $packageRoot, ?PDO $pdo = null, ?string $target = null): array
+    public static function environment(EnvironmentRequest $request): array
     {
         $xdebugMode = ini_get('xdebug.mode');
         $pcovEnabled = ini_get('pcov.enabled');
@@ -186,7 +169,7 @@ final class Harness
             && (!extension_loaded('pcov') || $pcovEnabled === '' || $pcovEnabled === '0');
 
         return [
-            'source' => self::sourceMetadata($packageRoot),
+            'source' => self::sourceMetadata($request),
             'os' => [
                 'family' => PHP_OS_FAMILY,
                 'name' => php_uname('s'),
@@ -205,7 +188,7 @@ final class Harness
                 'pcov_enabled' => $pcovEnabled === false ? null : $pcovEnabled,
                 'timing_instrumentation_disabled' => $instrumentationDisabled,
             ],
-            'pdo' => self::pdoMetadata($pdo, $target),
+            'pdo' => self::pdoMetadata($request),
         ];
     }
 
@@ -256,28 +239,23 @@ final class Harness
         }
     }
 
-    private static function execute(Closure $operation): mixed
-    {
-        return $operation();
-    }
-
     /** @return array<string, mixed> */
-    private static function sourceMetadata(string $packageRoot): array
+    private static function sourceMetadata(EnvironmentRequest $request): array
     {
-        $commit = self::git($packageRoot, ['rev-parse', 'HEAD']);
-        $status = self::git($packageRoot, ['status', '--porcelain']);
+        $commit = self::git($request, ['rev-parse', 'HEAD']);
+        $status = self::git($request, ['status', '--porcelain']);
 
         return [
-            'root_basename' => basename($packageRoot),
+            'root_basename' => basename($request->packageRoot()),
             'commit' => $commit,
             'dirty' => $status === null ? null : $status !== '',
         ];
     }
 
     /** @param list<string> $arguments */
-    private static function git(string $packageRoot, array $arguments): ?string
+    private static function git(EnvironmentRequest $request, array $arguments): ?string
     {
-        $parts = ['git', '-C', escapeshellarg($packageRoot)];
+        $parts = ['git', '-C', escapeshellarg($request->packageRoot())];
         foreach ($arguments as $argument) {
             $parts[] = escapeshellarg($argument);
         }
@@ -289,11 +267,12 @@ final class Harness
     }
 
     /** @return array<string, mixed> */
-    private static function pdoMetadata(?PDO $pdo, ?string $target): array
+    private static function pdoMetadata(EnvironmentRequest $request): array
     {
+        $pdo = $request->pdo();
         $metadata = [
             'available_drivers' => PDO::getAvailableDrivers(),
-            'target' => $target,
+            'target' => $request->target(),
             'driver' => null,
             'client_version' => null,
             'server_version' => null,

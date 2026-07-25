@@ -16,11 +16,11 @@ final class DatabaseScenarios implements ScenarioFactory
     #[\Override]
     public function prepare(ScenarioRequest $request): ?PreparedScenario
     {
-        return match ($request->name) {
-            ScenarioName::BatchExecute => $this->batch($request),
-            ScenarioName::Transactions => $this->transactions($request),
-            ScenarioName::Lifecycle, ScenarioName::LifecycleSoak => $this->lifecycle($request),
-            ScenarioName::MigrationQuery => $this->migration(),
+        return match ($request->name->value()) {
+            ScenarioName::BATCH_EXECUTE => $this->batch($request),
+            ScenarioName::TRANSACTIONS => $this->transactions($request),
+            ScenarioName::LIFECYCLE, ScenarioName::LIFECYCLE_SOAK => $this->lifecycle($request),
+            ScenarioName::MIGRATION_QUERY => $this->migration(),
             default => null,
         };
     }
@@ -99,7 +99,7 @@ final class DatabaseScenarios implements ScenarioFactory
 
     private function lifecycle(ScenarioRequest $request): PreparedScenario
     {
-        $loops = $request->name === ScenarioName::LifecycleSoak
+        $loops = $request->name->value() === ScenarioName::LIFECYCLE_SOAK
             ? $request->scale(['ci' => 500, 'reference' => 5_000])
             : $request->scale(['ci' => 20, 'reference' => 100]);
         $simpleQuery = static function () use ($loops): array {

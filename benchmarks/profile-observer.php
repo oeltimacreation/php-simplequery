@@ -18,7 +18,7 @@ if (!is_int($bindings) || !in_array($bindings, [1, 10, 50], true) || !is_int($ro
 require dirname(__DIR__) . '/vendor/autoload.php';
 require __DIR__ . '/bootstrap.php';
 
-$scenario = ScenarioName::from('observer_bindings_' . $bindings);
+$scenario = ScenarioName::from(['name' => 'observer_bindings_' . $bindings]);
 $prepared = ScenarioCatalog::prepare(new ScenarioRequest($scenario, BenchmarkProfile::Reference));
 $operation = $prepared->operations['observer_noop'] ?? null;
 if (!$operation instanceof Closure) {

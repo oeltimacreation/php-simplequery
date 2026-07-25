@@ -15,16 +15,16 @@ final class HydrationScenarios implements ScenarioFactory
     #[\Override]
     public function prepare(ScenarioRequest $request): ?PreparedScenario
     {
-        return match ($request->name) {
-            ScenarioName::Hydration => $this->hydration($request),
-            ScenarioName::CursorExhaustion => $this->cursorExhaustion($request),
-            ScenarioName::CursorEarlyClose => $this->cursorEarlyClose($request),
-            ScenarioName::ReadTerminals => $this->readTerminals($request),
-            ScenarioName::HydrationPdoAssociative,
-            ScenarioName::HydrationSimpleQueryAssociative,
-            ScenarioName::HydrationSimpleQueryObject,
-            ScenarioName::CursorSimpleQueryAssociative,
-            ScenarioName::CursorSimpleQueryObject => $this->standalone($request),
+        return match ($request->name->value()) {
+            ScenarioName::HYDRATION => $this->hydration($request),
+            ScenarioName::CURSOR_EXHAUSTION => $this->cursorExhaustion($request),
+            ScenarioName::CURSOR_EARLY_CLOSE => $this->cursorEarlyClose($request),
+            ScenarioName::READ_TERMINALS => $this->readTerminals($request),
+            ScenarioName::HYDRATION_PDO_ASSOCIATIVE,
+            ScenarioName::HYDRATION_SIMPLEQUERY_ASSOCIATIVE,
+            ScenarioName::HYDRATION_SIMPLEQUERY_OBJECT,
+            ScenarioName::CURSOR_SIMPLEQUERY_ASSOCIATIVE,
+            ScenarioName::CURSOR_SIMPLEQUERY_OBJECT => $this->standalone($request),
             default => null,
         };
     }
@@ -132,18 +132,18 @@ final class HydrationScenarios implements ScenarioFactory
     private function standalone(ScenarioRequest $request): PreparedScenario
     {
         [$connection, $pdo, $rows] = $this->rowFixture($request);
-        $operation = match ($request->name) {
-            ScenarioName::HydrationPdoAssociative => fn (): array => $this->selectRows($pdo)
+        $operation = match ($request->name->value()) {
+            ScenarioName::HYDRATION_PDO_ASSOCIATIVE => fn (): array => $this->selectRows($pdo)
                 ->fetchAll(PDO::FETCH_ASSOC),
-            ScenarioName::HydrationSimpleQueryAssociative => static fn (): array => $connection
+            ScenarioName::HYDRATION_SIMPLEQUERY_ASSOCIATIVE => static fn (): array => $connection
                 ->table('benchmark_rows')
                 ->orderBy('id')
                 ->getAssociative(),
-            ScenarioName::HydrationSimpleQueryObject => static fn (): array => array_map(
+            ScenarioName::HYDRATION_SIMPLEQUERY_OBJECT => static fn (): array => array_map(
                 static fn (object $row): array => get_object_vars($row),
                 $connection->table('benchmark_rows')->orderBy('id')->get(),
             ),
-            ScenarioName::CursorSimpleQueryAssociative => static function () use ($connection): array {
+            ScenarioName::CURSOR_SIMPLEQUERY_ASSOCIATIVE => static function () use ($connection): array {
                 $result = [];
                 foreach ($connection->table('benchmark_rows')->orderBy('id')->iterateAssociative() as $row) {
                     $result[] = $row;
@@ -151,7 +151,7 @@ final class HydrationScenarios implements ScenarioFactory
 
                 return $result;
             },
-            ScenarioName::CursorSimpleQueryObject => static function () use ($connection): array {
+            ScenarioName::CURSOR_SIMPLEQUERY_OBJECT => static function () use ($connection): array {
                 $result = [];
                 foreach ($connection->table('benchmark_rows')->orderBy('id')->iterate() as $row) {
                     $result[] = get_object_vars($row);
@@ -163,7 +163,7 @@ final class HydrationScenarios implements ScenarioFactory
         };
 
         return new PreparedScenario(
-            [$request->name->value => $operation],
+            [$request->name->value() => $operation],
             $pdo,
             ['rows' => $rows, 'payload_bytes' => 96],
         );

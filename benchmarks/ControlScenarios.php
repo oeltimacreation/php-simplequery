@@ -11,11 +11,11 @@ final class ControlScenarios implements ScenarioFactory
     #[\Override]
     public function prepare(ScenarioRequest $request): ?PreparedScenario
     {
-        return match ($request->name) {
-            ScenarioName::PdoControl10,
-            ScenarioName::PdoControl100,
-            ScenarioName::PdoControl1000,
-            ScenarioName::PdoControl5000 => $this->pdoControl($request),
+        return match ($request->name->value()) {
+            ScenarioName::PDO_CONTROL_10,
+            ScenarioName::PDO_CONTROL_100,
+            ScenarioName::PDO_CONTROL_1000,
+            ScenarioName::PDO_CONTROL_5000 => $this->pdoControl($request),
             default => null,
         };
     }

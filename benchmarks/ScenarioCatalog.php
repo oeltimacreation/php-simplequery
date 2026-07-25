@@ -11,10 +11,7 @@ final class ScenarioCatalog
     /** @return list<string> */
     public static function suite(BenchmarkSuite $suite): array
     {
-        return array_map(
-            static fn (ScenarioName $scenario): string => $scenario->value,
-            $suite->scenarios(),
-        );
+        return $suite->scenarios();
     }
 
     public static function prepare(ScenarioRequest $request): PreparedScenario
@@ -26,7 +23,7 @@ final class ScenarioCatalog
             }
         }
 
-        throw new RuntimeException(sprintf('Unknown benchmark scenario "%s".', $request->name->value));
+        throw new RuntimeException(sprintf('Unknown benchmark scenario "%s".', $request->name->value()));
     }
 
     /** @return list<ScenarioFactory> */
