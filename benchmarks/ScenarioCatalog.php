@@ -53,6 +53,18 @@ final class ScenarioCatalog
                 'migration_query',
             ],
             'migration' => ['migration_query'],
+            'hydration-experiment' => [
+                'hydration_pdo_associative',
+                'hydration_simplequery_associative',
+                'hydration_simplequery_object',
+                'cursor_simplequery_associative',
+                'cursor_simplequery_object',
+            ],
+            'observer-profile' => [
+                'observer_bindings_1',
+                'observer_bindings_10',
+                'observer_bindings_50',
+            ],
             'soak' => ['compiler_repeated', 'lifecycle_soak'],
             'ci', 'full' => array_values(array_unique(array_merge(
                 self::suite('baseline'),
@@ -82,6 +94,9 @@ final class ScenarioCatalog
         if (preg_match('/^compiler_predicates_(10|100|1000)$/', $name, $matches) === 1) {
             return self::compilerPredicates((int) $matches[1]);
         }
+        if (preg_match('/^observer_bindings_(1|10|50)$/', $name, $matches) === 1) {
+            return self::observerBindings((int) $matches[1], $reference ? 1_000 : 100);
+        }
 
         return match ($name) {
             'compiler_shapes' => self::compilerShapes($reference ? 250 : 50),
@@ -97,6 +112,11 @@ final class ScenarioCatalog
             'lifecycle' => self::lifecycle($reference ? 100 : 20),
             'lifecycle_soak' => self::lifecycle($reference ? 5_000 : 500),
             'migration_query' => self::migration(),
+            'hydration_pdo_associative',
+            'hydration_simplequery_associative',
+            'hydration_simplequery_object',
+            'cursor_simplequery_associative',
+            'cursor_simplequery_object' => self::standaloneHydration($name, $reference ? 100_000 : 2_000),
             default => throw new RuntimeException(sprintf('Unknown benchmark scenario "%s".', $name)),
         };
     }
@@ -351,6 +371,33 @@ final class ScenarioCatalog
     }
 
     /** @return array{operations: array<non-empty-string, Closure(): mixed>, pdo: PDO, dimensions: array<string, int>} */
+    private static function observerBindings(int $bindings, int $calls): array
+    {
+        $off = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
+        $noop = Connection::connect(Driver::Sqlite, 'sqlite::memory:', observer: new class implements QueryObserver {
+            #[\Override]
+            public function queryExecuted(QueryExecution $execution): void
+            {
+            }
+        });
+        $sql = 'SELECT ' . implode(' + ', array_fill(0, $bindings, '?')) . ' AS value';
+        $values = array_fill(0, $bindings, 1);
+        $operation = static function (Connection $connection) use ($calls, $sql, $values): array {
+            $value = null;
+            for ($call = 0; $call < $calls; ++$call) {
+                $value = $connection->query($sql, $values)->firstAssociative()['value'] ?? null;
+            }
+
+            return ['calls' => $calls, 'value' => $value];
+        };
+
+        return self::prepared([
+            'observer_off' => static fn (): array => $operation($off),
+            'observer_noop' => static fn (): array => $operation($noop),
+        ], $off->pdo(), ['bindings' => $bindings, 'calls_per_sample' => $calls]);
+    }
+
+    /** @return array{operations: array<non-empty-string, Closure(): mixed>, pdo: PDO, dimensions: array<string, int>} */
     private static function batchExecute(int $rows): array
     {
         $connection = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
@@ -504,6 +551,48 @@ final class ScenarioCatalog
             'fixture_rows' => 500,
             'result_rows' => 100,
         ]);
+    }
+
+    /** @return array{operations: array<non-empty-string, Closure(): mixed>, pdo: PDO, dimensions: array<string, int>} */
+    private static function standaloneHydration(string $mode, int $rows): array
+    {
+        [$connection, $pdo] = self::rowFixture($rows);
+        $operation = match ($mode) {
+            'hydration_pdo_associative' => static fn (): array => self::query(
+                $pdo,
+                'SELECT id, category, payload FROM benchmark_rows ORDER BY id',
+            )->fetchAll(PDO::FETCH_ASSOC),
+            'hydration_simplequery_associative' => static fn (): array => $connection
+                ->table('benchmark_rows')
+                ->orderBy('id')
+                ->getAssociative(),
+            'hydration_simplequery_object' => static fn (): array => array_map(
+                static fn (object $row): array => get_object_vars($row),
+                $connection->table('benchmark_rows')->orderBy('id')->get(),
+            ),
+            'cursor_simplequery_associative' => static function () use ($connection): array {
+                $result = [];
+                foreach ($connection->table('benchmark_rows')->orderBy('id')->iterateAssociative() as $row) {
+                    $result[] = $row;
+                }
+
+                return $result;
+            },
+            'cursor_simplequery_object' => static function () use ($connection): array {
+                $result = [];
+                foreach ($connection->table('benchmark_rows')->orderBy('id')->iterate() as $row) {
+                    if (!is_object($row)) {
+                        throw new RuntimeException('Object cursor returned a non-object row.');
+                    }
+                    $result[] = get_object_vars($row);
+                }
+
+                return $result;
+            },
+            default => throw new RuntimeException(sprintf('Unknown standalone hydration mode "%s".', $mode)),
+        };
+
+        return self::prepared([$mode => $operation], $pdo, ['rows' => $rows, 'payload_bytes' => 96]);
     }
 
     /** @return array{Connection, PDO} */

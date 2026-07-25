@@ -93,6 +93,21 @@ foreach ($reports as $report) {
         $predicateMedians[$predicates] = (float) $median;
     }
 }
+
+if ($suite === 'hydration-experiment') {
+    $hydrationDigests = [];
+    foreach ($reports as $report) {
+        $correctness = $report['correctness'] ?? null;
+        $digest = is_array($correctness) ? ($correctness['common_digest'] ?? null) : null;
+        if (!is_string($digest)) {
+            throw new RuntimeException('Hydration experiment scenario has no correctness digest.');
+        }
+        $hydrationDigests[] = $digest;
+    }
+    if (count(array_unique($hydrationDigests)) !== 1) {
+        throw new RuntimeException('Hydration experiment modes produced different result digests.');
+    }
+}
 ksort($predicateMedians);
 $previousSize = null;
 $previousMedian = null;

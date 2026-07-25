@@ -66,7 +66,9 @@
         "migration:check": "php tools/migration/report.php",
         "benchmark": "php benchmarks/run.php --suite=ci",
         "benchmark:baseline": "php benchmarks/run.php --suite=baseline",
+        "benchmark:hydration": "php benchmarks/run.php --suite=hydration-experiment --profile=reference --iterations=7 --warmups=2",
         "benchmark:migration": "php benchmarks/migration.php",
+        "benchmark:observer": "php benchmarks/run.php --suite=observer-profile --profile=reference --iterations=7 --warmups=2",
         "benchmark:reference": "php benchmarks/run.php --suite=full --profile=reference --iterations=7 --warmups=2",
         "benchmark:soak": "php benchmarks/run.php --suite=soak --profile=reference --iterations=7 --warmups=2",
         "examples:check": [

@@ -91,8 +91,7 @@ final class Cursor implements IteratorAggregate
                             $this->connection->connectionOptions()->label,
                         );
                     }
-                    $associativeRow = [];
-                    foreach ($row as $key => $value) {
+                    foreach ($row as $key => $_value) {
                         if (!is_string($key)) {
                             throw QueryExecutionException::invalidResult(
                                 'PDO returned a cursor row with a non-string column name.',
@@ -101,10 +100,9 @@ final class Cursor implements IteratorAggregate
                                 $this->connection->connectionOptions()->label,
                             );
                         }
-                        $associativeRow[$key] = $value;
                     }
 
-                    yield $associativeRow;
+                    yield $row;
                     continue;
                 }
                 if (!$row instanceof stdClass) {

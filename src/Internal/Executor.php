@@ -57,15 +57,16 @@ final readonly class Executor
             false,
             function (PDOStatement $statement) use ($query): array {
                 $rows = [];
-                foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $row) {
-                    $result = [];
-                    foreach ($row as $key => $value) {
+                while (($row = $statement->fetch(PDO::FETCH_ASSOC)) !== false) {
+                    if (!is_array($row)) {
+                        throw $this->invalidResult('PDO returned an invalid associative result row.', $query);
+                    }
+                    foreach ($row as $key => $_value) {
                         if (!is_string($key)) {
                             throw $this->invalidResult('PDO returned a non-string column name.', $query);
                         }
-                        $result[$key] = $value;
                     }
-                    $rows[] = $result;
+                    $rows[] = $row;
                 }
 
                 return $rows;

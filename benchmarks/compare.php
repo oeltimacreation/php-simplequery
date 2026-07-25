@@ -3,17 +3,30 @@
 declare(strict_types=1);
 
 /** @var array<string, false|string> $options */
-$options = getopt('', ['baseline-autoload:', 'candidate-autoload:', 'profile:', 'iterations:', 'warmups:']);
+$options = getopt('', [
+    'baseline-autoload:',
+    'candidate-autoload:',
+    'suite:',
+    'profile:',
+    'iterations:',
+    'warmups:',
+    'source-order:',
+]);
 $baseline = $options['baseline-autoload'] ?? null;
 $candidate = $options['candidate-autoload'] ?? dirname(__DIR__) . '/vendor/autoload.php';
+$suite = $options['suite'] ?? 'baseline';
 $profile = $options['profile'] ?? 'ci';
 $iterations = $options['iterations'] ?? '5';
 $warmups = $options['warmups'] ?? '1';
+$sourceOrder = $options['source-order'] ?? 'baseline-first';
 if (!is_string($baseline) || !is_file($baseline) || !is_string($candidate) || !is_file($candidate)) {
     throw new RuntimeException('Both baseline and candidate autoloaders are required.');
 }
+if (!is_string($sourceOrder) || !in_array($sourceOrder, ['baseline-first', 'candidate-first'], true)) {
+    throw new RuntimeException('Source order must be baseline-first or candidate-first.');
+}
 
-$run = static function (string $autoload) use ($profile, $iterations, $warmups): array {
+$run = static function (string $autoload) use ($suite, $profile, $iterations, $warmups): array {
     $command = [
         PHP_BINARY,
         '-d',
@@ -21,7 +34,7 @@ $run = static function (string $autoload) use ($profile, $iterations, $warmups):
         '-d',
         'xdebug.mode=off',
         __DIR__ . '/run.php',
-        '--suite=baseline',
+        '--suite=' . $suite,
         '--profile=' . $profile,
         '--iterations=' . $iterations,
         '--warmups=' . $warmups,
@@ -41,8 +54,13 @@ $run = static function (string $autoload) use ($profile, $iterations, $warmups):
     return $decoded;
 };
 
-$baselineRun = $run($baseline);
-$candidateRun = $run($candidate);
+if ($sourceOrder === 'baseline-first') {
+    $baselineRun = $run($baseline);
+    $candidateRun = $run($candidate);
+} else {
+    $candidateRun = $run($candidate);
+    $baselineRun = $run($baseline);
+}
 $digests = static function (array $run): array {
     $result = [];
     $scenarios = $run['scenarios'] ?? null;
@@ -73,7 +91,9 @@ fwrite(STDOUT, json_encode([
     'schema_version' => 2,
     'benchmark' => 'v0.1.0-to-candidate-comparison',
     'collected_at' => gmdate(DATE_ATOM),
-    'execution_order' => ['baseline', 'candidate'],
+    'execution_order' => $sourceOrder === 'baseline-first'
+        ? ['baseline', 'candidate']
+        : ['candidate', 'baseline'],
     'fresh_process_per_scenario' => true,
     'correctness_parity' => true,
     'correctness_digests' => $baselineDigests,
