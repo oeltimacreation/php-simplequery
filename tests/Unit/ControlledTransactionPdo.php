@@ -11,6 +11,8 @@ final class ControlledTransactionPdo extends PDO
 {
     public bool $failBegin = false;
 
+    public bool $failBeginAfterDispatch = false;
+
     public bool $failCommit = false;
 
     public bool $failRollback = false;
@@ -20,6 +22,8 @@ final class ControlledTransactionPdo extends PDO
     public bool $pretendRollbackSuccess = false;
 
     public ?string $failControlPrefix = null;
+
+    public ?string $failControlAfterDispatchPrefix = null;
 
     public function __construct()
     {
@@ -33,6 +37,11 @@ final class ControlledTransactionPdo extends PDO
     {
         if ($this->failBegin) {
             throw new PDOException('Controlled begin failure.');
+        }
+        if ($this->failBeginAfterDispatch) {
+            parent::beginTransaction();
+
+            throw new PDOException('Controlled post-dispatch begin failure.');
         }
 
         return parent::beginTransaction();
@@ -69,6 +78,14 @@ final class ControlledTransactionPdo extends PDO
     {
         if ($this->failControlPrefix !== null && str_starts_with($statement, $this->failControlPrefix)) {
             throw new PDOException('Controlled transaction-control SQL failure.');
+        }
+        if (
+            $this->failControlAfterDispatchPrefix !== null
+            && str_starts_with($statement, $this->failControlAfterDispatchPrefix)
+        ) {
+            parent::exec($statement);
+
+            throw new PDOException('Controlled post-dispatch transaction-control SQL failure.');
         }
 
         return parent::exec($statement);

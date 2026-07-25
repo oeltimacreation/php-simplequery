@@ -61,6 +61,12 @@ final class TransactionManager
         }
     }
 
+    /** @internal */
+    public function quarantine(): void
+    {
+        $this->markUnusable();
+    }
+
     /**
      * @template T
      * @param Closure(Connection): T $callback
@@ -80,7 +86,23 @@ final class TransactionManager
         try {
             $this->begin($pdo);
         } catch (Throwable $failure) {
-            throw $this->controlException('Could not begin the managed transaction.', 'begin', 0, $failure);
+            $recoveryFailure = $this->tryPhysicalRollback($pdo);
+            if ($recoveryFailure !== null) {
+                $this->markUnusable();
+            } else {
+                $this->resetManagedState();
+            }
+
+            throw new TransactionException(
+                'Could not begin the managed transaction.',
+                operation: 'begin',
+                managedDepth: 0,
+                driver: $this->connection->driver(),
+                connectionLabel: $this->connection->connectionOptions()->label,
+                controlFailure: $failure,
+                recoveryFailure: $recoveryFailure,
+                connectionUnusable: $recoveryFailure !== null,
+            );
         }
 
         $guard = $this->nextSavepoint('root');
@@ -135,11 +157,16 @@ final class TransactionManager
         try {
             $this->savepoint($pdo, $savepoint);
         } catch (Throwable $failure) {
-            throw $this->controlException(
+            $this->markUnusable();
+
+            throw new TransactionException(
                 'Could not create a nested transaction savepoint.',
-                'savepoint',
-                $scopeDepth,
-                $failure,
+                operation: 'savepoint',
+                managedDepth: $scopeDepth,
+                driver: $this->connection->driver(),
+                connectionLabel: $this->connection->connectionOptions()->label,
+                controlFailure: $failure,
+                connectionUnusable: true,
             );
         }
 
@@ -461,22 +488,6 @@ final class TransactionManager
         } catch (Throwable $failure) {
             return $failure;
         }
-    }
-
-    private function controlException(
-        string $message,
-        string $operation,
-        int $scopeDepth,
-        Throwable $controlFailure,
-    ): TransactionException {
-        return new TransactionException(
-            $message,
-            operation: $operation,
-            managedDepth: $scopeDepth,
-            driver: $this->connection->driver(),
-            connectionLabel: $this->connection->connectionOptions()->label,
-            controlFailure: $controlFailure,
-        );
     }
 
     private function stateException(

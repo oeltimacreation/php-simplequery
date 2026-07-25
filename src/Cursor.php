@@ -12,6 +12,7 @@ use PDO;
 use PDOException;
 use PDOStatement;
 use stdClass;
+use Throwable;
 use Traversable;
 
 /** @implements IteratorAggregate<int, stdClass|array<string, mixed>> */
@@ -48,18 +49,7 @@ final class Cursor implements IteratorAggregate
 
     public function close(): void
     {
-        if ($this->closed) {
-            return;
-        }
-        $this->closed = true;
-
-        try {
-            $this->statement->closeCursor();
-        } catch (PDOException $exception) {
-            throw $this->executionException($exception);
-        } finally {
-            $this->connection->releaseCursor();
-        }
+        $this->finalize();
     }
 
     public function isClosed(): bool
@@ -79,6 +69,8 @@ final class Cursor implements IteratorAggregate
     /** @return Generator<int, stdClass|array<string, mixed>> */
     private function rows(): Generator
     {
+        $primaryFailure = null;
+
         try {
             while (!$this->closed) {
                 try {
@@ -126,8 +118,52 @@ final class Cursor implements IteratorAggregate
 
                 yield $row;
             }
+        } catch (Throwable $failure) {
+            $primaryFailure = $failure;
+
+            throw $failure;
         } finally {
-            $this->close();
+            try {
+                $this->finalize();
+            } catch (Throwable $cleanupFailure) {
+                if ($primaryFailure === null) {
+                    throw $cleanupFailure;
+                }
+            }
+        }
+    }
+
+    private function finalize(): void
+    {
+        if ($this->closed) {
+            return;
+        }
+        $this->closed = true;
+
+        $cleanupFailure = null;
+        try {
+            if (!$this->statement->closeCursor()) {
+                $cleanupFailure = QueryExecutionException::invalidResult(
+                    'PDO could not close the cursor; the connection state is uncertain.',
+                    $this->query->sql,
+                    $this->connection->driver(),
+                    $this->connection->connectionOptions()->label,
+                );
+            }
+        } catch (PDOException $exception) {
+            $cleanupFailure = $this->executionException($exception);
+        }
+
+        try {
+            if ($cleanupFailure !== null) {
+                $this->connection->quarantine();
+            }
+        } finally {
+            $this->connection->releaseCursor();
+        }
+
+        if ($cleanupFailure !== null) {
+            throw $cleanupFailure;
         }
     }
 

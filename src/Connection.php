@@ -220,6 +220,12 @@ final class Connection
     }
 
     /** @internal */
+    public function quarantine(): void
+    {
+        $this->transactionManager->quarantine();
+    }
+
+    /** @internal */
     public function transactionDepth(): int
     {
         $managedDepth = $this->transactionManager->depth();

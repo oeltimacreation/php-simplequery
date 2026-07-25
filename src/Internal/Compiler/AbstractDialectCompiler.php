@@ -121,6 +121,11 @@ abstract class AbstractDialectCompiler implements DialectCompiler
         if ($column instanceof Identifier && ($column->wildcard || $column->alias !== null)) {
             throw new InvalidQueryException('Aggregate columns cannot be wildcards or aliases.');
         }
+        if ($state->distinct || $state->groups !== [] || !$state->having->isEmpty()) {
+            throw new UnsupportedFeatureException(
+                'Non-count scalar aggregates do not support distinct, grouping, or HAVING clauses.',
+            );
+        }
 
         $expressionContext = new CompilationContext();
         $columnSql = $this->expression($column, $expressionContext);
