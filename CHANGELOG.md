@@ -45,6 +45,8 @@ with ZeroVer releases before `1.0.0`.
   execution while preserving result, exception, SQL, and binding behavior.
 - Add low-noise import and comparison consistency rules without a style
   baseline or broad formatting churn.
+- Move pinned checkout and artifact-upload CI actions to their Node.js 24
+  releases, removing runner deprecation annotations.
 - Require PDO to report physical activity immediately after every managed
   transaction begin, and retain direct PDO ownership for schema control,
   manually started work, SQLite immediate transactions, and deployment-specific
