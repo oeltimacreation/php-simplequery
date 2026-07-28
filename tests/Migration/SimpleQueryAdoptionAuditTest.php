@@ -132,7 +132,7 @@ final class SimpleQueryAdoptionAuditTest extends TestCase
         self::assertSame(3, $review['split_generated_id_candidates'] ?? null);
         self::assertSame(2, $review['delayed_generated_id_candidates'] ?? null);
         self::assertSame(1, $review['intervening_statement_before_generated_id_candidates'] ?? null);
-        self::assertSame(1, $review['affected_row_insert_candidates'] ?? null);
+        self::assertSame(2, $review['affected_row_insert_candidates'] ?? null);
         self::assertGreaterThan(0, $review['direct_sql_transaction_control_candidates'] ?? 0);
         self::assertGreaterThan(0, $review['external_transaction_query_files'] ?? 0);
         self::assertGreaterThan(0, $review['nested_managed_transaction_candidates'] ?? 0);

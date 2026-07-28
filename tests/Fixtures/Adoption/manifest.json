@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "corpus_version": "0.3-phase-1",
+  "corpus_version": "0.3-phase-3",
   "scope": "synthetic production-shaped SimpleQuery adoption audit fixtures",
   "sources": [
     "Sources/query-shapes.php.txt",
@@ -20,6 +20,12 @@
     "affected_row_insert",
     "lock_conflict_evidence",
     "manual_transaction_refusal",
+    "ordinary_managed_transaction",
+    "nested_savepoint",
+    "callback_exception_identity",
+    "active_cursor_rejection",
+    "sqlite_immediate_managed_transaction",
+    "application_owned_exception_classification",
     "cursor_and_batch_result_shapes",
     "dynamic_identifier_review"
   ]

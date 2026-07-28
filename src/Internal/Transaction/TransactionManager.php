@@ -6,9 +6,13 @@ namespace Oeltima\SimpleQuery\Internal\Transaction;
 
 use Closure;
 use Oeltima\SimpleQuery\Connection;
+use Oeltima\SimpleQuery\Driver;
 use Oeltima\SimpleQuery\Exception\ExternalTransactionException;
+use Oeltima\SimpleQuery\Exception\InvalidQueryException;
 use Oeltima\SimpleQuery\Exception\TransactionException;
 use Oeltima\SimpleQuery\Exception\TransactionStateException;
+use Oeltima\SimpleQuery\Exception\UnsupportedFeatureException;
+use Oeltima\SimpleQuery\TransactionMode;
 use PDO;
 use RuntimeException;
 use Throwable;
@@ -33,14 +37,19 @@ final class TransactionManager
      * @param Closure(Connection): T $callback
      * @return T
      */
-    public function run(Closure $callback): mixed
+    public function run(Closure $callback, TransactionMode $mode = TransactionMode::Default): mixed
     {
         $this->assertUsable();
-        $pdo = $this->connection->pdoForExecution();
+        if ($this->depth === 0) {
+            $this->assertModeSupported($mode);
+        }
 
-        return $this->depth === 0
-            ? $this->runOuter($pdo, $callback)
-            : $this->runNested($pdo, $callback);
+        $pdo = $this->connection->pdoForExecution();
+        if ($this->depth > 0) {
+            return $this->runNestedWithMode($pdo, $callback, $mode);
+        }
+
+        return $this->runOuter($pdo, $callback, $mode);
     }
 
     public function depth(): int
@@ -72,10 +81,10 @@ final class TransactionManager
      * @param Closure(Connection): T $callback
      * @return T
      */
-    private function runOuter(PDO $pdo, Closure $callback): mixed
+    private function runOuter(PDO $pdo, Closure $callback, TransactionMode $mode): mixed
     {
         $this->rejectExternalTransaction($pdo);
-        $this->beginOuterTransaction($pdo);
+        $this->beginOuterTransaction($pdo, $mode);
         $guard = $this->establishOwnershipGuard($pdo);
 
         $this->depth = 1;
@@ -106,16 +115,42 @@ final class TransactionManager
         );
     }
 
-    private function beginOuterTransaction(PDO $pdo): void
+    private function beginOuterTransaction(PDO $pdo, TransactionMode $mode): void
     {
         try {
-            $this->begin($pdo);
+            $this->begin($pdo, $mode);
+            if (!$this->physicalTransactionActive($pdo, 'begin_verify')) {
+                throw new RuntimeException('PDO did not report an active transaction after begin.');
+            }
         } catch (Throwable $failure) {
             $this->throwOuterStartFailure(
                 $pdo,
                 $failure,
                 'Could not begin the managed transaction.',
                 'begin',
+            );
+        }
+    }
+
+    /**
+     * @template T
+     * @param Closure(Connection): T $callback
+     * @return T
+     */
+    private function runNestedWithMode(PDO $pdo, Closure $callback, TransactionMode $mode): mixed
+    {
+        if ($mode !== TransactionMode::Default) {
+            throw new InvalidQueryException('A nested transaction cannot select a physical transaction mode.');
+        }
+
+        return $this->runNested($pdo, $callback);
+    }
+
+    private function assertModeSupported(TransactionMode $mode): void
+    {
+        if ($mode === TransactionMode::Immediate && $this->connection->driver() !== Driver::Sqlite) {
+            throw new UnsupportedFeatureException(
+                'Immediate transactions are supported only by the SQLite driver.',
             );
         }
     }
@@ -450,9 +485,15 @@ final class TransactionManager
         }
     }
 
-    private function begin(PDO $pdo): void
+    private function begin(PDO $pdo, TransactionMode $mode): void
     {
-        if (!$pdo->beginTransaction()) {
+        if ($mode === TransactionMode::Immediate) {
+            $this->executeControlSql($pdo, 'BEGIN IMMEDIATE');
+
+            return;
+        }
+
+        if ($pdo->beginTransaction() === false) {
             throw new RuntimeException('PDO returned false while beginning a transaction.');
         }
     }

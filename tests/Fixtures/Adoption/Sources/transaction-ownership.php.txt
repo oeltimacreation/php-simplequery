@@ -3,8 +3,11 @@
 declare(strict_types=1);
 
 use Oeltima\SimpleQuery\Connection;
+use Oeltima\SimpleQuery\Driver;
 use Oeltima\SimpleQuery\Exception\ExternalTransactionException;
 use Oeltima\SimpleQuery\Exception\QueryExecutionException;
+use Oeltima\SimpleQuery\Exception\TransactionStateException;
+use Oeltima\SimpleQuery\TransactionMode;
 
 final class SyntheticProductionTransaction
 {
@@ -20,12 +23,44 @@ final class SyntheticProductionTransaction
         $pdo->commit();
     }
 
+    public function ordinaryManaged(array $record): string
+    {
+        return $this->database->transaction(function (Connection $database) use ($record): string {
+            $id = $database->table('records')->insertGetId($record);
+            $database->transaction(static function (Connection $nested) use ($id): void {
+                $nested->table('audit_records')->insert(['record_id' => $id]);
+            });
+
+            return $id;
+        });
+    }
+
+    public function callbackFailureIdentity(\Throwable $failure): bool
+    {
+        try {
+            $this->database->transaction(static function () use ($failure): never {
+                throw $failure;
+            });
+        } catch (\Throwable $caught) {
+            return $caught === $failure;
+        }
+
+        return false;
+    }
+
     public function sqliteImmediate(): void
     {
         $pdo = $this->database->pdo();
         $pdo->exec('BEGIN IMMEDIATE');
         $this->database->table('locks')->where('key', 'synthetic')->update(['held' => true]);
         $pdo->rollBack();
+    }
+
+    public function sqliteImmediateManaged(): void
+    {
+        $this->database->transaction(function (Connection $database): void {
+            $database->table('locks')->where('key', 'synthetic')->update(['held' => true]);
+        }, TransactionMode::Immediate);
     }
 
     public function nestedManaged(): void
@@ -51,6 +86,27 @@ final class SyntheticProductionTransaction
 
     public function isLockConflict(QueryExecutionException $exception): bool
     {
-        return in_array($exception->driverCode, ['1205', '1213', '5', '6'], true);
+        $code = (string) $exception->driverCode;
+
+        return match ($exception->driver) {
+            Driver::MariaDb, Driver::MySql => in_array($code, ['1205', '1213'], true),
+            Driver::Sqlite => $exception->sqlState === 'HY000' && in_array($code, ['5', '6'], true),
+        };
+    }
+
+    public function activeCursorRequiresExplicitClose(): bool
+    {
+        $cursor = null;
+        try {
+            $this->database->transaction(function (Connection $database) use (&$cursor): void {
+                $cursor = $database->table('records')->iterateAssociative();
+            });
+        } catch (TransactionStateException) {
+            $cursor?->close();
+
+            return true;
+        }
+
+        return false;
     }
 }

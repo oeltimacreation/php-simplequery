@@ -9,10 +9,12 @@ use Oeltima\SimpleQuery\Connection;
 use Oeltima\SimpleQuery\Cursor;
 use Oeltima\SimpleQuery\Driver;
 use Oeltima\SimpleQuery\Expression\Identifier;
+use Oeltima\SimpleQuery\Exception\QueryExecutionException;
 use Oeltima\SimpleQuery\JoinClause;
 use Oeltima\SimpleQuery\Observability\QueryExecution;
 use Oeltima\SimpleQuery\ParameterType;
 use Oeltima\SimpleQuery\Expression\RawExpression;
+use Oeltima\SimpleQuery\TransactionMode;
 use stdClass;
 
 use function PHPStan\Testing\assertType;
@@ -68,4 +70,22 @@ return static function (Connection $database): void {
     new RawExpression('COALESCE(?, ?)', $bindings);
     new CompiledQuery('SELECT ?', [new Binding(1, ParameterType::Integer)]);
     new QueryExecution('SELECT ?', [ParameterType::Integer], 0.1, true, null, Driver::Sqlite, null, 0);
+
+    $transactionResult = $database->transaction(
+        static function ($transaction): string {
+            assertType(Connection::class, $transaction);
+
+            return $transaction->table('records')->insertGetId(['label' => 'synthetic']);
+        },
+        TransactionMode::Immediate,
+    );
+    assertType('string', $transactionResult);
+
+    try {
+        $database->query('SELECT * FROM missing_table')->get();
+    } catch (QueryExecutionException $exception) {
+        assertType('string|null', $exception->sqlState);
+        assertType('int|string|null', $exception->driverCode);
+        assertType(Driver::class, $exception->driver);
+    }
 };

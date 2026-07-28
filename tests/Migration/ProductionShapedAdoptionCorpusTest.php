@@ -8,7 +8,7 @@ use PHPUnit\Framework\TestCase;
 
 final class ProductionShapedAdoptionCorpusTest extends TestCase
 {
-    public function testManifestCoversRequiredPhaseOneShapesWithoutPrivateMaterial(): void
+    public function testManifestCoversRequiredAdoptionShapesWithoutPrivateMaterial(): void
     {
         $root = dirname(__DIR__) . '/Fixtures/Adoption';
         $contents = file_get_contents($root . '/manifest.json');
@@ -34,6 +34,12 @@ final class ProductionShapedAdoptionCorpusTest extends TestCase
                 'affected_row_insert',
                 'lock_conflict_evidence',
                 'manual_transaction_refusal',
+                'ordinary_managed_transaction',
+                'nested_savepoint',
+                'callback_exception_identity',
+                'active_cursor_rejection',
+                'sqlite_immediate_managed_transaction',
+                'application_owned_exception_classification',
             ] as $shape
         ) {
             self::assertContains($shape, $requiredShapes);

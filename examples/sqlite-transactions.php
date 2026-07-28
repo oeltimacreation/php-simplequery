@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Oeltima\SimpleQuery\Connection;
 use Oeltima\SimpleQuery\Driver;
+use Oeltima\SimpleQuery\TransactionMode;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
@@ -25,7 +26,7 @@ $returned = $db->transaction(function (Connection $connection): int {
     }
 
     return $connection->table('accounts')->count();
-});
+}, TransactionMode::Immediate);
 
 $names = array_column($db->table('accounts')->orderBy('id')->getAssociative(), 'name');
 if ($returned !== 2 || $names !== ['outer', 'outer-continued']) {
@@ -33,4 +34,4 @@ if ($returned !== 2 || $names !== ['outer', 'outer-continued']) {
 }
 
 $db->close();
-fwrite(STDOUT, "SQLite managed transaction example passed.\n");
+fwrite(STDOUT, "SQLite immediate managed transaction example passed.\n");
