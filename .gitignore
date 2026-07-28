@@ -6,6 +6,7 @@
 /build/
 /tools/database-probes/results/
 /benchmarks/results/
+/internal_docs/
 
 .env
 .env.local
