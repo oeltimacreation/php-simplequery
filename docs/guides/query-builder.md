@@ -59,6 +59,20 @@ above needs trusted raw SQL; identifiers, wildcards, and aliases retain their
 typed meaning. The [projection ergonomics spike](../evidence/0.3-projection-ergonomics-spike.md)
 records why the existing variadic API was retained.
 
+Use a trusted raw projection only for syntax that cannot be represented as an
+identifier, wildcard, or alias. Keep values in its ordered binding list:
+
+```php
+$query->select(
+    'orders.id',
+    Identifier::of('orders.customer_id')->as('customer'),
+    $db->raw('orders.total * ? AS converted_total', [$exchangeRate]),
+);
+```
+
+The SQL text remains application-authored code. A raw expression is not parsed,
+escaped, or made portable by the builder.
+
 ## Identifiers and aliases
 
 ```php
@@ -124,6 +138,23 @@ Strings in those methods are always identifiers, never values or expressions.
 
 `whereNot()` negates the complete comparison, raw condition, or group. It does
 not guess an inverse operator.
+
+### Date and time ranges
+
+Prefer a half-open range over wrapping an indexed column in a function. Compute
+the boundaries in application code and bind both values:
+
+```php
+$query
+    ->where('events.created_at', '>=', $startUtc)
+    ->where('events.created_at', '<', $nextDayUtc);
+```
+
+This avoids double-counting a boundary and lets supported engines consider an
+ordinary index on `created_at`. A vendor function such as `DATE(...)` requires
+a trusted raw expression and may need a matching functional index. Confirm
+important shapes with production-like data and the selected engine's query-plan
+tooling; the builder does not control indexes.
 
 ### Nulls and empty lists
 
@@ -211,6 +242,43 @@ pagination, and locking:
 - grouped count returns the number of groups/result rows;
 - the original builder is unchanged;
 - `PDOStatement::rowCount()` is never used for `SELECT` counting.
+
+To count distinct non-null values, project only that identifier, apply
+`distinct()`, and call `count()`:
+
+```php
+$customerCount = $db
+    ->table('orders')
+    ->select('customer_id')
+    ->distinct()
+    ->whereNotNull('customer_id')
+    ->count();
+```
+
+The explicit null predicate documents whether null is part of the logical
+result. For a grouped report, build the intended grouped query and call
+`count()` to count its result rows. Do not place `COUNT(DISTINCT ...)` inside a
+raw scalar projection merely to recover the structured logical-count contract.
+
+## Deliberate raw boundaries
+
+Use structured identifiers, comparisons, joins, ranges, grouping, and ordering
+whenever they express the query. A complete `RawExpression` is appropriate for
+vendor predicates or expression-to-expression SQL that the finite API does not
+model; `Connection::query()` is the escape path when the whole statement is
+inherently raw.
+
+At every raw boundary:
+
+- keep SQL text fixed and application-authored;
+- keep runtime values in ordered positional bindings;
+- allowlist request-derived identifiers before constructing `Identifier`;
+- test exact placeholder SQL and binding order;
+- run the query on every engine or proxy for which the application claims
+  support.
+
+See [raw SQL and security](raw-sql-and-security.md) for the complete trust
+model.
 
 ## Locking reads
 

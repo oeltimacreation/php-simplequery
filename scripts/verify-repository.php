@@ -59,6 +59,8 @@ $requiredFiles = [
     'examples/query-building.php',
     'examples/sqlite-compiler-smoke.php',
     'examples/sqlite-execution.php',
+    'examples/sqlite-streaming-report.php',
+    'examples/sqlite-batch-write.php',
     'examples/sqlite-transactions.php',
     'examples/sqlite-migration-slice.php',
     'tools/database-probes/compose.yaml',

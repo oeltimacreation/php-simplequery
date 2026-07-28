@@ -217,6 +217,11 @@ The aggregate scalar cases are executable data in
 Write shape and result rules are detailed in
 [results and writes](../guides/results-and-writes.md).
 
+Grouped count returns the number of groups/result rows; a projection-only
+distinct builder can therefore express a logical count-distinct recipe without
+adding a separate aggregate parser. See [query builder](../guides/query-builder.md)
+for null handling and the canonical shape.
+
 `RawQuery` exposes the same appropriate object/associative/cursor terminals
 plus `execute(): int`; construction does not execute SQL. Raw SQL and bindings
 remain immutable for that query.

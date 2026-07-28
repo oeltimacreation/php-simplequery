@@ -60,6 +60,8 @@ synthetic parity test, accepted as an application-owned escape path, or blocked.
   infer MariaDB, MySQL, SQLite, or proxy compatibility from another engine.
 - [ ] Performance: preserve index-friendly ranges and joins; compare only
   identical result digests and environments.
+- [ ] Static analysis: run the consumer's strictest supported configuration
+  after construction, callback, result, and exception types are migrated.
 - [ ] Exceptions and diagnostics: retain redaction, inspect structured driver
   evidence only where needed, and avoid application dependence on SQL text.
 

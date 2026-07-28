@@ -5,15 +5,15 @@
 1. Create `release/<version>` from the default branch; never cut a stable
    release directly from a feature branch.
 2. Confirm all required CI and scheduled database/proxy jobs are green.
-2. Review the public database support matrix and tested minimums.
-3. Run the complete test, coverage, static-analysis, style, audit, example, and
+3. Review the public database support matrix and tested minimums.
+4. Run the complete test, coverage, static-analysis, style, audit, example, and
    no-dev consumer suites.
-4. Review benchmark artifacts for correctness and clear regressions.
-5. Update `CHANGELOG.md`, `docs/guides/upgrading.md`, support notes, and
+5. Review benchmark artifacts for correctness and clear regressions.
+6. Update `CHANGELOG.md`, `docs/guides/upgrading.md`, support notes, and
    migration guidance.
-6. Verify every public API change is documented and accepted by an ADR when
+7. Verify every public API change is documented and accepted by an ADR when
    required.
-7. Perform the raw SQL/compiler security checklist.
+8. Perform the raw SQL/compiler security checklist.
 
 ## Publishing
 

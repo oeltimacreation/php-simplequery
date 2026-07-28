@@ -88,6 +88,8 @@
             "php examples/query-building.php",
             "php examples/sqlite-compiler-smoke.php",
             "php examples/sqlite-execution.php",
+            "php examples/sqlite-streaming-report.php",
+            "php examples/sqlite-batch-write.php",
             "php examples/sqlite-transactions.php",
             "php examples/sqlite-migration-slice.php"
         ],

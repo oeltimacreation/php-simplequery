@@ -53,7 +53,20 @@ Discard a quarantined connection rather than retrying work on it.
 Published release tags are immutable. Corrections are issued as new patch
 releases.
 
-## Preparing for 0.3
+## Upgrading from 0.2 to 0.3
+
+`0.3.0` adds trusted expression-to-bound-value comparisons to `WHERE`, nested
+condition groups, `HAVING`, and value-oriented joins. The expression SQL and
+its bindings occur before the separately bound comparison value. It also adds
+explicit `whereColumn()` and `orWhereColumn()` identifier comparisons, and
+allows exactly one trusted expression operand in identifier-oriented joins.
+Plain strings retain their existing identifier/value meaning; complete
+one-argument raw conditions are unchanged. Review exact SQL and binding order
+when adopting an overload.
+
+No projection-list parser was added. Continue passing identifiers,
+`Identifier::as()` aliases, wildcards, and deliberate raw projections as
+separate variadic `select()` arguments.
 
 The one-argument `transaction()` contract is unchanged. MySQL-family row locks
 continue to use `forUpdate()` or `forShare()` inside an ordinary managed
@@ -65,3 +78,10 @@ Managed begin now verifies `PDO::inTransaction()` before executing the callback.
 A driver/runtime combination that dispatches begin without reporting physical
 activity fails before application work runs; reuse is allowed only after
 physical inactivity is verified.
+
+Applications migrating from Pixie or reviewing an existing SimpleQuery
+adoption should run the deterministic `--mode=simplequery` analyzer, resolve
+generated-ID timing and transaction ownership, and retest raw boundaries,
+static analysis, SARGable plans, and every claimed live-engine/proxy path. See
+[migrating from Pixie](migrating-from-pixie.md) and the
+[migration review report](../maintainers/migration-review.md).

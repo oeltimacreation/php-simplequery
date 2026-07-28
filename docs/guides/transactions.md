@@ -14,6 +14,22 @@ $result = $db->transaction(
 The callback result is returned. Any `Throwable` triggers rollback handling.
 When rollback succeeds, application/domain exceptions are rethrown unchanged.
 
+Keep every statement that belongs to the atomic unit inside the callback, and
+return only data that remains valid after commit:
+
+```php
+$orderId = $db->transaction(
+    static function (Connection $connection) use ($order, $lines): string {
+        $id = $connection->table('orders')->insertGetId($order);
+        foreach ($lines as $line) {
+            $connection->table('order_lines')->insert($line + ['order_id' => $id]);
+        }
+
+        return $id;
+    },
+);
+```
+
 ## Ownership
 
 - depth zero begins and owns the physical PDO transaction;
@@ -29,6 +45,27 @@ commits externally owned work.
 
 Builder queries may execute inside an externally managed PDO transaction, but
 transaction completion remains the caller's responsibility.
+
+Choose one owner for each physical transaction. If a framework or application
+owns PDO completion, use builder terminals inside that scope but do not call
+`Connection::transaction()`:
+
+```php
+$pdo = $db->pdo();
+$pdo->beginTransaction();
+try {
+    $db->table('jobs')->where('id', $jobId)->update(['state' => 'claimed']);
+    $pdo->commit();
+} catch (Throwable $failure) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+
+    throw $failure;
+}
+```
+
+That scope is entirely application-owned; SimpleQuery will not complete it.
 
 ## Direct PDO use
 
@@ -99,6 +136,33 @@ transaction. `noWait()` and `skipLocked()` are optional lock modifiers with
 engine- and version-sensitive behavior. See
 [database support](../reference/database-support.md).
 
+Acquire MySQL-family row locks inside an ordinary managed transaction and
+finish reading any cursor before the callback returns:
+
+```php
+$job = $db->transaction(
+    static function (Connection $connection): ?array {
+        $job = $connection
+            ->table('jobs')
+            ->where('state', 'ready')
+            ->forUpdate()
+            ->skipLocked()
+            ->firstAssociative();
+
+        if ($job !== null) {
+            $connection->table('jobs')->where('id', $job['id'])->update(['state' => 'claimed']);
+        }
+
+        return $job;
+    },
+);
+```
+
+`NOWAIT`, `SKIP LOCKED`, deadlock selection, and lock-timeout behavior are
+engine-, version-, topology-, and workload-sensitive. Preserve the exception's
+SQLSTATE and driver code as evidence, then decide in the application whether
+the operation can be abandoned, reconciled, or deliberately retried.
+
 ## Retry policy
 
 SimpleQuery does not retry transactions. Applications that implement retry
@@ -117,3 +181,8 @@ and `1213`, or SQLite SQLSTATE `HY000` with codes `5` and `6`. Those values are
 diagnostic inputs, not proof that a callback is safe to replay. See the
 [Phase 3 evidence](../evidence/0.3-transaction-and-exception-ergonomics.md) for
 the complete recipe and limits.
+
+Before any retry, the application must separately prove bounded attempts,
+idempotent or compensatable effects, safe generated-ID behavior, and a policy
+for ambiguous commit outcomes. SimpleQuery deliberately provides no retry flag
+or automatic callback replay.

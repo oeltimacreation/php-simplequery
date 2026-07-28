@@ -8,6 +8,21 @@ library-owned [migration validation](../maintainers/migration-validation.md) rec
 representative shapes grounded in a read-only nine-consumer audit without
 changing any application repository.
 
+Before editing a migrated or partially migrated checkout, generate a
+deterministic, path-redacted adoption report:
+
+```bash
+php tools/audit-consumers.php /read-only/consumer-workspace \
+  --mode=simplequery \
+  --deterministic > adoption-audit.json
+```
+
+The lexical analyzer reports review candidates; it does not prove runtime
+reachability or semantic safety. Keep a private path-bearing report only when a
+reviewer needs it, and never commit private paths, identifiers, or SQL to this
+repository. Resolve the output with the canonical
+[migration review report](../maintainers/migration-review.md).
+
 ## Familiar behavior retained
 
 - mutable fluent builders;
@@ -133,25 +148,31 @@ Every migration must explicitly resolve these differences:
    tests for results, writes, side effects, and failure behavior before edits.
 2. Select one bounded feature slice with an owner, rollback plan, engine path,
    representative data, and observable success criteria.
-3. Inventory imports/construction, every insert return, write truthiness, raw
-   SQL, dynamic identifiers, transactions, diagnostics, vendor functions,
-   cursors, and unsupported methods.
+3. Run the SimpleQuery adoption analyzer and inventory imports/construction,
+   every insert return, split or delayed `lastInsertId()` use, write truthiness,
+   raw SQL, dynamic identifiers, direct PDO, transactions, diagnostics, vendor
+   functions, cursors, batches, and unsupported methods.
 4. Classify insert calls as generated ID, ignored affected rows, truthiness,
    pass-through, or batch assumption. Never globally rename `insert()`.
 5. Rewrite construction and types to native `Connection`, then migrate fluent
    queries. Use `compile()` tests for exact SQL and ordered binding parity.
 6. Replace interpolated values with bindings and allowlist request-derived
-   identifiers. Treat every raw fragment and vendor function as a security and
-   portability review point.
+   identifiers. Classify every raw projection, predicate, join, grouping,
+   ordering, `HAVING`, and full raw query as a security and portability review
+   point.
 7. Rewrite transaction ownership, query terminal timing, aggregate scalar
    expectations, write returns, and diagnostic observation explicitly.
-8. Run fast SQLite/application tests, then the real MariaDB/MySQL and proxy
-   paths needed by that slice. Compare rows, types, affected rows, IDs, side
-   effects, SQLSTATE behavior, timings, and memory.
-9. Review any mechanical output. The provided analyzer permits only an
+8. Preserve SARGable ranges and identifier joins where they represent the same
+   business rule. Test critical plans with production-shaped data rather than
+   assuming a structured rewrite uses an index.
+9. Run the application's static analysis and compile assertions, then fast
+   SQLite/application tests and the real MariaDB/MySQL and proxy paths needed
+   by that slice. Compare rows, types, affected rows, IDs, side effects,
+   SQLSTATE behavior, timings, memory, and important query plans.
+10. Review any mechanical output. The provided analyzer permits only an
    isolated same-name connection import and refuses handler construction plus
    every ambiguous semantic change.
-10. Deploy the bounded slice through the application's staged rollout, observe
+11. Deploy the bounded slice through the application's staged rollout, observe
     errors/latency/connection state, reconcile writes, and retain a rapid
     rollback path before expanding scope.
 

@@ -28,11 +28,51 @@ buffered mode may receive the complete result into client memory. Unbuffered
 mode changes connection availability and requires explicit configuration and
 tests.
 
+```php
+$cursor = $db->table('report_rows')->orderBy('id')->iterateAssociative();
+try {
+    foreach ($cursor as $row) {
+        consume($row);
+        if (reportIsComplete()) {
+            break;
+        }
+    }
+} finally {
+    $cursor->close();
+}
+```
+
+Natural exhaustion also closes the cursor, but explicit `finally` cleanup is
+required when the loop can stop early or throw. Do not let a live cursor cross
+a transaction/savepoint completion or connection-close boundary. The runnable
+[SQLite streaming report](../../examples/sqlite-streaming-report.php) verifies
+early cleanup.
+
 ## Batch writes
 
 `insertMany()` avoids one round trip per row. It does not select a chunk size
 or transaction policy. Applications must account for database parameter,
 packet, statement-size, lock-duration, and rollback costs.
+
+```php
+$write = static function (Connection $connection) use ($rows, $batchSize): int {
+    $affected = 0;
+    foreach (array_chunk($rows, $batchSize) as $batch) {
+        $affected += $connection->table('imports')->insertMany($batch);
+    }
+
+    return $affected;
+};
+
+$affected = $atomicImport ? $db->transaction($write) : $write($db);
+```
+
+`$batchSize` and `$atomicImport` are application decisions. One transaction can
+make all chunks atomic but also lengthens lock duration and increases rollback
+cost; independent chunks permit partial progress that the application must
+record and reconcile. The runnable
+[SQLite batch-write example](../../examples/sqlite-batch-write.php) keeps both
+choices explicit.
 
 ## No speculative cache
 
