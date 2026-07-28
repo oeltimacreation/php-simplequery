@@ -52,6 +52,10 @@ Files:
   branch coverage;
 - [`0.3.0` production-shaped performance evidence](0.3-production-performance.md),
   recording paired `v0.2.0` measurements, query plans, memory, and soak gates;
+- [`0.3.0` release-candidate certification](0.3-release-candidate-certification.md),
+  recording local quality/coverage, minimum/current direct and proxy probes,
+  path-redacted consumer validation, security review, and the remaining real-
+  deployment publication blocker;
 - [edge-feature usage verification](feature-usage-verification.md).
 
 Generated reports belong in `tools/database-probes/results/`, are ignored by Git, and

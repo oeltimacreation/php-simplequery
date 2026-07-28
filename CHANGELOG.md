@@ -13,6 +13,9 @@ with ZeroVer releases before `1.0.0`.
 - Add canonical `0.3.0` query, transaction, streaming, batching, migration,
   upgrade, and API guidance, plus CI-executed SQLite examples for early cursor
   cleanup and application-owned batch/atomicity policy.
+- Add release-candidate evidence for local quality and coverage, clean no-dev
+  installation, minimum/current direct and proxy probes, path-redacted
+  consumer validation, security review, and the remaining deployment gate.
 - Add correctness-gated production-shaped compiler, report hydration/cursor,
   logical count, batch write, and SQLite query-plan benchmark evidence.
 - Add generic baseline/candidate comparison labels, operation-level median

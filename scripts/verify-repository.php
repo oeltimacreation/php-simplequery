@@ -37,6 +37,8 @@ $requiredFiles = [
     'docs/evidence/0.3-production-adoption-baseline.md',
     'docs/evidence/0.3-transaction-and-exception-ergonomics.md',
     'docs/evidence/0.3-architecture-and-quality-audit.md',
+    'docs/evidence/0.3-production-performance.md',
+    'docs/evidence/0.3-release-candidate-certification.md',
     'docs/evidence/v0.2.0-development-baseline.md',
     'docs/evidence/v0.2.0-development-baseline.json',
     'docs/maintainers/migration-validation.md',
