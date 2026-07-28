@@ -98,5 +98,5 @@ manual review of Pecee Pixie consumers, but all names, SQL, rows, and project
 identifiers remain synthetic. Use them as patterns for CRUD, injected models,
 raw reports, diagnostics, and complex lists, then build application-owned
 characterization tests around real behavior. See
-[migration validation](migration-validation.md) and run
+[migration validation](../maintainers/migration-validation.md) and run
 `composer migration:check` before changing the corpus.

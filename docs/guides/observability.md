@@ -24,7 +24,7 @@ No notification is emitted for:
 - detached compilation;
 - connection-construction probes;
 - statements executed through `Connection::pdo()`;
-- PDO transaction-control or savepoint calls in `0.1.0`.
+- PDO transaction-control or savepoint calls.
 
 Cursor statements emit their single notification after prepare/bind/execute
 and cursor hand-off, before row consumption. Its duration and success describe
@@ -61,7 +61,7 @@ accepts that cost.
 
 Applications can implement `QueryObserver` to bridge into PSR-3, tracing, or a
 metrics system. The core has no dependency on those packages and ships no
-first-party PSR-3 bridge in `0.1.0`.
+first-party PSR-3 bridge.
 
 ## Recording tests
 

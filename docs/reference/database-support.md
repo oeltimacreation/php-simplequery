@@ -15,8 +15,8 @@ successful simple query does not imply support.
 | Generated IDs | Implemented | Implemented | Implemented |
 | Multi-row insert compilation | Implemented | Implemented | Implemented |
 | Lock clauses | Implemented | Implemented | Unsupported |
-| Generic upsert | Deferred | Deferred | Deferred |
-| Generic DML returning | Deferred | Unsupported shape | Deferred |
+| Generic upsert | Unsupported | Unsupported | Unsupported |
+| Generic DML returning | Unsupported | Unsupported | Unsupported |
 
 The direct fixture pairs are MariaDB 11.8.2/11.8.8 and MySQL 8.0.11/8.0.46,
 representing the minimum/current supported release within each declared engine

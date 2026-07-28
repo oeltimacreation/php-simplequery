@@ -2,7 +2,7 @@
 
 This catalogue records portability boundaries. Exact fixture/deployment
 inventory, primary-source dossiers, and executable matrices are maintained in
-the [compatibility evidence records](evidence/README.md).
+the [compatibility evidence records](../evidence/README.md).
 
 ## PDO
 
@@ -60,5 +60,5 @@ Each accepted deployment-sensitive policy should link:
 Do not publish credentials, hostnames, private topology, customer data, or
 proprietary query samples in this catalogue.
 
-See [technical references](references.md) for the primary public documentation
+See [technical references](../maintainers/references.md) for the primary public documentation
 used to establish these constraints.

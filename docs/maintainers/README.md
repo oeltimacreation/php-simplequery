@@ -1,23 +1,24 @@
-# Maintainer notes
+# Maintainer documentation
 
 This page indexes the public maintenance contract. It intentionally contains no
 private consumer inventory, production topology, credentials, or customer
 information.
 
-## Required references
+## Core references
 
-- [Architecture](architecture.md)
-- [Architecture decisions](adr/README.md)
-- [Roadmap and release gates](roadmap.md)
+- [Architecture](../reference/architecture.md)
+- [Architecture decisions](../adr/README.md)
+- [Active `0.3` development plan](../plans/0.3.md)
 - [Test strategy](testing-strategy.md)
 - [Testing architecture](testing-architecture.md)
-- [Compatibility evidence records](evidence/README.md)
+- [Compatibility evidence records](../evidence/README.md)
 - [Benchmark method](benchmarking.md)
-- [PDO, engine, and proxy quirks](pdo-engine-proxy-quirks.md)
+- [PDO, engine, and proxy quirks](../reference/pdo-engine-proxy-quirks.md)
 - [Release process](release-process.md)
 - [Security review checklist](security-review-checklist.md)
-- [Support policy](../SUPPORT.md)
-- [Contributing](../CONTRIBUTING.md)
+- [Technical references](references.md)
+- [Support policy](../../SUPPORT.md)
+- [Contributing](../../CONTRIBUTING.md)
 
 ## Public/internal boundary
 

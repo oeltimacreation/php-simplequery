@@ -36,4 +36,4 @@ support matrix and passes the required live tests. Proxy compatibility is
 configuration-sensitive and will be published using reproducible test
 fixtures, not inferred from protocol similarity.
 
-See [database support](docs/database-support.md) for the current target matrix.
+See [database support](docs/reference/database-support.md) for the current target matrix.

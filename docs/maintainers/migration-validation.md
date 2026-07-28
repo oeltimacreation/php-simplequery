@@ -5,11 +5,11 @@ read-only scan and manual review of nine Pecee Pixie 4.15.8/4.16.3 consumer
 checkouts. It does not copy or modify an application repository, publish
 private SQL, or claim that a real application has already completed rollout.
 The anonymous aggregate evidence is
-[`consumer-audit-baseline.json`](evidence/consumer-audit-baseline.json). The
+[`consumer-audit-baseline.json`](../evidence/consumer-audit-baseline.json). The
 executable corpus is
-[`representative-slices.json`](../tests/Fixtures/Migration/representative-slices.json),
+[`representative-slices.json`](../../tests/Fixtures/Migration/representative-slices.json),
 and its deterministic summary is
-[`migration-validation.json`](evidence/migration-validation.json).
+[`migration-validation.json`](../evidence/migration-validation.json).
 
 ## Representative slices
 

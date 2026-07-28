@@ -46,7 +46,7 @@ row you inserted. `insertGetId()` returns a string because database generated
 IDs may be wider than PHP's integer range.
 
 The equivalent source-checkout example is
-[`examples/beginner/first-query.php`](../examples/beginner/first-query.php).
+[`examples/beginner/first-query.php`](../../examples/beginner/first-query.php).
 
 ## 3. Filter, sort, and fetch many rows
 
@@ -107,8 +107,8 @@ non-persistent connections, and `utf8mb4`. For an existing PDO connection use
 
 ## Next steps
 
-- Run the [beginner examples](../examples/README.md).
+- Run the [beginner examples](../../examples/README.md).
 - Learn complex filters and joins in the [query builder guide](query-builder.md).
-- Check engine-specific limits in [database support](database-support.md).
+- Check engine-specific limits in [database support](../reference/database-support.md).
 - Add compile assertions to your application tests with
   [testing applications](testing-applications.md).

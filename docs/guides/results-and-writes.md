@@ -139,9 +139,9 @@ They reject builders containing `distinct()`, `groupBy()`, or `having()` with
 when grouped aggregate results are required. `count()` continues to support
 distinct, grouped, and `HAVING` logical result shapes.
 
-## Deferred write features
+## Unsupported write features
 
 Generic upsert, `insertIgnore()`, `replace()`, DML `RETURNING`, joined writes,
-ordered/limited writes, and unions are not part of `0.1.0`. Engine-specific raw
-SQL remains available when an application deliberately accepts those
-semantics.
+ordered/limited writes, and unions are not supported by the structured API.
+Engine-specific raw SQL remains available when an application deliberately
+accepts those semantics.

@@ -43,7 +43,7 @@ binding maps are rejected at runtime.
 final readonly declaration with nullable prepare-emulation, buffering,
 `FOUND_ROWS`, persistence, SQLite busy-timeout, and connection-label fields.
 The executable construction cases are in
-[`connection-construction.json`](../tests/Fixtures/Contracts/connection-construction.json).
+[`connection-construction.json`](../../tests/Fixtures/Contracts/connection-construction.json).
 
 Construction performs no environment lookup or topology discovery. Broad PDO
 driver mismatch, hard-invariant conflict, invalid/inapplicable options,
@@ -136,11 +136,11 @@ set is `=`, `!=`, `<>`, `<`, `<=`, `>`, `>=`, `LIKE`, and `NOT LIKE`. Join
 Inner/left joins are supported on all three engines. Typed row locks are
 MariaDB/MySQL-only, require an active transaction at execution, and reject
 ambiguous query shapes. Right joins, unions, generic upserts, and DML returning
-are deferred.
+are not supported.
 
 Invalid values or states throw `InvalidQueryException`. A valid concept that
-the selected engine or `0.1.0` shape does not support throws
-`UnsupportedFeatureException`. See [query builder](query-builder.md).
+the selected engine or structured API does not support throws
+`UnsupportedFeatureException`. See [query builder](../guides/query-builder.md).
 
 ## Terminals
 
@@ -163,8 +163,9 @@ Terminals never mutate clause state.
 | `update()` / `delete()` | Affected rows as `int`. |
 
 The aggregate scalar cases are executable data in
-[`aggregate-scalars.json`](../tests/Fixtures/Contracts/aggregate-scalars.json).
-Write shape and result rules are detailed in [results and writes](results-and-writes.md).
+[`aggregate-scalars.json`](../../tests/Fixtures/Contracts/aggregate-scalars.json).
+Write shape and result rules are detailed in
+[results and writes](../guides/results-and-writes.md).
 
 `RawQuery` exposes the same appropriate object/associative/cursor terminals
 plus `execute(): int`; construction does not execute SQL. Raw SQL and bindings
@@ -176,7 +177,7 @@ Managed outer transactions own physical completion; nested managed calls use
 savepoints. A pre-existing physical transaction is external and is never
 adopted. Every `Throwable` enters rollback handling. Live tracked cursors
 reject transaction/savepoint completion rather than being truncated. See
-[transactions](transactions.md).
+[transactions](../guides/transactions.md).
 
 A cursor close failure quarantines its connection. A failed transaction begin
 is reusable only after verified physical inactivity; uncertain nested
@@ -186,7 +187,7 @@ savepoint creation also quarantines the connection.
 observation integration. It is post-attempt, connection-scoped, immutable,
 redacted, and non-interfering. Observer failures never change the database
 outcome or trigger replay. There is no global event or mutable last-query
-state. See [observability](observability.md).
+state. See [observability](../guides/observability.md).
 
 ## Exceptions
 
@@ -209,4 +210,4 @@ interpolated binding values. Transaction failures expose the attempted control
 operation, managed depth, driver/connection label, callback/control/recovery
 failures, and whether the connection is unusable. Domain exceptions retain
 identity when rollback succeeds. Pixie's broad vendor-normalized constraint
-subclass family is not part of `0.1.0`.
+subclass family is not part of the public contract.

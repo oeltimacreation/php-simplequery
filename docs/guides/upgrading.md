@@ -14,7 +14,7 @@ lines. The first public release is `0.1.0`.
 
 ## Upgrade checklist
 
-For each future upgrade:
+For each upgrade:
 
 1. read the changelog and this guide;
 2. review runtime, extension, database, and proxy support floors;
@@ -34,7 +34,7 @@ composer require oeltimacreation/php-simplequery:^0.2
 `0.2.0` requires PHP 8.2+, `ext-pdo`, and either `pdo_sqlite` or `pdo_mysql`.
 Select `Driver::MariaDb`, `Driver::MySql`, or `Driver::Sqlite` explicitly. See
 [getting started](getting-started.md) for connection examples and
-[database support](database-support.md) for engine floors.
+[database support](../reference/database-support.md) for engine floors.
 
 ## Upgrading from 0.1 to 0.2
 
@@ -49,14 +49,6 @@ boundaries. A false or throwing PDO cursor close and an uncertain nested
 savepoint creation now quarantine the connection. Failed transaction begin is
 recoverable only when SimpleQuery can verify an inactive physical transaction.
 Discard a quarantined connection rather than retrying work on it.
-
-## Future upgrade sections
-
-Version-specific instructions will be added under headings such as:
-
-```text
-## Upgrading from 0.x to 1.0
-```
 
 Published release tags are immutable. Corrections are issued as new patch
 releases.

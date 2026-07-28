@@ -88,7 +88,8 @@ advance.
 
 MariaDB/MySQL `forUpdate()` and `forShare()` execution requires an active
 transaction. `noWait()` and `skipLocked()` are optional lock modifiers with
-engine- and version-sensitive behavior. See [database support](database-support.md).
+engine- and version-sensitive behavior. See
+[database support](../reference/database-support.md).
 
 ## Retry policy
 

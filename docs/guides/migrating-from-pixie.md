@@ -4,7 +4,7 @@ SimpleQuery is not a drop-in replacement for `pecee/pixie`. There is no Pixie
 namespace compatibility package, runtime facade, or deprecation shim.
 
 Migration is an application change supported by characterization tests. The
-library-owned [migration validation](migration-validation.md) recreates five
+library-owned [migration validation](../maintainers/migration-validation.md) recreates five
 representative shapes grounded in a read-only nine-consumer audit without
 changing any application repository.
 
@@ -116,7 +116,7 @@ Every migration must explicitly resolve these differences:
 | Nested/external transaction adoption | Outer managed scope owns PDO; nesting uses savepoints; external work is never adopted. |
 | Transaction control-flow exceptions | All `Throwable` values enter rollback handling; domain failures retain identity. |
 | Live cursor crossing completion | Transaction/savepoint completion rejects the cursor and requires explicit cleanup. |
-| `updateOrInsert()` select-then-write | Generic upsert is deferred; use a deliberate vendor design or transaction workflow. |
+| `updateOrInsert()` select-then-write | Generic upsert is unsupported; use a deliberate vendor design or transaction workflow. |
 | String lock modes | Typed lock methods; execution requires a transaction; SQLite rejects them. |
 | Interpolated subqueries | Child SQL and bindings are snapshotted structurally. |
 | Terminal mutation such as `first()` changing limit | Terminals do not change builder state. |

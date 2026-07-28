@@ -88,5 +88,5 @@ src/
     └── Executor.php
 ```
 
-See the [architecture decision records](adr/README.md) for the reasons behind
+See the [architecture decision records](../adr/README.md) for the reasons behind
 these boundaries.

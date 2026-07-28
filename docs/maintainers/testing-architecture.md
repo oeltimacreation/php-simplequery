@@ -28,7 +28,7 @@ composer benchmark:soak        # repeated compile/lifecycle stress
 
 `composer check` is the clean-checkout contract. The service-backed command
 starts only the exact synthetic Docker fixtures in
-[`compose.yaml`](../tools/database-probes/compose.yaml), records native/emulated and
+[`compose.yaml`](../../tools/database-probes/compose.yaml), records native/emulated and
 buffered/unbuffered reports plus public execution and transaction smokes under
 the ignored `tools/database-probes/results/` directory. It also runs the
 library-owned migration slices through every target, prints a summary, and
@@ -69,7 +69,7 @@ values, customer data, hostnames, or production topology. Direct engine output
 is the control for every proxy comparison.
 
 Probe reports use schema version 1 and the record format in
-[the evidence index](evidence/README.md). A report observation may be:
+[the evidence index](../evidence/README.md). A report observation may be:
 
 - `observed`: the probe ran and recorded behavior without asserting a portable
   outcome;

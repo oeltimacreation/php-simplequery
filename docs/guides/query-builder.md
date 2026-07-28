@@ -36,7 +36,7 @@ QueryBuilder::as(string $alias): self
 ```
 
 A builder source is snapshotted and requires an alias. Multiple structured
-`FROM` sources are excluded from `0.1.0`; use joins or trusted raw SQL.
+`FROM` sources are not supported; use joins or trusted raw SQL.
 
 Without an explicit projection, the query selects `*`. Repeated `select()`
 calls append in call order. Projection strings recognize `*` and qualified
@@ -119,7 +119,7 @@ Normal `on()` operands are identifiers. A comparison to a value must use
 `onValue()` or the equivalent value-oriented join method. A complete trusted
 raw condition may be used when structured joins cannot represent the SQL.
 
-Inner and left joins are in `0.1.0`. Right joins are deferred.
+Inner and left joins are supported. Right joins are not supported.
 
 ## Grouping, ordering, and pagination
 
@@ -173,7 +173,7 @@ derived-only lock shapes are rejected.
 
 Insert terminals require an unaliased physical table with no read clauses.
 Update and delete accept predicates but reject aliases, projection, distinct,
-joins, grouping, having, ordering, pagination, and locks in `0.1.0`.
+joins, grouping, having, ordering, pagination, and locks.
 
 The builder does not prevent a full-table update or delete. Teams should apply
 their own review or wrapper policy when that risk is unacceptable.

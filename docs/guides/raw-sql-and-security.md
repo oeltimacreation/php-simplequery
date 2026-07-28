@@ -71,8 +71,8 @@ $rows = $db
 `query()` returns a deferred `RawQuery`. Execution happens at `get()`,
 `first()`, `execute()`, or iteration.
 
-Bindings are a positional list. Named and mixed placeholders are excluded from
-`0.1.0`. Plain values receive the same normalization as builder values.
+Bindings are a positional list. Named and mixed placeholders are not
+supported. Plain values receive the same normalization as builder values.
 
 Use result terminals for row-returning SQL and `execute()` for non-row-returning
 SQL. `RawQuery::first()` does not rewrite caller SQL or append a limit; it

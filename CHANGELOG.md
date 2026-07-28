@@ -8,6 +8,12 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+### Changed
+
+- Reorganize documentation into guides, reference, maintainer operations,
+  active plans, ADRs, and evidence; remove completed roadmap and release-plan
+  documents, and add the evidence-gated `0.3.0` development plan.
+
 ## [0.2.0] - 2026-07-26
 
 ### Added

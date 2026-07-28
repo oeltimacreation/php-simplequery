@@ -9,8 +9,8 @@
 3. Run the complete test, coverage, static-analysis, style, audit, example, and
    no-dev consumer suites.
 4. Review benchmark artifacts for correctness and clear regressions.
-5. Update `CHANGELOG.md`, `docs/upgrading.md`, support notes, and migration
-   guidance.
+5. Update `CHANGELOG.md`, `docs/guides/upgrading.md`, support notes, and
+   migration guidance.
 6. Verify every public API change is documented and accepted by an ADR when
    required.
 7. Perform the raw SQL/compiler security checklist.

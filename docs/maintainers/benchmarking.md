@@ -1,7 +1,7 @@
 # Benchmark harness and baselines
 
-Status: implemented reproducible harness; Phase 1 / package `0.2-A` and the
-Phase 2 / package `0.2-E` hydration experiment completed 2026-07-26.
+Status: implemented reproducible harness, including the accepted `0.2.0`
+hydration experiment.
 
 ## Measurement contract
 
@@ -106,8 +106,8 @@ candidate baseline comparison for 30 days. Scheduled/manual/release service CI
 archives live direct/proxy and multiprocess-soak JSON for 90 days. Raw outputs
 are ephemeral artifacts, not committed universal thresholds.
 
-The committed [`v0.1.0` evidence](evidence/v0.1.0-performance-baseline.md)
+The committed [`v0.1.0` evidence](../evidence/v0.1.0-performance-baseline.md)
 remains the historical reference. The accepted
-[`0.2.0` associative hydration experiment](evidence/0.2-associative-hydration-experiment.md)
+[`0.2.0` associative hydration experiment](../evidence/0.2-associative-hydration-experiment.md)
 records both paired execution orders, the hard-gate decision, failure-path
 coverage, and the observer profiling decision.
