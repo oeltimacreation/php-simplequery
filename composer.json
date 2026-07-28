@@ -47,7 +47,8 @@
             "Oeltima\\SimpleQuery\\Benchmark\\": "benchmarks/",
             "Oeltima\\SimpleQuery\\Tests\\": "tests/",
             "Oeltima\\SimpleQuery\\Tools\\DatabaseProbe\\": "tools/database-probes/src/",
-            "Oeltima\\SimpleQuery\\Tools\\Migration\\": "tools/migration/"
+            "Oeltima\\SimpleQuery\\Tools\\Migration\\": "tools/migration/",
+            "Oeltima\\SimpleQuery\\Tools\\Quality\\": "tools/quality/"
         }
     },
     "scripts": {
@@ -60,7 +61,10 @@
         "phpstan:consumer": "phpstan analyse --no-progress --configuration=phpstan.consumer.neon",
         "cs:check": "phpcs",
         "cs:fix": "phpcbf",
+        "docs:check": "php scripts/check-documentation-links.php",
         "lint": "php scripts/lint-php.php",
+        "public-api:check": "php scripts/public-api-manifest.php",
+        "public-api:update": "php scripts/public-api-manifest.php --write",
         "probe:sqlite": "php tools/database-probes/run.php sqlite",
         "probe:execution": "php tools/database-probes/execution-smoke.php",
         "probe:transaction": "php tools/database-probes/transaction-smoke.php",
@@ -92,6 +96,8 @@
             "@phpstan",
             "@phpstan:consumer",
             "@cs:check",
+            "@public-api:check",
+            "@docs:check",
             "@examples:check",
             "@migration:check",
             "@verify"

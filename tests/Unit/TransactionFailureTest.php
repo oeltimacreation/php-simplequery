@@ -18,6 +18,25 @@ use RuntimeException;
 #[RequiresPhpExtension('pdo_sqlite')]
 final class TransactionFailureTest extends TestCase
 {
+    public function testTransactionStateInspectionFailureQuarantinesConnection(): void
+    {
+        [$pdo, $connection] = $this->connection();
+        $pdo->failTransactionInspection = true;
+
+        try {
+            $connection->transaction(static fn (): string => 'not-called');
+            self::fail('The controlled transaction-state inspection failure unexpectedly succeeded.');
+        } catch (TransactionStateException $exception) {
+            self::assertSame('begin', $exception->operation);
+            self::assertInstanceOf(PDOException::class, $exception->controlFailure);
+            self::assertTrue($exception->connectionUnusable);
+        }
+
+        $pdo->failTransactionInspection = false;
+        $this->assertQuarantined($connection);
+        $connection->close();
+    }
+
     public function testBeginFailureHasMetadataAndDoesNotQuarantineCleanConnection(): void
     {
         [$pdo, $connection] = $this->connection();

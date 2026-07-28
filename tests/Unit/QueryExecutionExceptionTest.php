@@ -12,6 +12,22 @@ use PHPUnit\Framework\TestCase;
 
 final class QueryExecutionExceptionTest extends TestCase
 {
+    public function testMissingPdoErrorInfoDoesNotInventPortableEvidence(): void
+    {
+        $pdoException = new PDOException('synthetic transport failure');
+        $exception = QueryExecutionException::fromPdo(
+            $pdoException,
+            'SELECT ?',
+            Driver::Sqlite,
+            'synthetic',
+        );
+
+        self::assertNull($exception->sqlState);
+        self::assertNull($exception->driverCode);
+        self::assertSame('Database statement execution failed.', $exception->getMessage());
+        self::assertSame($pdoException, $exception->getPrevious());
+    }
+
     #[DataProvider('driverEvidence')]
     public function testPdoEvidenceRemainsAccessibleWithoutAssigningPortableSemantics(
         Driver $driver,

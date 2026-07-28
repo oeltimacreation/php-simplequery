@@ -14,11 +14,54 @@ use Oeltima\SimpleQuery\JoinClause;
 use Oeltima\SimpleQuery\Observability\QueryExecution;
 use Oeltima\SimpleQuery\ParameterType;
 use Oeltima\SimpleQuery\Expression\RawExpression;
+use Oeltima\SimpleQuery\QueryBuilder;
 use stdClass;
 
 use function PHPStan\Testing\assertType;
 
 return static function (Connection $database): void {
+    $repository = new class ($database) {
+        public function __construct(private readonly Connection $database)
+        {
+        }
+
+        public function activeForTenant(int $tenantId): QueryBuilder
+        {
+            return $this->database
+                ->table('users')
+                ->where('tenant_id', $tenantId)
+                ->where('active', true);
+        }
+
+        public function withMinimumScore(QueryBuilder $query, int $score): QueryBuilder
+        {
+            return $query->where($this->database->raw('COALESCE(score, ?)', [0]), '>=', $score);
+        }
+
+        /** @param array<string, mixed> $attributes */
+        public function create(array $attributes): string
+        {
+            return $this->database->table('users')->insertGetId($attributes);
+        }
+
+        public function deactivate(int $tenantId): int
+        {
+            return $this->database->transaction(
+                fn (Connection $connection): int => $connection
+                    ->table('users')
+                    ->where('tenant_id', $tenantId)
+                    ->update(['active' => false]),
+            );
+        }
+    };
+    assertType(QueryBuilder::class, $repository->activeForTenant(42));
+    assertType(
+        QueryBuilder::class,
+        $repository->withMinimumScore($repository->activeForTenant(42), 10),
+    );
+    assertType('string', $repository->create(['email' => 'ada@example.test']));
+    assertType('int', $repository->deactivate(42));
+
     $normalizedEmail = $database->raw('LOWER(users.email)');
     $builder = $database
         ->table('users')

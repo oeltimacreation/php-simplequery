@@ -126,6 +126,25 @@ final class ExpressionComparisonTest extends TestCase
         yield 'expression ordering against null' => [
             static fn () => $db->table('users')->where($db->raw('LOWER(email)'), '>', null),
         ];
+        yield 'expression comparison with too many arguments' => [
+            static fn () => (new \ReflectionMethod($db->table('users'), 'where'))->invoke(
+                $db->table('users'),
+                $db->raw('LOWER(email)'),
+                '=',
+                'ada@example.test',
+                'extra',
+            ),
+        ];
+        yield 'condition group with an extra argument' => [
+            static fn () => $db->table('users')->where(static function (ConditionGroup $_group): void {
+            }, true),
+        ];
+        yield 'identifier comparison without a value' => [
+            static fn () => $db->table('users')->where('email'),
+        ];
+        yield 'non-string expression operator' => [
+            static fn () => $db->table('users')->where($db->raw('LOWER(email)'), 42, 'ada@example.test'),
+        ];
         yield 'invalid column operator' => [
             static fn () => $db->table('users')->whereColumn('owner_id', 'IS', 'user_id'),
         ];
@@ -134,6 +153,21 @@ final class ExpressionComparisonTest extends TestCase
         ];
         yield 'null join expression value' => [
             static fn () => (new JoinClause())->onValue($db->raw('LOWER(a)'), '=', null),
+        ];
+        yield 'join value with a non-string operator' => [
+            static fn () => (new JoinClause())->where('status', 42, 'active'),
+        ];
+        yield 'single structured join operand' => [
+            static fn () => (new JoinClause())->on('users.id'),
+        ];
+        yield 'join expression with missing right operand' => [
+            static fn () => (new JoinClause())->on('users.id', '='),
+        ];
+        yield 'join operand with unsupported type' => [
+            static fn () => (new JoinClause())->on('users.id', '=', 42),
+        ];
+        yield 'join operator with unsupported type' => [
+            static fn () => (new JoinClause())->on('users.id', 42, 'owners.id'),
         ];
     }
 
