@@ -129,6 +129,19 @@ final class BenchmarkHarnessTest extends TestCase
         self::assertSame(10.5, $measurements['execute']['change_percent']);
     }
 
+    public function testComparisonAnalysisKeepsZeroBaselineSerializable(): void
+    {
+        $analysis = ComparisonAnalysis::between(
+            $this->comparisonRun(['operation' => 0.0]),
+            $this->comparisonRun(['operation' => 1.0]),
+        );
+        $measurement = $analysis['measurements']['production']['operation'] ?? null;
+        self::assertIsArray($measurement);
+        self::assertNull($measurement['change_percent']);
+        self::assertTrue($measurement['review_required']);
+        self::assertJson(json_encode($analysis, JSON_THROW_ON_ERROR));
+    }
+
     public function testQueryPlanEvidenceGatesResultParityAndExpectedSqlitePlans(): void
     {
         $evidence = QueryPlanEvidence::collect(200);

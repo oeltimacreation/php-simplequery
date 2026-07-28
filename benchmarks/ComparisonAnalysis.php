@@ -11,7 +11,10 @@ final class ComparisonAnalysis
     /**
      * @param array<string, mixed> $baseline
      * @param array<string, mixed> $candidate
-     * @return array{threshold_percent: float, measurements: array<string, array<string, array<string, float|bool>>>}
+     * @return array{
+     *     threshold_percent: float,
+     *     measurements: array<string, array<string, array<string, float|bool|null>>>
+     * }
      */
     public static function between(array $baseline, array $candidate, float $thresholdPercent = 10.0): array
     {
@@ -33,7 +36,7 @@ final class ComparisonAnalysis
                     'baseline_median_ms' => $baselineMedian,
                     'candidate_median_ms' => $candidateMedian,
                     'change_percent' => $change,
-                    'review_required' => $change > $thresholdPercent,
+                    'review_required' => $change === null || $change > $thresholdPercent,
                 ];
             }
         }
@@ -80,10 +83,10 @@ final class ComparisonAnalysis
         }
     }
 
-    private static function percentageChange(float $baseline, float $candidate): float
+    private static function percentageChange(float $baseline, float $candidate): ?float
     {
         if ($baseline === 0.0) {
-            return $candidate === 0.0 ? 0.0 : INF;
+            return $candidate === 0.0 ? 0.0 : null;
         }
 
         return round((($candidate - $baseline) / $baseline) * 100, 3);
