@@ -43,6 +43,22 @@ calls append in call order. Projection strings recognize `*` and qualified
 wildcards such as `users.*`; normal strings are parsed only as qualified
 identifiers, never as free-form expressions or `AS` aliases.
 
+Keep projection lists structured even when they are long:
+
+```php
+$query->select(
+    'u.id',
+    Identifier::of('u.email')->as('contact'),
+    Identifier::wildcard('profiles'),
+    $db->raw('LOWER(u.email) AS normalized_email'),
+);
+```
+
+There is no comma-list parser or `selectList()` method. Only the function call
+above needs trusted raw SQL; identifiers, wildcards, and aliases retain their
+typed meaning. The [projection ergonomics spike](../evidence/0.3-projection-ergonomics-spike.md)
+records why the existing variadic API was retained.
+
 ## Identifiers and aliases
 
 ```php
@@ -64,6 +80,8 @@ table or column. Applications must allowlist dynamic identifiers.
 $query
     ->where('active', true)
     ->where('age', '>=', 18)
+    ->where($db->raw('LOWER(email)'), '=', $normalizedEmail)
+    ->whereColumn('events.owner_id', '=', 'users.id')
     ->orWhere(static function (ConditionGroup $group): void {
         $group
             ->whereNull('deleted_at')
@@ -85,6 +103,25 @@ The predicate family includes:
 - null and not-null predicates;
 - complete trusted `RawExpression` conditions.
 
+A trusted expression can be the left side of a value comparison without
+placing the operator or value placeholder inside raw SQL:
+
+```php
+$query->where(
+    $db->raw('COALESCE(LOWER(users.email), ?)', ['']),
+    '=',
+    $normalizedEmail,
+);
+```
+
+The expression's binding (`''`) occurs first, followed by the normalized-email
+binding. Two-argument expression/value comparisons imply `=`. These overloads
+also work in condition groups and `HAVING`. The expression is still trusted
+application code and is not parsed or made portable by the builder.
+
+Use `whereColumn()`/`orWhereColumn()` when both operands are identifiers.
+Strings in those methods are always identifiers, never values or expressions.
+
 `whereNot()` negates the complete comparison, raw condition, or group. It does
 not guess an inverse operator.
 
@@ -94,6 +131,8 @@ not guess an inverse operator.
 - `whereNot('x', null)` becomes `x IS NOT NULL`.
 - equality/inequality against null normalizes consistently.
 - ordering comparisons against null throw `InvalidQueryException`.
+- expression equality/inequality against null uses the same `IS NULL`/`IS NOT
+  NULL` policy after emitting any bindings inside the expression.
 - `whereIn('x', [])` becomes constant false.
 - `whereNotIn('x', [])` becomes constant true.
 - an empty closure group throws rather than broadening a query.
@@ -118,6 +157,20 @@ $query->leftJoin('profiles', static function (JoinClause $join): void {
 Normal `on()` operands are identifiers. A comparison to a value must use
 `onValue()` or the equivalent value-oriented join method. A complete trusted
 raw condition may be used when structured joins cannot represent the SQL.
+
+Exactly one `on()` operand may instead be an explicit `RawExpression`:
+
+```php
+$query->join('events', static function (JoinClause $join) use ($db): void {
+    $join
+        ->on($db->raw('events.owner_id + ?', [0]), '=', Identifier::of('users.id'))
+        ->onValue($db->raw('LOWER(events.kind)'), '=', $normalizedKind);
+});
+```
+
+Plain strings passed to `on()` remain identifiers. Two raw operands are
+rejected; use one complete trusted raw condition for an inherently raw
+expression-to-expression join. Join value methods continue to reject null.
 
 Inner and left joins are supported. Right joins are not supported.
 

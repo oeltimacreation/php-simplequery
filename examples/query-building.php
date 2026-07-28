@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Oeltima\SimpleQuery\ConditionGroup;
 use Oeltima\SimpleQuery\Driver;
+use Oeltima\SimpleQuery\Expression\Identifier;
 use Oeltima\SimpleQuery\JoinClause;
 use Oeltima\SimpleQuery\Testing\CompiledQueryAssertions;
 use Oeltima\SimpleQuery\Testing\CompiledWriteQuery;
@@ -15,7 +16,11 @@ $db = CompilerConnection::for(Driver::MySql);
 $activeRoles = $db->table('roles')->select('user_id')->where('active', true);
 $query = $db
     ->table('users', 'u')
-    ->select('u.id', 'u.email', $db->raw('LOWER(u.email) AS normalized_email'))
+    ->select(
+        'u.id',
+        Identifier::of('u.email')->as('email_address'),
+        $db->raw('LOWER(u.email) AS normalized_email'),
+    )
     ->distinct()
     ->leftJoin('profiles', static function (JoinClause $join): void {
         $join->on('profiles.user_id', '=', 'u.id')->onValue('profiles.visible', '=', true);
@@ -24,6 +29,8 @@ $query = $db
         $group->where('u.status', 'active')->orWhereNull('u.deleted_at');
     })
     ->whereIn('u.id', $activeRoles)
+    ->where($db->raw('LOWER(u.email)'), 'LIKE', '%@example.test')
+    ->whereColumn('u.id', '=', 'u.id')
     ->whereBetween('u.age', 18, 65)
     ->whereNotIn('u.kind', [])
     ->groupBy('u.id', 'u.email')

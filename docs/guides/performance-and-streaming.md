@@ -43,6 +43,29 @@ and interacts with proxy and connection lifecycles.
 
 Optimization requires a profile and a benchmark showing a meaningful benefit.
 
+## Index-friendly predicates
+
+Prefer comparisons that leave an indexed column unwrapped. For a half-open
+calendar-day window, compute boundaries in application code and bind them:
+
+```php
+$query
+    ->where('events.created_at', '>=', $startUtc)
+    ->where('events.created_at', '<', $nextDayUtc);
+```
+
+This shape preserves exact boundary semantics and lets supported engines
+consider a normal index on `created_at`. A predicate such as
+`DATE(events.created_at) = ?` applies a function to each candidate value and
+commonly prevents use of that ordinary index unless the engine and schema have
+a matching functional/expression index. Confirm important cases with the
+engine's query-plan tooling and production-like data.
+
+Trusted raw expression comparisons are available for genuinely required
+vendor functions, but their convenience does not make the resulting query
+portable or index-friendly. Prefer structured ranges and indexed identifier
+joins when they express the same business rule.
+
 Associative full-result hydration now fetches and validates one row at a time
 into the final returned list. This avoids retaining PDO's complete `fetchAll()`
 array while constructing a second validated copy. Associative cursors likewise

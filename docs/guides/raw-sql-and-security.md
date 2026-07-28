@@ -60,6 +60,16 @@ raw node's exact position during compilation.
 Use a raw expression only when the SQL text is trusted application code.
 Request input belongs in a binding or an allowlisted identifier.
 
+When only the left comparison operand needs raw SQL, keep the operator and
+value in the structured API:
+
+```php
+$query->where($db->raw('LOWER(users.email)'), '=', $normalizedEmail);
+```
+
+This form binds `$normalizedEmail`; it does not sanitize or validate the raw
+function expression. Use `whereColumn()` when both operands are identifiers.
+
 ## Raw queries
 
 ```php

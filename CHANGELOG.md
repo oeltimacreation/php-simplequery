@@ -10,6 +10,14 @@ with ZeroVer releases before `1.0.0`.
 
 ### Added
 
+- Add trusted expression-to-bound-value comparisons across `WHERE`, nested
+  condition groups, `HAVING`, and value-oriented joins while retaining ordered
+  positional bindings and established null semantics.
+- Add explicit `whereColumn()` and `orWhereColumn()` identifier comparisons,
+  plus join comparisons with exactly one trusted expression operand.
+- Add an expression-comparison ADR, projection-ergonomics decision record,
+  index-friendly date-range guidance, all-dialect binding-order coverage,
+  SQLite execution coverage, and direct MariaDB/MySQL probe coverage.
 - Add a deterministic, read-only SimpleQuery adoption audit with path-redacted
   findings for clauses, result terminals, raw-expression contexts, generated-ID
   timing, direct PDO, transaction ownership, dynamic identifiers, batching,
@@ -20,6 +28,9 @@ with ZeroVer releases before `1.0.0`.
 
 ### Changed
 
+- Extend the public API and independent level-9 consumer contract with the
+  accepted expression and column comparison overloads; retain variadic
+  `select()` instead of adding a SQL-list parser or parallel projection API.
 - Reorganize documentation into guides, reference, maintainer operations,
   active plans, ADRs, and evidence; remove completed roadmap and release-plan
   documents, and add the evidence-gated `0.3.0` development plan.

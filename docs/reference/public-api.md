@@ -100,6 +100,8 @@ where(...): self
 orWhere(...): self
 whereNot(...): self
 orWhereNot(...): self
+whereColumn(string|Identifier $left, string $operator, string|Identifier $right): self
+orWhereColumn(string|Identifier $left, string $operator, string|Identifier $right): self
 whereIn(...): self
 orWhereIn(...): self
 whereNotIn(...): self
@@ -128,10 +130,54 @@ skipLocked(): self
 ```
 
 Predicate overloads accept a complete trusted raw condition, a typed
-`Closure(ConditionGroup): mixed`, `(column, value)`, or `(column, operator,
-value)`. Join closures infer `Closure(JoinClause): mixed`. The finite operator
-set is `=`, `!=`, `<>`, `<`, `<=`, `>`, `>=`, `LIKE`, and `NOT LIKE`. Join
-`on()` operands are identifiers; `onValue()` is the value-binding form.
+`Closure(ConditionGroup): mixed`, `(column, value)`, `(column, operator,
+value)`, `(RawExpression, value)`, or `(RawExpression, operator, value)`.
+Expression SQL and its bindings occur before the separately bound comparison
+value. `whereColumn()` and `orWhereColumn()` are the explicit
+identifier-to-identifier forms and are also available inside condition groups.
+The same expression/value overloads apply to `having()` and `orHaving()`.
+
+```php
+where(
+    RawExpression|Closure|string|Identifier $subject,
+    mixed $operatorOrValue = null,
+    mixed $value = null,
+): static
+whereColumn(string|Identifier $left, string $operator, string|Identifier $right): static
+
+having(
+    RawExpression|Closure|string|Identifier $subject,
+    mixed $operatorOrValue = null,
+    mixed $value = null,
+): self
+```
+
+The corresponding `orWhere()`, `whereNot()`, `orWhereNot()`,
+`orWhereColumn()`, and `orHaving()` methods preserve the same operand shapes.
+
+Join closures infer `Closure(JoinClause): mixed`. The finite operator set is
+`=`, `!=`, `<>`, `<`, `<=`, `>`, `>=`, `LIKE`, and `NOT LIKE`. Join `on()`
+operands are identifiers with at most one explicit `RawExpression` operand;
+`onValue()` is the value-binding form and also accepts a raw left expression.
+Plain `on()` strings are always identifiers. Two raw operands and null join
+values are rejected.
+
+```php
+JoinClause::on(
+    RawExpression|string|Identifier $left,
+    mixed $operator = null,
+    mixed $right = null,
+): self
+JoinClause::onValue(
+    RawExpression|string|Identifier $expression,
+    string $operator,
+    mixed $value,
+): self
+```
+
+`orOn()` and `orOnValue()` accept the corresponding forms. The value-oriented
+join `where()` accepts the same left expression type as `onValue()` and either
+the two-argument equality or three-argument explicit-operator shape.
 
 Inner/left joins are supported on all three engines. Typed row locks are
 MariaDB/MySQL-only, require an active transaction at execution, and reject
