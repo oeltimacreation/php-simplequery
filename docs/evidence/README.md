@@ -50,6 +50,8 @@ Files:
   recording the public signature manifest, internal seam review, hotspot and
   extraction decisions, static-analysis fixture, style audit, and high-risk
   branch coverage;
+- [`0.3.0` production-shaped performance evidence](0.3-production-performance.md),
+  recording paired `v0.2.0` measurements, query plans, memory, and soak gates;
 - [edge-feature usage verification](feature-usage-verification.md).
 
 Generated reports belong in `tools/database-probes/results/`, are ignored by Git, and

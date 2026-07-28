@@ -61,6 +61,11 @@ commonly prevents use of that ordinary index unless the engine and schema have
 a matching functional/expression index. Confirm important cases with the
 engine's query-plan tooling and production-like data.
 
+The maintained [Phase 5 evidence](../evidence/0.3-production-performance.md)
+shows this comparison on a synthetic indexed SQLite fixture. It explains those
+exact shapes; it is not a portability claim or an assertion that the builder
+controls application indexes.
+
 Trusted raw expression comparisons are available for genuinely required
 vendor functions, but their convenience does not make the resulting query
 portable or index-friendly. Prefer structured ranges and indexed identifier
@@ -88,7 +93,9 @@ The executable fresh-process harness is documented in
 - cursor exhaustion and early close;
 - observer disabled, no-op, and bounded-recording overhead;
 - first/scalar/write terminals, managed transactions, and connection lifecycle;
-- direct versus supported proxy paths.
+- direct versus supported proxy paths;
+- production-shaped report compilation, full/cursor reads, logical counts, and
+  batch-versus-repeated writes.
 
 Every scenario correctness-gates its raw samples, reports PHP peak allocation
 and subprocess RSS, and runs without active coverage/profiling instrumentation.

@@ -103,7 +103,8 @@ Pull-request CI runs PHP 8.2–8.5 SQLite tests, strict quality checks, a
 lowest-dependency job, minimum/current MariaDB/MySQL direct probes, a no-dev
 installation, an independent external-consumer PHPStan run, enforced Xdebug
 branch/path coverage, the
-18-scenario SQLite benchmark suite, and a fresh-process `v0.1.0` comparison.
+22-scenario SQLite benchmark suite, SQLite query-plan evidence, and a
+fresh-process labeled `v0.2.0` production-workload comparison.
 The scheduled/manual proxy workflow runs the exact direct/proxy fixtures plus
 live comparisons and four concurrent soak workers, then uploads redacted JSON
 artifacts. Release

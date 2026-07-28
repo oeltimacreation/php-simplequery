@@ -1,7 +1,7 @@
 # Benchmark harness and baselines
 
 Status: implemented reproducible harness, including the accepted `0.2.0`
-hydration experiment.
+hydration experiment and production-shaped `0.3.0` release comparison.
 
 ## Measurement contract
 
@@ -39,6 +39,8 @@ composer benchmark:baseline    # preserved v0.1.0 workload shapes
 composer benchmark:hydration   # standalone 100,000-row hydration/cursor modes
 composer benchmark:migration   # migration comparison only
 composer benchmark:observer    # observer off/no-op at 1, 10, and 50 bindings
+composer benchmark:plans       # SQLite range/function query-plan evidence
+composer benchmark:production  # production-shaped reference-size scenarios
 composer benchmark:reference   # full 100,000-row/reference-size profile
 composer benchmark:soak        # repeated compile and lifecycle stress
 ```
@@ -50,7 +52,7 @@ stdout to a JSON file under the ignored `benchmarks/results/` directory.
 
 ## Implemented scenario matrix
 
-`composer benchmark` executes these 18 fresh-process scenarios:
+`composer benchmark` executes these 22 fresh-process scenarios:
 
 | Scenario | Operations or shapes |
 |---|---|
@@ -67,12 +69,23 @@ stdout to a JSON file under the ignored `benchmarks/results/` directory.
 | `transactions` | managed outer/nested calls versus direct PDO/savepoint control |
 | `lifecycle` | create/use/close loops versus direct PDO |
 | `migration_query` | representative list/join result and timing parity |
+| `production_report_compile` | 12 aliased/raw projections, nested filters, three joins, a date range, and a large `IN` list |
+| `production_count_compile` | exact distinct-count SQL and ordered bindings over production-shaped filters |
+| `production_report_execute` | object/associative full hydration, both cursor modes, direct PDO bulk read, and count parity |
+| `production_batch_execute` | `insertMany()` versus repeated individual SimpleQuery writes with identical rows |
 
-The baseline suite is the identical finalized worker restricted to the four
+The historical baseline suite is the identical finalized worker restricted to the four
 PDO controls, three ordered-predicate sizes, and migration query that preserve
-the `v0.1.0` workload shapes. `benchmarks/compare.php` runs that suite against
-separate `v0.1.0` and candidate autoloaders in fresh processes and rejects any
-cross-version correctness-digest mismatch.
+the `v0.1.0` workload shapes.
+
+`benchmarks/compare.php` accepts explicit `--baseline-label` and
+`--candidate-label` metadata for any supported suite. It runs separate source
+autoloaders in fresh processes, rejects cross-version correctness-digest
+mismatches, and reports operation-level median changes. A change above 10% is a
+review signal, not an automatic failure: it must repeat across paired source
+orders before it needs investigation or a documented waiver. Existing schema-2
+historical reports remain readable because the `baseline` and `candidate`
+payloads and correctness fields are unchanged.
 
 The `hydration-experiment` suite runs direct PDO associative hydration,
 SimpleQuery associative/object hydration, and both SimpleQuery cursor modes as
@@ -99,10 +112,21 @@ reports and launches four concurrent soak suites. Soak reports include repeated
 compile and create/use/close timings plus retained memory and descriptor deltas.
 Direct engine results remain the control for proxy interpretation.
 
+## Query-plan evidence
+
+`composer benchmark:plans` builds a deterministic indexed SQLite fixture and
+compares two equivalent day filters. The half-open range uses the ordinary
+`created_at` index for a bounded search; the `date(created_at)` form scans that
+index. Result IDs must be identical before evidence is emitted. Plans explain
+only this fixture and engine version: SimpleQuery does not create application
+indexes or promise a database optimizer's choice. The recorded Phase 5 result
+is in the [`0.3.0` performance evidence](../evidence/0.3-production-performance.md).
+
 ## CI and artifact policy
 
-Pull-request CI archives the complete SQLite suite and a `v0.1.0` versus
-candidate baseline comparison for 30 days. Scheduled/manual/release service CI
+Pull-request CI archives the complete SQLite suite, SQLite query-plan evidence,
+and a labeled `v0.2.0` versus candidate production comparison for 30 days.
+Scheduled/manual/release service CI
 archives live direct/proxy and multiprocess-soak JSON for 90 days. Raw outputs
 are ephemeral artifacts, not committed universal thresholds.
 

@@ -10,6 +10,10 @@ with ZeroVer releases before `1.0.0`.
 
 ### Added
 
+- Add correctness-gated production-shaped compiler, report hydration/cursor,
+  logical count, batch write, and SQLite query-plan benchmark evidence.
+- Add generic baseline/candidate comparison labels, operation-level median
+  change review signals, and paired `v0.2.0` release-candidate measurements.
 - Add a deterministic reflection-based public API signature manifest and
   `composer check` gates for unreviewed contract drift and broken relative
   documentation links.
