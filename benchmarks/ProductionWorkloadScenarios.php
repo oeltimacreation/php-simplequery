@@ -168,18 +168,32 @@ final class ProductionWorkloadScenarios implements ScenarioFactory
 
     private function insertEvents(Connection $connection, int $rows): void
     {
-        $events = [];
-        for ($id = 1; $id <= $rows; ++$id) {
-            $events[] = [
-                'id' => $id,
-                'account_id' => (($id - 1) % 20) + 1,
-                'status' => $id % 3 === 0 ? 'ready' : 'pending',
-                'score' => $id % 100,
-                'created_at' => sprintf('2026-01-%02d 12:00:00', (($id - 1) % 28) + 1),
-                'payload' => str_repeat((string) ($id % 10), 64),
-            ];
-        }
-        $connection->table('production_events')->insertMany($events);
+        $connection->transaction(function (Connection $database) use ($rows): void {
+            $events = [];
+            for ($id = 1; $id <= $rows; ++$id) {
+                $events[] = self::event($id);
+                if (count($events) === 100) {
+                    $database->table('production_events')->insertMany($events);
+                    $events = [];
+                }
+            }
+            if ($events !== []) {
+                $database->table('production_events')->insertMany($events);
+            }
+        });
+    }
+
+    /** @return array{id: int, account_id: int, status: string, score: int, created_at: string, payload: string} */
+    private static function event(int $id): array
+    {
+        return [
+            'id' => $id,
+            'account_id' => (($id - 1) % 20) + 1,
+            'status' => $id % 3 === 0 ? 'ready' : 'pending',
+            'score' => $id % 100,
+            'created_at' => sprintf('2026-01-%02d 12:00:00', (($id - 1) % 28) + 1),
+            'payload' => str_repeat((string) ($id % 10), 64),
+        ];
     }
 
     private function batch(ScenarioRequest $request): PreparedScenario
