@@ -186,17 +186,21 @@ jobs:
       - run: composer install --no-interaction --prefer-dist --no-progress
       - run: mkdir -p benchmarks/results
       - run: composer benchmark > benchmarks/results/sqlite-suite.json
-      - name: Compare v0.1.0 and candidate with the finalized runner
+      - name: Compare v0.2.0 and candidate production workloads
         shell: bash
         run: |
-          baseline_dir="${RUNNER_TEMP}/php-simplequery-v0.1.0"
-          git worktree add --detach "${baseline_dir}" v0.1.0
+          baseline_dir="${RUNNER_TEMP}/php-simplequery-v0.2.0"
+          git worktree add --detach "${baseline_dir}" v0.2.0
           trap 'git worktree remove --force "${baseline_dir}"' EXIT
           composer install --working-dir="${baseline_dir}" --no-interaction --prefer-dist --no-progress
           php benchmarks/compare.php \
+            --suite=production \
             --baseline-autoload="${baseline_dir}/vendor/autoload.php" \
             --candidate-autoload="${GITHUB_WORKSPACE}/vendor/autoload.php" \
-            > benchmarks/results/v0.1.0-comparison.json
+            --baseline-label=v0.2.0 \
+            --candidate-label=0.3-candidate \
+            > benchmarks/results/v0.2.0-comparison.json
+      - run: composer benchmark:plans > benchmarks/results/sqlite-query-plans.json
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: reproducible-benchmark-reports

@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Oeltima\SimpleQuery\Tests\Unit;
 
 use Oeltima\SimpleQuery\Benchmark\BenchmarkSuite;
+use Oeltima\SimpleQuery\Benchmark\ComparisonAnalysis;
 use Oeltima\SimpleQuery\Benchmark\EnvironmentRequest;
 use Oeltima\SimpleQuery\Benchmark\Harness;
 use Oeltima\SimpleQuery\Benchmark\MeasurementRequest;
+use Oeltima\SimpleQuery\Benchmark\QueryPlanEvidence;
 use Oeltima\SimpleQuery\Benchmark\ScenarioCatalog;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -74,7 +76,7 @@ final class BenchmarkHarnessTest extends TestCase
     {
         $scenarios = ScenarioCatalog::suite(BenchmarkSuite::Ci);
 
-        self::assertCount(18, $scenarios);
+        self::assertCount(22, $scenarios);
         foreach (
             [
             'compiler_shapes',
@@ -86,6 +88,10 @@ final class BenchmarkHarnessTest extends TestCase
             'transactions',
             'lifecycle',
             'migration_query',
+            'production_report_compile',
+            'production_count_compile',
+            'production_report_execute',
+            'production_batch_execute',
             ] as $scenario
         ) {
             self::assertContains($scenario, $scenarios);
@@ -107,5 +113,60 @@ final class BenchmarkHarnessTest extends TestCase
         self::assertArrayHasKey('commit', $source);
         self::assertGreaterThan(0, $memory['php_peak_allocated_bytes']);
         self::assertJson(json_encode([$environment, $memory], JSON_THROW_ON_ERROR));
+    }
+
+    public function testComparisonAnalysisFlagsOnlyRegressionsAboveTheReviewThreshold(): void
+    {
+        $baseline = $this->comparisonRun(['compile' => 10.0, 'execute' => 20.0]);
+        $candidate = $this->comparisonRun(['compile' => 11.0, 'execute' => 22.1]);
+
+        $analysis = ComparisonAnalysis::between($baseline, $candidate);
+        $measurements = $analysis['measurements']['production'] ?? null;
+        self::assertIsArray($measurements);
+        self::assertFalse($measurements['compile']['review_required']);
+        self::assertSame(10.0, $measurements['compile']['change_percent']);
+        self::assertTrue($measurements['execute']['review_required']);
+        self::assertSame(10.5, $measurements['execute']['change_percent']);
+    }
+
+    public function testQueryPlanEvidenceGatesResultParityAndExpectedSqlitePlans(): void
+    {
+        $evidence = QueryPlanEvidence::collect(200);
+        $range = $evidence['range'] ?? null;
+        $wrapped = $evidence['function_wrapped'] ?? null;
+        self::assertIsArray($range);
+        self::assertIsArray($wrapped);
+        self::assertIsString($range['sql'] ?? null);
+        self::assertIsString($wrapped['sql'] ?? null);
+        self::assertIsArray($range['plan'] ?? null);
+        self::assertIsArray($wrapped['plan'] ?? null);
+        $rangePlan = $range['plan'][0] ?? null;
+        $wrappedPlan = $wrapped['plan'][0] ?? null;
+        self::assertIsString($rangePlan);
+        self::assertIsString($wrappedPlan);
+        self::assertGreaterThan(0, $evidence['result_rows']);
+        self::assertStringContainsString('created_at" >= ?', $range['sql']);
+        self::assertStringContainsString('date(created_at) = ?', $wrapped['sql']);
+        self::assertStringContainsString('USING COVERING INDEX', $rangePlan);
+        self::assertStringContainsString('SCAN plan_events', $wrappedPlan);
+    }
+
+    /**
+     * @param array<string, float> $medians
+     * @return array<string, mixed>
+     */
+    private function comparisonRun(array $medians): array
+    {
+        $operations = [];
+        foreach ($medians as $name => $median) {
+            $operations[$name] = ['median_ms' => $median];
+        }
+
+        return [
+            'scenarios' => [[
+                'scenario' => 'production',
+                'measurement' => ['operations' => $operations],
+            ]],
+        ];
     }
 }

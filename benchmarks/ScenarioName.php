@@ -31,6 +31,10 @@ final class ScenarioName
     public const LIFECYCLE = 'lifecycle';
     public const LIFECYCLE_SOAK = 'lifecycle_soak';
     public const MIGRATION_QUERY = 'migration_query';
+    public const PRODUCTION_REPORT_COMPILE = 'production_report_compile';
+    public const PRODUCTION_COUNT_COMPILE = 'production_count_compile';
+    public const PRODUCTION_REPORT_EXECUTE = 'production_report_execute';
+    public const PRODUCTION_BATCH_EXECUTE = 'production_batch_execute';
     public const HYDRATION_PDO_ASSOCIATIVE = 'hydration_pdo_associative';
     public const HYDRATION_SIMPLEQUERY_ASSOCIATIVE = 'hydration_simplequery_associative';
     public const HYDRATION_SIMPLEQUERY_OBJECT = 'hydration_simplequery_object';
@@ -61,6 +65,10 @@ final class ScenarioName
         self::LIFECYCLE,
         self::LIFECYCLE_SOAK,
         self::MIGRATION_QUERY,
+        self::PRODUCTION_REPORT_COMPILE,
+        self::PRODUCTION_COUNT_COMPILE,
+        self::PRODUCTION_REPORT_EXECUTE,
+        self::PRODUCTION_BATCH_EXECUTE,
         self::HYDRATION_PDO_ASSOCIATIVE,
         self::HYDRATION_SIMPLEQUERY_ASSOCIATIVE,
         self::HYDRATION_SIMPLEQUERY_OBJECT,

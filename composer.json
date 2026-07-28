@@ -76,6 +76,8 @@
         "benchmark:hydration": "php benchmarks/run.php --suite=hydration-experiment --profile=reference --iterations=7 --warmups=2",
         "benchmark:migration": "php benchmarks/migration.php",
         "benchmark:observer": "php benchmarks/run.php --suite=observer-profile --profile=reference --iterations=7 --warmups=2",
+        "benchmark:plans": "php benchmarks/query-plans.php",
+        "benchmark:production": "php benchmarks/run.php --suite=production --profile=reference --iterations=7 --warmups=2",
         "benchmark:reference": "php benchmarks/run.php --suite=full --profile=reference --iterations=7 --warmups=2",
         "benchmark:soak": "php benchmarks/run.php --suite=soak --profile=reference --iterations=7 --warmups=2",
         "examples:check": [

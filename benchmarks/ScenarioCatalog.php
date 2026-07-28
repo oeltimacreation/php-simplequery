@@ -32,9 +32,11 @@ final class ScenarioCatalog
         return [
             new ControlScenarios(),
             new CompilerScenarios(),
+            new ProductionCompilerScenarios(),
             new HydrationScenarios(),
             new ObserverScenarios(),
             new DatabaseScenarios(),
+            new ProductionWorkloadScenarios(),
         ];
     }
 }
