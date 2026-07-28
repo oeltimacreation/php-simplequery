@@ -223,7 +223,7 @@ final class PublicApiManifest
             'compatibility' => $this->compatibility($method->getDocComment()),
             'static' => $method->isStatic(),
             'final' => $method->isFinal(),
-            'return_type' => $this->typeName($method->getReturnType()),
+            'return_type' => $this->methodReturnType($method),
             'returns_reference' => $method->returnsReference(),
             'annotations' => $this->annotations($method->getDocComment()),
             'parameters' => array_map($this->describeParameter(...), $method->getParameters()),
@@ -253,6 +253,16 @@ final class PublicApiManifest
         }
 
         return $description;
+    }
+
+    private function methodReturnType(ReflectionMethod $method): ?string
+    {
+        $type = $this->typeName($method->getReturnType());
+        if ($type === $method->getDeclaringClass()->getName()) {
+            return 'self';
+        }
+
+        return $type;
     }
 
     private function typeName(?ReflectionType $type): ?string

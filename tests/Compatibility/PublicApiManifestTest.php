@@ -33,6 +33,7 @@ final class PublicApiManifestTest extends TestCase
         $queryBuilder = $this->typeByName($types, 'Oeltima\\SimpleQuery\\QueryBuilder');
         $snapshot = $this->methodByName($queryBuilder, 'snapshotForCompilation');
         self::assertSame('internal', $snapshot['compatibility'] ?? null);
+        self::assertSame('self', $this->methodByName($queryBuilder, 'select')['return_type'] ?? null);
     }
 
     /**
