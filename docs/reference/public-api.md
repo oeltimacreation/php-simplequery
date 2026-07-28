@@ -3,6 +3,10 @@
 This is the signature index for the public surface. The linked topic guides
 define overloads, mutation rules, validation, result shapes, and dialect
 limits. A semantic change requires an ADR and synchronized fixture update.
+The machine-readable
+[`public-api.json`](../../tests/Fixtures/Contracts/public-api.json) freezes exact
+reflection signatures and generic annotations; `composer public-api:check`
+rejects unreviewed drift.
 
 ## Connection and configuration
 

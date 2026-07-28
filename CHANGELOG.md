@@ -10,6 +10,16 @@ with ZeroVer releases before `1.0.0`.
 
 ### Added
 
+- Add a deterministic reflection-based public API signature manifest and
+  `composer check` gates for unreviewed contract drift and broken relative
+  documentation links.
+- Add an architecture and code-quality audit covering the `@internal` public
+  seam, core responsibility hotspots, extraction decisions, style rules, and
+  focused condition, transaction, exception, cursor, and connection-state
+  tests.
+- Extend the independent PHPStan level-9 consumer with production-shaped model
+  construction, mutable query helpers, generated IDs, managed transactions,
+  callbacks, raw-expression overloads, generic cursors, and exception evidence.
 - Add transaction-classification and exception-ergonomics evidence, ADR-020,
   supported-PHP SQLite immediate probes, and application-owned immediate-
   transaction and lock-conflict recipes without retry claims.
@@ -31,6 +41,10 @@ with ZeroVer releases before `1.0.0`.
 
 ### Changed
 
+- Reuse one private associative-row validator across full and first-result
+  execution while preserving result, exception, SQL, and binding behavior.
+- Add low-noise import and comparison consistency rules without a style
+  baseline or broad formatting churn.
 - Require PDO to report physical activity immediately after every managed
   transaction begin, and retain direct PDO ownership for schema control,
   manually started work, SQLite immediate transactions, and deployment-specific

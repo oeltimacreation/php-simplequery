@@ -12,6 +12,8 @@ composer coverage:check        # PCOV: 90 overall and 95 compiler line gates
 composer test:coverage:branch  # Xdebug path/branch report
 composer coverage:check:branch # 80 overall and 90 compiler branch gates
 composer phpstan:consumer      # independent public-contract inference
+composer public-api:check      # reviewed reflection-signature manifest
+composer docs:check            # relative Markdown link targets
 composer examples:check        # executable compiler and SQLite examples
 composer probe:sqlite          # JSON PDO/SQLite evidence
 composer probe:execution -- sqlite    # public executor smoke
@@ -35,6 +37,12 @@ library-owned migration slices through every target, prints a summary, and
 removes containers, networks, and volumes. Direct CI supplies exact version
 variables for MariaDB 11.8.2/11.8.8 and MySQL 8.0.11/8.0.46 and archives each
 fixture pair separately; scheduled proxy runs use the current pair.
+
+An intentional public signature change is reviewed by running `composer
+public-api:update` and committing the resulting manifest diff. Documentation
+validation scans maintained root and `docs/` Markdown only, so external URLs
+and generated benchmark, probe, coverage, vendor, and analysis output are not
+treated as local targets.
 
 ## Naming and placement
 

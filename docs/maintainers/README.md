@@ -12,6 +12,7 @@ information.
 - [Test strategy](testing-strategy.md)
 - [Testing architecture](testing-architecture.md)
 - [Compatibility evidence records](../evidence/README.md)
+- [Architecture and quality audit](../evidence/0.3-architecture-and-quality-audit.md)
 - [Benchmark method](benchmarking.md)
 - [Migration review report](migration-review.md)
 - [PDO, engine, and proxy quirks](../reference/pdo-engine-proxy-quirks.md)
@@ -25,6 +26,10 @@ information.
 
 Public types require documentation, static-analysis coverage, executable
 examples where appropriate, and upgrade notes for breaking changes.
+
+`composer public-api:check` compares runtime reflection against the reviewed
+signature manifest. After approving an intentional contract change, regenerate
+the fixture with `composer public-api:update` and review the complete diff.
 
 AST nodes, compiler strategies, executor internals, transaction state objects,
 and capability implementation details remain under `Internal` and are not

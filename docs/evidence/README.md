@@ -46,6 +46,10 @@ Files:
 - [`0.3.0` transaction and exception ergonomics](0.3-transaction-and-exception-ergonomics.md),
   classifying manual ownership, SQLite immediate-mode evidence, and the
   application-owned error-inspection boundary;
+- [`0.3.0` architecture and quality audit](0.3-architecture-and-quality-audit.md),
+  recording the public signature manifest, internal seam review, hotspot and
+  extraction decisions, static-analysis fixture, style audit, and high-risk
+  branch coverage;
 - [edge-feature usage verification](feature-usage-verification.md).
 
 Generated reports belong in `tools/database-probes/results/`, are ignored by Git, and

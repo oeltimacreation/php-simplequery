@@ -36,6 +36,7 @@ $requiredFiles = [
     'docs/evidence/0.2-phase-3-hardening.md',
     'docs/evidence/0.3-production-adoption-baseline.md',
     'docs/evidence/0.3-transaction-and-exception-ergonomics.md',
+    'docs/evidence/0.3-architecture-and-quality-audit.md',
     'docs/evidence/v0.2.0-development-baseline.md',
     'docs/evidence/v0.2.0-development-baseline.json',
     'docs/maintainers/migration-validation.md',
@@ -43,6 +44,7 @@ $requiredFiles = [
     'docs/maintainers/benchmarking.md',
     'tests/Fixtures/Contracts/aggregate-scalars.json',
     'tests/Fixtures/Contracts/connection-construction.json',
+    'tests/Fixtures/Contracts/public-api.json',
     'tests/Fixtures/Migration/v1.json',
     'tests/Fixtures/Migration/representative-slices.json',
     'tests/Fixtures/Adoption/manifest.json',
@@ -76,6 +78,8 @@ $requiredFiles = [
     'benchmarks/run.php',
     'benchmarks/worker.php',
     'tests/Fixtures/Consumer/static-analysis.php',
+    'scripts/check-documentation-links.php',
+    'scripts/public-api-manifest.php',
 ];
 
 $errors = [];
@@ -94,6 +98,7 @@ $jsonFiles = [
     'docs/evidence/v0.2.0-development-baseline.json',
     'tests/Fixtures/Contracts/aggregate-scalars.json',
     'tests/Fixtures/Contracts/connection-construction.json',
+    'tests/Fixtures/Contracts/public-api.json',
     'tests/Fixtures/Migration/v1.json',
     'tests/Fixtures/Migration/representative-slices.json',
     'tests/Fixtures/Adoption/manifest.json',
