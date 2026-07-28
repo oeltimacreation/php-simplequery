@@ -1,4 +1,4 @@
-# ADR-020: SQLite immediate managed transactions
+# ADR-020: Reject managed SQLite transaction modes
 
 - Status: Accepted
 - Date: 2026-07-28
@@ -11,42 +11,46 @@ callback. The lock workflow uses MySQL row locks in production and SQLite
 immediate transactions in tests so writer contention begins at transaction
 start rather than at the first write.
 
-PDO has no portable transaction-mode argument. Issuing arbitrary caller-owned
-begin SQL through the manager would weaken the closed dialect boundary and
-could make physical ownership unverifiable. Keeping every SQLite immediate
-scope outside the manager, however, duplicates completion and exception
-handling for one well-defined engine capability.
+PDO has no portable transaction-mode argument. A spike implemented a closed
+`TransactionMode::Immediate` option by issuing fixed `BEGIN IMMEDIATE` control
+SQL through the manager, then requiring `PDO::inTransaction()` before the
+callback. It preserved the normal ownership guard, savepoints, cursor checks,
+and failure evidence on PHP 8.4 and 8.5.
+
+The supported PHP 8.2 and 8.3 CI jobs disproved portability. Their PDO SQLite
+implementations execute `BEGIN IMMEDIATE` but continue to report
+`inTransaction() === false`. PDO `commit()` and `rollBack()` therefore cannot
+complete that transaction; matching control SQL is required. A manager that
+continued despite the false state could neither prove ownership nor reliably
+detect external work.
 
 ## Decision
 
-Add the closed public `TransactionMode` enum with `Default` and `Immediate`.
-`Connection::transaction()` accepts the mode as an optional second argument.
+Reject a public transaction-mode API. `Connection::transaction()` continues to
+use `PDO::beginTransaction()` on every supported engine. Nested managed calls
+continue to use generated savepoints.
 
-`Default` retains `PDO::beginTransaction()` on every supported engine.
-`Immediate` is accepted only for an outer SQLite managed scope and dispatches
-the fixed statement `BEGIN IMMEDIATE`. The manager immediately requires
-`PDO::inTransaction()` to report physical activity, establishes its generated
-root ownership savepoint, and then retains the existing commit, rollback,
-cursor, nesting, state-verification, and quarantine behavior. Nested calls use
-`Default` and savepoints; a nested call cannot select another physical mode.
+SQLite immediate transactions remain a deliberate PDO-owned escape path. The
+application issues fixed, trusted `BEGIN IMMEDIATE`, `COMMIT`, and `ROLLBACK`
+control SQL and must not call `Connection::transaction()` within that scope.
+Application code also owns version-sensitive state inspection and recovery.
 
-MariaDB and MySQL reject `Immediate` with `UnsupportedFeatureException` before
-the callback or transaction control begins. Manually issued `BEGIN IMMEDIATE`
-remains externally owned and is rejected by the managed callback just like a
-transaction started with `PDO::beginTransaction()`.
+MySQL-family row locking continues to use typed `forUpdate()` / `forShare()`
+queries inside the ordinary managed callback. Schema/migration control and
+other externally owned work remain outside managed transactions.
 
-No other SQLite modes, caller-provided begin SQL, isolation configuration,
-external transaction adoption, reconnect, or retry behavior are added.
+No caller-provided begin SQL, isolation configuration, external transaction
+adoption, reconnect, or retry behavior is added.
 
 ## Consequences
 
-- SQLite applications can request writer intent while retaining managed
-  callback ownership and generated savepoint nesting.
-- A busy failure while beginning the transaction is exposed as a
-  `TransactionException`; verified physical inactivity permits reuse.
-- Supported PHP/SQLite combinations must execute the immediate-mode probe and
-  prove PDO transaction-state tracking, PDO commit/rollback, nested savepoints,
-  contention evidence, and reuse after a busy begin.
-- MySQL-family row locking continues to use the existing typed lock clauses
-  inside an ordinary managed transaction.
-- Schema/migration control and deliberately external work remain PDO-owned.
+- The PHP 8.2 runtime floor retains one coherent managed-ownership contract.
+- SQLite applications that need immediate writer intent use an explicit,
+  engine-specific PDO escape path and test it against their deployed runtime.
+- The compatibility transaction probe records whether PDO tracks manual
+  immediate begin, selects the matching PDO or control-SQL completion path,
+  exercises savepoints and contention, and proves connection reuse.
+- Managed begin now verifies that PDO reports physical activity before any
+  callback work runs.
+- No API implies that a busy, deadlock, timeout, transport, or commit failure is
+  safe to retry.

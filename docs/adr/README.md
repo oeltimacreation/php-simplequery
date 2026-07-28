@@ -25,7 +25,7 @@ silently rewriting the original decision.
 | [017](017-zerover-and-support-floors.md) | ZeroVer and support floors | Accepted |
 | [018](018-evidence-gated-compatibility.md) | Evidence-gated compatibility | Accepted |
 | [019](019-expression-and-column-comparisons.md) | Expression and column comparisons | Accepted |
-| [020](020-sqlite-immediate-transaction-mode.md) | SQLite immediate managed transactions | Accepted |
+| [020](020-sqlite-immediate-transaction-mode.md) | Reject managed SQLite transaction modes | Accepted |
 
 ## Format
 

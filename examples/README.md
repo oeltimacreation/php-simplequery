@@ -11,7 +11,7 @@ or require a server.
 | [beginner/transaction.php](beginner/transaction.php) | Atomic related writes and rollback | `php examples/beginner/transaction.php` |
 | [compiler-assertions.php](compiler-assertions.php) | Test SQL without a database | `php examples/compiler-assertions.php` |
 | [sqlite-execution.php](sqlite-execution.php) | PDO execution and generated IDs | `php examples/sqlite-execution.php` |
-| [sqlite-transactions.php](sqlite-transactions.php) | SQLite immediate mode and nested savepoints | `php examples/sqlite-transactions.php` |
+| [sqlite-transactions.php](sqlite-transactions.php) | Nested savepoints | `php examples/sqlite-transactions.php` |
 | [query-building.php](query-building.php) | Advanced predicates, joins, subqueries, and locks | `php examples/query-building.php` |
 | [sqlite-migration-slice.php](sqlite-migration-slice.php) | A representative Pixie migration shape | `php examples/sqlite-migration-slice.php` |
 

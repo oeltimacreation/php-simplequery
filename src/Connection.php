@@ -142,9 +142,9 @@ final class Connection
      * @param Closure(self): T $callback
      * @return T
      */
-    public function transaction(Closure $callback, TransactionMode $mode = TransactionMode::Default): mixed
+    public function transaction(Closure $callback): mixed
     {
-        return $this->transactionManager->run($callback, $mode);
+        return $this->transactionManager->run($callback);
     }
 
     public function close(): void

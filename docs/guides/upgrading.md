@@ -55,20 +55,11 @@ releases.
 
 ## Preparing for 0.3
 
-The existing one-argument `transaction()` call remains source-compatible and
-uses `TransactionMode::Default`. SQLite applications can opt into managed
-writer intent with the new optional second argument:
-
-```php
-use Oeltima\SimpleQuery\TransactionMode;
-
-$db->transaction($callback, TransactionMode::Immediate);
-```
-
-Do not pass `Immediate` to MariaDB/MySQL or to a nested callback. MySQL-family
-row locks continue to use `forUpdate()` or `forShare()` inside an ordinary
-managed transaction. Manually started transactions, including raw SQLite
-`BEGIN IMMEDIATE`, remain externally owned and are never adopted.
+The one-argument `transaction()` contract is unchanged. MySQL-family row locks
+continue to use `forUpdate()` or `forShare()` inside an ordinary managed
+transaction. SQLite immediate transactions remain externally owned direct PDO
+work because supported PHP versions disagree on whether manual begin is visible
+through `PDO::inTransaction()`.
 
 Managed begin now verifies `PDO::inTransaction()` before executing the callback.
 A driver/runtime combination that dispatches begin without reporting physical

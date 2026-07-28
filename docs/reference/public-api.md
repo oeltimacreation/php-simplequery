@@ -27,10 +27,7 @@ Connection::connect(
 Connection::table(string|Identifier|QueryBuilder $source, ?string $alias = null): QueryBuilder
 Connection::raw(string $trustedSql, array $bindings = []): RawExpression
 Connection::query(string $trustedSql, array $bindings = []): RawQuery
-Connection::transaction(
-    Closure $callback,
-    TransactionMode $mode = TransactionMode::Default,
-): mixed
+Connection::transaction(Closure $callback): mixed
 Connection::pdo(): PDO
 Connection::close(): void
 ```
@@ -62,7 +59,6 @@ diagnostics.
 | `Driver` | Closed backed enum for MariaDB, MySQL, and SQLite. |
 | `SortDirection` | Closed enum with `Asc` and `Desc`. |
 | `ParameterType` | Closed PDO-independent binding type enum. |
-| `TransactionMode` | Closed enum with portable `Default` and SQLite-only `Immediate`. |
 | `Binding` | Final readonly normalized value and explicit parameter type. |
 | `CompiledQuery` | Final readonly placeholder SQL and ordered `list<Binding>`. |
 | `Identifier` | Final immutable qualified/wildcard identifier with optional alias. |
@@ -229,12 +225,6 @@ adopted. Every `Throwable` enters rollback handling. Live tracked cursors
 reject transaction/savepoint completion rather than being truncated. See
 [transactions](../guides/transactions.md).
 
-`TransactionMode::Default` uses PDO's portable begin behavior.
-`TransactionMode::Immediate` uses fixed `BEGIN IMMEDIATE` control SQL for an
-outer SQLite scope, then retains the same ownership guard, nested savepoints,
-completion checks, and failure evidence. MariaDB/MySQL reject the mode with
-`UnsupportedFeatureException`; nested scopes reject physical mode selection.
-
 A cursor close failure quarantines its connection. A failed transaction begin
 is reusable only after verified physical inactivity; uncertain nested
 savepoint creation also quarantines the connection.
@@ -271,3 +261,7 @@ subclass family is not part of the public contract.
 No public exception classifier labels a statement or transaction retryable.
 Applications may interpret SQLSTATE and driver codes only within their known
 driver/deployment policy and must treat ambiguous commits separately.
+
+SQLite immediate begin is not a managed mode because PDO transaction-state
+tracking differs across supported PHP versions. It remains a deliberate,
+application-owned direct-PDO escape path.

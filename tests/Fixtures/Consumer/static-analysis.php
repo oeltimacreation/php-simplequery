@@ -14,7 +14,6 @@ use Oeltima\SimpleQuery\JoinClause;
 use Oeltima\SimpleQuery\Observability\QueryExecution;
 use Oeltima\SimpleQuery\ParameterType;
 use Oeltima\SimpleQuery\Expression\RawExpression;
-use Oeltima\SimpleQuery\TransactionMode;
 use stdClass;
 
 use function PHPStan\Testing\assertType;
@@ -77,7 +76,6 @@ return static function (Connection $database): void {
 
             return $transaction->table('records')->insertGetId(['label' => 'synthetic']);
         },
-        TransactionMode::Immediate,
     );
     assertType('string', $transactionResult);
 

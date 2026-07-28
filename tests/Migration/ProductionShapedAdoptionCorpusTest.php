@@ -38,7 +38,7 @@ final class ProductionShapedAdoptionCorpusTest extends TestCase
                 'nested_savepoint',
                 'callback_exception_identity',
                 'active_cursor_rejection',
-                'sqlite_immediate_managed_transaction',
+                'sqlite_immediate_external_ownership',
                 'application_owned_exception_classification',
             ] as $shape
         ) {

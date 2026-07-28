@@ -14,26 +14,6 @@ $result = $db->transaction(
 The callback result is returned. Any `Throwable` triggers rollback handling.
 When rollback succeeds, application/domain exceptions are rethrown unchanged.
 
-Use the default mode for portable transactions. SQLite callers that must
-acquire writer intent when the transaction begins can select the immediate
-mode explicitly:
-
-```php
-use Oeltima\SimpleQuery\TransactionMode;
-
-$db->transaction(
-    static function (Connection $db): void {
-        $db->table('jobs')->where('id', 42)->update(['state' => 'claimed']);
-    },
-    TransactionMode::Immediate,
-);
-```
-
-`Immediate` dispatches the fixed SQLite `BEGIN IMMEDIATE` statement. It is
-valid only for an outer SQLite managed scope. MariaDB/MySQL reject it, and a
-nested callback cannot select a new physical mode; nested work continues to
-use generated savepoints inside the outer scope.
-
 ## Ownership
 
 - depth zero begins and owns the physical PDO transaction;
@@ -60,9 +40,13 @@ callback is unsupported. The manager detects observable state loss and throws
 Direct PDO statements bypass observers, compiler validation, and error
 translation.
 
-Manually issuing `BEGIN IMMEDIATE` also creates external ownership. When PDO
-reports that transaction as active, `transaction()` refuses to adopt it. The
-application that starts it must complete it.
+SQLite immediate transactions are not a managed mode. Applications that need
+writer intent at begin may use direct PDO with fixed trusted `BEGIN IMMEDIATE`,
+`COMMIT`, and `ROLLBACK` control SQL, but they own the entire scope and must not
+call `transaction()` inside it. PHP 8.2/8.3 PDO SQLite can execute manual begin
+while `inTransaction()` remains false, so SimpleQuery cannot detect or complete
+that external work on every supported runtime. Test the exact deployment and
+prefer a dedicated helper that always completes the scope.
 
 ## Active cursors
 

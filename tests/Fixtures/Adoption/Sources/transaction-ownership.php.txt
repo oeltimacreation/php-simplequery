@@ -7,7 +7,6 @@ use Oeltima\SimpleQuery\Driver;
 use Oeltima\SimpleQuery\Exception\ExternalTransactionException;
 use Oeltima\SimpleQuery\Exception\QueryExecutionException;
 use Oeltima\SimpleQuery\Exception\TransactionStateException;
-use Oeltima\SimpleQuery\TransactionMode;
 
 final class SyntheticProductionTransaction
 {
@@ -54,13 +53,6 @@ final class SyntheticProductionTransaction
         $pdo->exec('BEGIN IMMEDIATE');
         $this->database->table('locks')->where('key', 'synthetic')->update(['held' => true]);
         $pdo->rollBack();
-    }
-
-    public function sqliteImmediateManaged(): void
-    {
-        $this->database->transaction(function (Connection $database): void {
-            $database->table('locks')->where('key', 'synthetic')->update(['held' => true]);
-        }, TransactionMode::Immediate);
     }
 
     public function nestedManaged(): void
