@@ -31,7 +31,7 @@ final class SimpleQueryAdoptionAuditTest extends TestCase
         $this->consumerPath = $temporaryPath;
 
         $composer = json_encode(
-            ['require' => ['oeltimacreation/php-simplequery' => '^0.2']],
+            ['require' => ['oeltimacreation/php-simplequery' => '^0.3']],
             JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR,
         );
         self::assertNotFalse(file_put_contents($temporaryPath . '/composer.json', $composer));
@@ -104,7 +104,7 @@ final class SimpleQueryAdoptionAuditTest extends TestCase
         self::assertIsArray($profiles);
         $profile = $profiles[0] ?? null;
         self::assertIsArray($profile);
-        self::assertSame('^0.2', $profile['simplequery_version'] ?? null);
+        self::assertSame('^0.3', $profile['simplequery_version'] ?? null);
         $aggregate = $report['aggregate'] ?? null;
         self::assertIsArray($aggregate);
         $counts = $aggregate['counts'] ?? null;

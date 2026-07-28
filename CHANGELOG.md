@@ -8,6 +8,8 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-28
+
 ### Added
 
 - Add canonical `0.3.0` query, transaction, streaming, batching, migration,
@@ -170,6 +172,7 @@ with ZeroVer releases before `1.0.0`.
 - A repeatable direct-migration playbook and complete intentional-difference
   checklist without a runtime Pixie dependency or compatibility façade.
 
-[Unreleased]: https://github.com/oeltimacreation/php-simplequery/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/oeltimacreation/php-simplequery/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/oeltimacreation/php-simplequery/releases/tag/v0.1.0
