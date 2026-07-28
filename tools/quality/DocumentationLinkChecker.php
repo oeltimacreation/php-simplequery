@@ -13,9 +13,10 @@ final class DocumentationLinkChecker
     /** @return list<string> */
     public function check(string $root): array
     {
+        $rootDirectory = new SplFileInfo($root);
         $errors = [];
-        foreach ($this->markdownFiles($root) as $file) {
-            array_push($errors, ...$this->fileErrors($root, $file));
+        foreach ($this->markdownFiles($rootDirectory) as $file) {
+            array_push($errors, ...$this->fileErrors($rootDirectory, $file));
         }
 
         sort($errors);
@@ -23,51 +24,54 @@ final class DocumentationLinkChecker
         return $errors;
     }
 
-    /** @return list<string> */
-    private function markdownFiles(string $root): array
+    /** @return list<SplFileInfo> */
+    private function markdownFiles(SplFileInfo $root): array
     {
         $files = $this->rootMarkdownFiles($root);
         array_push($files, ...$this->documentationMarkdownFiles($root));
-        sort($files);
+        usort(
+            $files,
+            static fn (SplFileInfo $left, SplFileInfo $right): int => $left->getPathname() <=> $right->getPathname(),
+        );
 
         return $files;
     }
 
-    /** @return list<string> */
-    private function rootMarkdownFiles(string $root): array
+    /** @return list<SplFileInfo> */
+    private function rootMarkdownFiles(SplFileInfo $root): array
     {
         $files = [];
         foreach (['README.md', 'CHANGELOG.md', 'SECURITY.md'] as $rootFile) {
-            $path = rtrim($root, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $rootFile;
-            if (is_file($path)) {
-                $files[] = $path;
+            $file = new SplFileInfo($root->getPathname() . DIRECTORY_SEPARATOR . $rootFile);
+            if ($file->isFile()) {
+                $files[] = $file;
             }
         }
 
         return $files;
     }
 
-    /** @return list<string> */
-    private function documentationMarkdownFiles(string $root): array
+    /** @return list<SplFileInfo> */
+    private function documentationMarkdownFiles(SplFileInfo $root): array
     {
-        $docs = rtrim($root, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'docs';
-        if (!is_dir($docs)) {
+        $docs = new SplFileInfo($root->getPathname() . DIRECTORY_SEPARATOR . 'docs');
+        if (!$docs->isDir()) {
             return [];
         }
 
         $files = [];
-        $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($docs));
+        $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($docs->getPathname()));
         foreach ($iterator as $file) {
-            $path = $this->markdownPath($file);
-            if ($path !== null) {
-                $files[] = $path;
+            $markdownFile = $this->markdownFile($file);
+            if ($markdownFile !== null) {
+                $files[] = $markdownFile;
             }
         }
 
         return $files;
     }
 
-    private function markdownPath(mixed $file): ?string
+    private function markdownFile(mixed $file): ?SplFileInfo
     {
         if (!$file instanceof SplFileInfo) {
             return null;
@@ -79,13 +83,13 @@ final class DocumentationLinkChecker
             return null;
         }
 
-        return $file->getPathname();
+        return $file;
     }
 
     /** @return list<string> */
-    private function fileErrors(string $root, string $file): array
+    private function fileErrors(SplFileInfo $root, SplFileInfo $file): array
     {
-        $contents = file_get_contents($file);
+        $contents = file_get_contents($file->getPathname());
         if (!is_string($contents)) {
             return [sprintf('Could not read %s.', $this->relativePath($root, $file))];
         }
@@ -101,9 +105,10 @@ final class DocumentationLinkChecker
         return $errors;
     }
 
-    private function targetError(string $root, string $file, string $target): ?string
+    private function targetError(SplFileInfo $root, SplFileInfo $file, string $target): ?string
     {
-        if (file_exists($this->targetPath($file, $target))) {
+        $path = $this->targetPath($file, $target);
+        if (file_exists($path->getPathname())) {
             return null;
         }
 
@@ -138,17 +143,18 @@ final class DocumentationLinkChecker
             && preg_match('/^[a-z][a-z0-9+.-]*:/i', $target) !== 1;
     }
 
-    private function targetPath(string $sourceFile, string $target): string
+    private function targetPath(SplFileInfo $sourceFile, string $target): SplFileInfo
     {
         $path = explode('#', explode('?', $target, 2)[0], 2)[0];
 
-        return dirname($sourceFile) . DIRECTORY_SEPARATOR . rawurldecode($path);
+        return new SplFileInfo($sourceFile->getPath() . DIRECTORY_SEPARATOR . rawurldecode($path));
     }
 
-    private function relativePath(string $root, string $file): string
+    private function relativePath(SplFileInfo $root, SplFileInfo $file): string
     {
-        $prefix = rtrim($root, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        $prefix = rtrim($root->getPathname(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        $path = $file->getPathname();
 
-        return str_starts_with($file, $prefix) ? substr($file, strlen($prefix)) : $file;
+        return str_starts_with($path, $prefix) ? substr($path, strlen($prefix)) : $path;
     }
 }
