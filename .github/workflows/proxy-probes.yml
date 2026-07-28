@@ -30,14 +30,14 @@ jobs:
       - run: composer install --no-interaction --prefer-dist --no-progress
       - name: Run exact direct/proxy matrix
         run: RUN_BENCHMARKS=true bash tools/database-probes/run-services.sh
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         if: always()
         with:
           name: proxy-pdo-probe-reports
           path: tools/database-probes/results/*.json
           if-no-files-found: error
           retention-days: 90
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         if: always()
         with:
           name: scheduled-engine-proxy-soak-benchmarks
