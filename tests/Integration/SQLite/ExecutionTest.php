@@ -13,6 +13,8 @@ use Oeltima\SimpleQuery\Exception\InvalidQueryException;
 use Oeltima\SimpleQuery\Exception\QueryExecutionException;
 use Oeltima\SimpleQuery\Exception\TransactionStateException;
 use Oeltima\SimpleQuery\Exception\UnsupportedFeatureException;
+use Oeltima\SimpleQuery\Expression\Identifier;
+use Oeltima\SimpleQuery\JoinClause;
 use Oeltima\SimpleQuery\Observability\QueryExecution;
 use Oeltima\SimpleQuery\Observability\QueryObserver;
 use Oeltima\SimpleQuery\ParameterType;
@@ -149,6 +151,34 @@ final class ExecutionTest extends TestCase
         self::assertSame(30, $this->connection->table('users')->max('score'));
         self::assertNull($this->connection->table('users')->where('id', '<', 0)->sum('score'));
         self::assertNull($this->connection->table('users')->where('id', '<', 0)->average('score'));
+    }
+
+    public function testExpressionAndColumnComparisonsExecuteEndToEnd(): void
+    {
+        $this->seedUsers();
+
+        $rows = $this->connection
+            ->table('users', 'u')
+            ->join(Identifier::of('users')->as('peer'), function (JoinClause $join): void {
+                $join
+                    ->on($this->connection->raw('peer.id + ?', [0]), '=', Identifier::of('u.id'))
+                    ->onValue($this->connection->raw('LENGTH(peer.name)'), '>', 2);
+            })
+            ->where($this->connection->raw('LOWER(u.name)'), '=', 'ada')
+            ->whereColumn('u.id', '=', 'peer.id')
+            ->getAssociative();
+
+        self::assertCount(1, $rows);
+        self::assertSame('Ada', $rows[0]['name']);
+
+        $groups = $this->connection
+            ->table('users')
+            ->select('category')
+            ->groupBy('category')
+            ->having($this->connection->raw('COUNT(*)'), '>', 1)
+            ->orderBy('category')
+            ->getAssociative();
+        self::assertSame([['category' => 'engineering']], $groups);
     }
 
     public function testNonCountScalarAggregatesRejectMultiRowAndDistinctShapes(): void

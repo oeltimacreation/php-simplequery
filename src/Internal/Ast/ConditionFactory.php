@@ -26,11 +26,30 @@ final class ConditionFactory
         mixed $value,
     ): Predicate {
         if ($subject instanceof RawExpression) {
-            if ($argumentCount !== 1) {
-                throw new InvalidQueryException('A raw condition does not accept additional arguments.');
+            if ($argumentCount === 1) {
+                return new RawPredicate($subject);
             }
 
-            return new RawPredicate($subject);
+            if ($argumentCount !== 2 && $argumentCount !== 3) {
+                throw new InvalidQueryException(
+                    'An expression comparison requires an expression/value or expression/operator/value shape.',
+                );
+            }
+
+            $operator = $argumentCount === 2
+                ? ComparisonOperator::Equal
+                : self::operator($operatorOrValue);
+            $comparisonValue = $argumentCount === 2 ? $operatorOrValue : $value;
+            $binding = Binding::fromValue($comparisonValue);
+            if ($binding->type->value === 'null') {
+                if (!$operator->supportsNull()) {
+                    throw new InvalidQueryException('Ordering comparisons against null are not supported.');
+                }
+
+                return new ExpressionNullPredicate($subject, !$operator->isEquality());
+            }
+
+            return new ExpressionComparisonPredicate($subject, $operator, $binding);
         }
 
         if ($subject instanceof Closure) {
@@ -67,6 +86,18 @@ final class ConditionFactory
         }
 
         return new ComparisonPredicate($column, $operator, $binding);
+    }
+
+    public static function columns(
+        string|Identifier $left,
+        string $operator,
+        string|Identifier $right,
+    ): IdentifierComparisonPredicate {
+        return new IdentifierComparisonPredicate(
+            InputNormalizer::identifier($left),
+            ComparisonOperator::normalize($operator),
+            InputNormalizer::identifier($right),
+        );
     }
 
     /** @param iterable<mixed>|QueryBuilder $values */

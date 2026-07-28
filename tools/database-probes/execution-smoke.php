@@ -7,6 +7,8 @@ use Oeltima\SimpleQuery\Connection;
 use Oeltima\SimpleQuery\ConnectionOptions;
 use Oeltima\SimpleQuery\Driver;
 use Oeltima\SimpleQuery\Exception\QueryExecutionException;
+use Oeltima\SimpleQuery\Expression\Identifier;
+use Oeltima\SimpleQuery\JoinClause;
 use Oeltima\SimpleQuery\ParameterType;
 use Oeltima\SimpleQuery\Testing\RecordingQueryObserver;
 use Oeltima\SimpleQuery\Tools\DatabaseProbe\ProbeTarget;
@@ -128,6 +130,32 @@ try {
         && count($associative) === 3
         && ($objects[0]->label ?? null) === 'phase2-one'
         && ($associative[1]['label'] ?? null) === 'phase2-two',
+    );
+
+    $expressionRows = $connection
+        ->table('simplequery_phase2_probe', 'probe')
+        ->join(
+            Identifier::of('simplequery_phase2_probe')->as('peer'),
+            static function (JoinClause $join) use ($connection): void {
+                $join
+                    ->on($connection->raw('peer.id + ?', [0]), '=', Identifier::of('probe.id'))
+                    ->onValue($connection->raw('LENGTH(peer.label)'), '>', 2);
+            },
+        )
+        ->where($connection->raw('LOWER(probe.label)'), '=', 'phase2-one')
+        ->whereColumn('probe.id', '=', 'peer.id')
+        ->getAssociative();
+    $expressionGroups = $connection
+        ->table('simplequery_phase2_probe')
+        ->select('enabled')
+        ->groupBy('enabled')
+        ->having($connection->raw('COUNT(*)'), '>', 0)
+        ->getAssociative();
+    $record(
+        'structured_expression_comparisons',
+        count($expressionRows) === 1
+        && ($expressionRows[0]['label'] ?? null) === 'phase2-one'
+        && count($expressionGroups) === 2,
     );
 
     $mixedIn = $connection

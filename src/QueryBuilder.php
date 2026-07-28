@@ -72,30 +72,30 @@ final class QueryBuilder
         return $this;
     }
 
-    /** @param (Closure(JoinClause): mixed)|string|Identifier $conditionOrLeft */
+    /** @param (Closure(JoinClause): mixed)|RawExpression|string|Identifier $conditionOrLeft */
     public function join(
         string|Identifier $table,
-        Closure|string|Identifier $conditionOrLeft,
+        RawExpression|Closure|string|Identifier $conditionOrLeft,
         mixed $operator = null,
         mixed $right = null,
     ): self {
         return $this->addJoin('INNER', func_num_args(), $table, $conditionOrLeft, $operator, $right);
     }
 
-    /** @param (Closure(JoinClause): mixed)|string|Identifier $conditionOrLeft */
+    /** @param (Closure(JoinClause): mixed)|RawExpression|string|Identifier $conditionOrLeft */
     public function innerJoin(
         string|Identifier $table,
-        Closure|string|Identifier $conditionOrLeft,
+        RawExpression|Closure|string|Identifier $conditionOrLeft,
         mixed $operator = null,
         mixed $right = null,
     ): self {
         return $this->addJoin('INNER', func_num_args(), $table, $conditionOrLeft, $operator, $right);
     }
 
-    /** @param (Closure(JoinClause): mixed)|string|Identifier $conditionOrLeft */
+    /** @param (Closure(JoinClause): mixed)|RawExpression|string|Identifier $conditionOrLeft */
     public function leftJoin(
         string|Identifier $table,
-        Closure|string|Identifier $conditionOrLeft,
+        RawExpression|Closure|string|Identifier $conditionOrLeft,
         mixed $operator = null,
         mixed $right = null,
     ): self {
@@ -321,12 +321,12 @@ final class QueryBuilder
         return $this->state->where;
     }
 
-    /** @param (Closure(JoinClause): mixed)|string|Identifier $conditionOrLeft */
+    /** @param (Closure(JoinClause): mixed)|RawExpression|string|Identifier $conditionOrLeft */
     private function addJoin(
         string $type,
         int $argumentCount,
         string|Identifier $table,
-        Closure|string|Identifier $conditionOrLeft,
+        RawExpression|Closure|string|Identifier $conditionOrLeft,
         mixed $operator,
         mixed $right,
     ): self {

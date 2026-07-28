@@ -13,6 +13,9 @@ use Oeltima\SimpleQuery\Expression\RawExpression;
 use Oeltima\SimpleQuery\Internal\Ast\BetweenPredicate;
 use Oeltima\SimpleQuery\Internal\Ast\ComparisonPredicate;
 use Oeltima\SimpleQuery\Internal\Ast\ConditionCollection;
+use Oeltima\SimpleQuery\Internal\Ast\ExpressionComparisonPredicate;
+use Oeltima\SimpleQuery\Internal\Ast\ExpressionIdentifierComparisonPredicate;
+use Oeltima\SimpleQuery\Internal\Ast\ExpressionNullPredicate;
 use Oeltima\SimpleQuery\Internal\Ast\GroupPredicate;
 use Oeltima\SimpleQuery\Internal\Ast\IdentifierComparisonPredicate;
 use Oeltima\SimpleQuery\Internal\Ast\InPredicate;
@@ -348,6 +351,13 @@ abstract class AbstractDialectCompiler implements DialectCompiler
             return $this->quote($predicate->column) . ' ' . $predicate->operator->value . ' ?';
         }
 
+        if ($predicate instanceof ExpressionComparisonPredicate) {
+            $sql = $this->expression($predicate->expression, $context);
+            $context->bind($predicate->value);
+
+            return $sql . ' ' . $predicate->operator->value . ' ?';
+        }
+
         if ($predicate instanceof IdentifierComparisonPredicate) {
             return sprintf(
                 '%s %s %s',
@@ -357,8 +367,22 @@ abstract class AbstractDialectCompiler implements DialectCompiler
             );
         }
 
+        if ($predicate instanceof ExpressionIdentifierComparisonPredicate) {
+            return sprintf(
+                '%s %s %s',
+                $this->expression($predicate->left, $context),
+                $predicate->operator->value,
+                $this->expression($predicate->right, $context),
+            );
+        }
+
         if ($predicate instanceof NullPredicate) {
             return $this->quote($predicate->column) . ($predicate->negated ? ' IS NOT NULL' : ' IS NULL');
+        }
+
+        if ($predicate instanceof ExpressionNullPredicate) {
+            return $this->expression($predicate->expression, $context)
+                . ($predicate->negated ? ' IS NOT NULL' : ' IS NULL');
         }
 
         if ($predicate instanceof RawPredicate) {

@@ -8,6 +8,7 @@ use Oeltima\SimpleQuery\ConditionGroup;
 use Oeltima\SimpleQuery\Connection;
 use Oeltima\SimpleQuery\Cursor;
 use Oeltima\SimpleQuery\Driver;
+use Oeltima\SimpleQuery\Expression\Identifier;
 use Oeltima\SimpleQuery\JoinClause;
 use Oeltima\SimpleQuery\Observability\QueryExecution;
 use Oeltima\SimpleQuery\ParameterType;
@@ -17,20 +18,39 @@ use stdClass;
 use function PHPStan\Testing\assertType;
 
 return static function (Connection $database): void {
+    $normalizedEmail = $database->raw('LOWER(users.email)');
     $builder = $database
         ->table('users')
-        ->where(static function ($group): void {
+        ->where($normalizedEmail, '=', 'ada@example.test')
+        ->orWhere($database->raw('COALESCE(users.email, ?)', ['']), 'grace@example.test')
+        ->whereNot($database->raw('LOWER(users.status)'), '=', 'disabled')
+        ->orWhereNot($database->raw('LOWER(users.status)'), 'archived')
+        ->whereColumn('users.team_id', '=', 'teams.id')
+        ->orWhereColumn(Identifier::of('users.owner_id'), '=', Identifier::of('users.id'))
+        ->where(static function ($group) use ($database): void {
             assertType(ConditionGroup::class, $group);
-            $group->where('active', true);
+            $group
+                ->where('active', true)
+                ->where($database->raw('LOWER(name)'), '=', 'ada')
+                ->whereColumn('tenant_id', '=', 'owner_tenant_id');
         })
-        ->having(static function ($group): void {
+        ->having($database->raw('COUNT(*)'), '>', 1)
+        ->orHaving(static function ($group) use ($database): void {
             assertType(ConditionGroup::class, $group);
-            $group->where('score', '>', 0);
+            $group->where($database->raw('MAX(score)'), '>', 0);
         })
-        ->join('teams', static function ($join): void {
+        ->join('teams', static function ($join) use ($database): void {
             assertType(JoinClause::class, $join);
-            $join->on('teams.id', '=', 'users.team_id');
-        });
+            $join
+                ->on($database->raw('teams.id + ?', [0]), '=', Identifier::of('users.team_id'))
+                ->orOn('teams.owner_id', '=', $database->raw('users.owner_id + ?', [0]))
+                ->onValue($database->raw('LENGTH(teams.name)'), '>', 2)
+                ->orOnValue($database->raw('LENGTH(teams.code)'), '>', 1)
+                ->where($database->raw('LOWER(teams.status)'), '=', 'active');
+        })
+        ->leftJoin('owners', $database->raw('owners.id + ?', [0]), '=', Identifier::of('users.owner_id'));
+
+    assertType('Oeltima\\SimpleQuery\\QueryBuilder', $builder);
 
     assertType(Cursor::class . '<' . stdClass::class . '>', $builder->iterate());
     assertType('Traversable<int, stdClass>', $builder->iterate()->getIterator());
