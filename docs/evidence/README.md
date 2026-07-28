@@ -39,6 +39,10 @@ Files:
   including paired source-order and observer-profile decisions;
 - [`0.2.0` Phase 3 hardening evidence](0.2-phase-3-hardening.md), including
   external types, branch/path coverage, behavior gaps, and engine versions;
+- [`v0.2.0` development baseline](v0.2.0-development-baseline.md) and its
+  [machine-readable source, query, coverage, and benchmark record](v0.2.0-development-baseline.json);
+- [`0.3.0` production-adoption baseline](0.3-production-adoption-baseline.md),
+  containing only anonymized aggregate evidence and release-scope decisions;
 - [edge-feature usage verification](feature-usage-verification.md).
 
 Generated reports belong in `tools/database-probes/results/`, are ignored by Git, and

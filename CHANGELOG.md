@@ -8,6 +8,16 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+### Added
+
+- Add a deterministic, read-only SimpleQuery adoption audit with path-redacted
+  findings for clauses, result terminals, raw-expression contexts, generated-ID
+  timing, direct PDO, transaction ownership, dynamic identifiers, batching,
+  and streaming.
+- Add a production-shaped synthetic adoption corpus, a required migration
+  review report, an anonymized first-production-migration evidence record, and
+  a reproducible `v0.2.0` source/query/coverage/benchmark baseline.
+
 ### Changed
 
 - Reorganize documentation into guides, reference, maintainer operations,

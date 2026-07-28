@@ -61,6 +61,20 @@ This limited tool does not mutate application files. It demonstrates the safe
 boundary for an optional project-owned codemod; it is not installed at runtime
 and is not a compatibility layer.
 
+For already migrated SimpleQuery consumers, use the read-only adoption mode:
+
+```bash
+php tools/audit-consumers.php /path/to/workspace --mode=simplequery --deterministic
+```
+
+It inventories structured clauses, terminal/result shapes, raw-expression
+contexts, PDO and transaction ownership, dynamic identifiers, batches,
+cursors, and generated-ID timing. Paths are replaced by stable source tokens
+unless `--include-paths` is explicitly supplied for a private working report.
+Resolve its candidates with the
+[migration review report](migration-review.md); lexical output never certifies
+semantic safety.
+
 ## Query, result, and performance parity
 
 The complex list slice compares native SimpleQuery output with a direct PDO

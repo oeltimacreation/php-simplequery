@@ -13,6 +13,7 @@ information.
 - [Testing architecture](testing-architecture.md)
 - [Compatibility evidence records](../evidence/README.md)
 - [Benchmark method](benchmarking.md)
+- [Migration review report](migration-review.md)
 - [PDO, engine, and proxy quirks](../reference/pdo-engine-proxy-quirks.md)
 - [Release process](release-process.md)
 - [Security review checklist](security-review-checklist.md)
