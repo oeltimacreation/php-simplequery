@@ -10,6 +10,13 @@ with ZeroVer releases before `1.0.0`.
 
 ### Added
 
+- Add a closed `TransactionMode` contract with SQLite-only managed immediate
+  transactions, preserving outer ownership, nested savepoints, active-cursor
+  guards, callback exception identity, and verified reuse after busy begin
+  failures.
+- Add transaction-classification and exception-ergonomics evidence, ADR-020,
+  supported-PHP SQLite immediate probes, MySQL-family rejection probes, and an
+  application-owned lock-conflict inspection recipe without retry claims.
 - Add trusted expression-to-bound-value comparisons across `WHERE`, nested
   condition groups, `HAVING`, and value-oriented joins while retaining ordered
   positional bindings and established null semantics.
@@ -28,6 +35,9 @@ with ZeroVer releases before `1.0.0`.
 
 ### Changed
 
+- Require PDO to report physical activity immediately after every managed
+  transaction begin, and retain direct PDO ownership for schema control,
+  manually started work, and deployment-specific exception classification.
 - Extend the public API and independent level-9 consumer contract with the
   accepted expression and column comparison overloads; retain variadic
   `select()` instead of adding a SQL-list parser or parallel projection API.

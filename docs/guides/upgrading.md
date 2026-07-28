@@ -52,3 +52,25 @@ Discard a quarantined connection rather than retrying work on it.
 
 Published release tags are immutable. Corrections are issued as new patch
 releases.
+
+## Preparing for 0.3
+
+The existing one-argument `transaction()` call remains source-compatible and
+uses `TransactionMode::Default`. SQLite applications can opt into managed
+writer intent with the new optional second argument:
+
+```php
+use Oeltima\SimpleQuery\TransactionMode;
+
+$db->transaction($callback, TransactionMode::Immediate);
+```
+
+Do not pass `Immediate` to MariaDB/MySQL or to a nested callback. MySQL-family
+row locks continue to use `forUpdate()` or `forShare()` inside an ordinary
+managed transaction. Manually started transactions, including raw SQLite
+`BEGIN IMMEDIATE`, remain externally owned and are never adopted.
+
+Managed begin now verifies `PDO::inTransaction()` before executing the callback.
+A driver/runtime combination that dispatches begin without reporting physical
+activity fails before application work runs; reuse is allowed only after
+physical inactivity is verified.

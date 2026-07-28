@@ -12,6 +12,7 @@ successful simple query does not imply support.
 | Inner/left joins | Implemented | Implemented | Implemented |
 | Group/order/pagination | Implemented | Implemented | Implemented |
 | Savepoints | Implemented | Implemented | Implemented |
+| Immediate managed transaction | Unsupported | Unsupported | Implemented |
 | Generated IDs | Implemented | Implemented | Implemented |
 | Multi-row insert compilation | Implemented | Implemented | Implemented |
 | Lock clauses | Implemented | Implemented | Unsupported |
@@ -61,6 +62,10 @@ The default connection policy:
 SQLite serializes writers. WAL allows readers alongside a writer but does not
 provide simultaneous writers. Applications must handle `SQLITE_BUSY` according
 to their workload and transaction policy.
+
+`TransactionMode::Immediate` acquires SQLite writer intent at managed
+transaction start. The fixed mode does not enable WAL, change the configured
+busy timeout, retry a busy begin, or adopt manually started work.
 
 SQLite uses type affinity and has no separate Boolean/date storage class.
 Applications own Boolean conventions, date/time formats, timezones, decimal

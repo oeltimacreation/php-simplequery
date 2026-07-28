@@ -43,6 +43,9 @@ Files:
   [machine-readable source, query, coverage, and benchmark record](v0.2.0-development-baseline.json);
 - [`0.3.0` production-adoption baseline](0.3-production-adoption-baseline.md),
   containing only anonymized aggregate evidence and release-scope decisions;
+- [`0.3.0` transaction and exception ergonomics](0.3-transaction-and-exception-ergonomics.md),
+  classifying manual ownership, SQLite immediate-mode evidence, and the
+  application-owned error-inspection boundary;
 - [edge-feature usage verification](feature-usage-verification.md).
 
 Generated reports belong in `tools/database-probes/results/`, are ignored by Git, and
