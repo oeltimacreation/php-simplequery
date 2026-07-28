@@ -14,6 +14,7 @@ use Oeltima\SimpleQuery\Internal\Ast\ConditionTerm;
 use Oeltima\SimpleQuery\Internal\Ast\ExpressionComparisonPredicate;
 use Oeltima\SimpleQuery\Internal\Ast\ExpressionIdentifierComparisonPredicate;
 use Oeltima\SimpleQuery\Internal\Ast\IdentifierComparisonPredicate;
+use Oeltima\SimpleQuery\Internal\Ast\Predicate;
 use Oeltima\SimpleQuery\Internal\Ast\RawPredicate;
 use Oeltima\SimpleQuery\Internal\InputNormalizer;
 
@@ -91,43 +92,91 @@ final class JoinClause
         mixed $operator,
         mixed $right,
     ): self {
-        if ($left instanceof RawExpression) {
-            if ($argumentCount === 1) {
-                $predicate = new RawPredicate($left);
-                $this->conditions->add(new ConditionTerm($predicate, $or));
-
-                return $this;
-            }
+        if ($argumentCount === 1) {
+            return $this->addRawCondition($or, $left);
         }
-
-        if (
-            $argumentCount !== 3
-            || !is_string($operator)
-            || (!is_string($right) && !$right instanceof Identifier && !$right instanceof RawExpression)
-        ) {
+        if ($argumentCount !== 3) {
             throw new InvalidQueryException(
                 'Join on() requires expression/identifier, operator, and expression/identifier operands.',
             );
         }
 
-        if (!$left instanceof RawExpression && !$right instanceof RawExpression) {
-            $predicate = new IdentifierComparisonPredicate(
-                InputNormalizer::identifier($left),
-                ComparisonOperator::normalize($operator),
-                InputNormalizer::identifier($right),
-            );
-        } elseif ($left instanceof RawExpression && $right instanceof RawExpression) {
-            throw new InvalidQueryException('A structured join comparison accepts only one trusted raw expression.');
-        } else {
-            $predicate = new ExpressionIdentifierComparisonPredicate(
-                $left instanceof RawExpression ? $left : InputNormalizer::identifier($left),
-                ComparisonOperator::normalize($operator),
-                $right instanceof RawExpression ? $right : InputNormalizer::identifier($right),
-            );
-        }
+        $predicate = $this->identifierPredicate(
+            $this->joinOperand($left),
+            $this->joinOperator($operator),
+            $this->joinOperand($right),
+        );
         $this->conditions->add(new ConditionTerm($predicate, $or));
 
         return $this;
+    }
+
+    private function addRawCondition(bool $or, RawExpression|string|Identifier $condition): self
+    {
+        if (!$condition instanceof RawExpression) {
+            throw new InvalidQueryException(
+                'Join on() requires expression/identifier, operator, and expression/identifier operands.',
+            );
+        }
+
+        $this->conditions->add(new ConditionTerm(new RawPredicate($condition), $or));
+
+        return $this;
+    }
+
+    private function identifierPredicate(
+        RawExpression|Identifier $left,
+        ComparisonOperator $operator,
+        RawExpression|Identifier $right,
+    ): Predicate {
+        if ($left instanceof RawExpression) {
+            return $this->rawLeftPredicate($left, $operator, $right);
+        }
+        if ($right instanceof RawExpression) {
+            return new ExpressionIdentifierComparisonPredicate($left, $operator, $right);
+        }
+
+        return new IdentifierComparisonPredicate($left, $operator, $right);
+    }
+
+    private function rawLeftPredicate(
+        RawExpression $left,
+        ComparisonOperator $operator,
+        RawExpression|Identifier $right,
+    ): ExpressionIdentifierComparisonPredicate {
+        if ($right instanceof RawExpression) {
+            throw new InvalidQueryException('A structured join comparison accepts only one trusted raw expression.');
+        }
+
+        return new ExpressionIdentifierComparisonPredicate($left, $operator, $right);
+    }
+
+    private function joinOperand(mixed $operand): RawExpression|Identifier
+    {
+        if ($operand instanceof RawExpression) {
+            return $operand;
+        }
+        if ($operand instanceof Identifier) {
+            return $operand;
+        }
+        if (is_string($operand)) {
+            return InputNormalizer::identifier($operand);
+        }
+
+        throw new InvalidQueryException(
+            'Join on() requires expression/identifier, operator, and expression/identifier operands.',
+        );
+    }
+
+    private function joinOperator(mixed $operator): ComparisonOperator
+    {
+        if (!is_string($operator)) {
+            throw new InvalidQueryException(
+                'Join on() requires expression/identifier, operator, and expression/identifier operands.',
+            );
+        }
+
+        return ComparisonOperator::normalize($operator);
     }
 
     private function addValueCondition(

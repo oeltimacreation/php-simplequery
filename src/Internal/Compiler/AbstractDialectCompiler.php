@@ -345,6 +345,21 @@ abstract class AbstractDialectCompiler implements DialectCompiler
 
     private function predicate(Predicate $predicate, CompilationContext $context): string
     {
+        $sql = $this->comparisonPredicate($predicate, $context);
+        if ($sql !== null) {
+            return $sql;
+        }
+
+        $sql = $this->simplePredicate($predicate, $context);
+        if ($sql !== null) {
+            return $sql;
+        }
+
+        return $this->compoundPredicate($predicate, $context);
+    }
+
+    private function comparisonPredicate(Predicate $predicate, CompilationContext $context): ?string
+    {
         if ($predicate instanceof ComparisonPredicate) {
             $context->bind($predicate->value);
 
@@ -376,6 +391,11 @@ abstract class AbstractDialectCompiler implements DialectCompiler
             );
         }
 
+        return null;
+    }
+
+    private function simplePredicate(Predicate $predicate, CompilationContext $context): ?string
+    {
         if ($predicate instanceof NullPredicate) {
             return $this->quote($predicate->column) . ($predicate->negated ? ' IS NOT NULL' : ' IS NULL');
         }
@@ -389,6 +409,11 @@ abstract class AbstractDialectCompiler implements DialectCompiler
             return $this->expression($predicate->expression, $context);
         }
 
+        return null;
+    }
+
+    private function compoundPredicate(Predicate $predicate, CompilationContext $context): string
+    {
         if ($predicate instanceof GroupPredicate) {
             return '(' . $this->conditions($predicate->conditions, $context) . ')';
         }

@@ -26,66 +26,102 @@ final class ConditionFactory
         mixed $value,
     ): Predicate {
         if ($subject instanceof RawExpression) {
-            if ($argumentCount === 1) {
-                return new RawPredicate($subject);
-            }
-
-            if ($argumentCount !== 2 && $argumentCount !== 3) {
-                throw new InvalidQueryException(
-                    'An expression comparison requires an expression/value or expression/operator/value shape.',
-                );
-            }
-
-            $operator = $argumentCount === 2
-                ? ComparisonOperator::Equal
-                : self::operator($operatorOrValue);
-            $comparisonValue = $argumentCount === 2 ? $operatorOrValue : $value;
-            $binding = Binding::fromValue($comparisonValue);
-            if ($binding->type->value === 'null') {
-                if (!$operator->supportsNull()) {
-                    throw new InvalidQueryException('Ordering comparisons against null are not supported.');
-                }
-
-                return new ExpressionNullPredicate($subject, !$operator->isEquality());
-            }
-
-            return new ExpressionComparisonPredicate($subject, $operator, $binding);
+            return self::rawCondition($argumentCount, $subject, $operatorOrValue, $value);
         }
 
         if ($subject instanceof Closure) {
-            if ($argumentCount !== 1) {
-                throw new InvalidQueryException('A condition group does not accept additional arguments.');
-            }
-
-            $group = new ConditionGroup($connection);
-            $subject($group);
-            if ($group->isEmpty()) {
-                throw new InvalidQueryException('A condition group cannot be empty.');
-            }
-
-            return new GroupPredicate($group->snapshot());
+            return self::groupCondition($connection, $argumentCount, $subject);
         }
 
+        return self::identifierCondition($argumentCount, $subject, $operatorOrValue, $value);
+    }
+
+    private static function rawCondition(
+        int $argumentCount,
+        RawExpression $expression,
+        mixed $operatorOrValue,
+        mixed $value,
+    ): Predicate {
+        if ($argumentCount === 1) {
+            return new RawPredicate($expression);
+        }
+        if ($argumentCount !== 2 && $argumentCount !== 3) {
+            throw new InvalidQueryException(
+                'An expression comparison requires an expression/value or expression/operator/value shape.',
+            );
+        }
+
+        return self::comparison($argumentCount, $expression, $operatorOrValue, $value);
+    }
+
+    /** @param Closure(ConditionGroup): mixed $groupCallback */
+    private static function groupCondition(
+        Connection $connection,
+        int $argumentCount,
+        Closure $groupCallback,
+    ): GroupPredicate {
+        if ($argumentCount !== 1) {
+            throw new InvalidQueryException('A condition group does not accept additional arguments.');
+        }
+
+        $group = new ConditionGroup($connection);
+        $groupCallback($group);
+        if ($group->isEmpty()) {
+            throw new InvalidQueryException('A condition group cannot be empty.');
+        }
+
+        return new GroupPredicate($group->snapshot());
+    }
+
+    private static function identifierCondition(
+        int $argumentCount,
+        string|Identifier $column,
+        mixed $operatorOrValue,
+        mixed $value,
+    ): Predicate {
         if ($argumentCount !== 2 && $argumentCount !== 3) {
             throw new InvalidQueryException('A comparison requires a column/value or column/operator/value shape.');
         }
 
-        $column = InputNormalizer::identifier($subject);
+        return self::comparison(
+            $argumentCount,
+            InputNormalizer::identifier($column),
+            $operatorOrValue,
+            $value,
+        );
+    }
+
+    private static function comparison(
+        int $argumentCount,
+        RawExpression|Identifier $left,
+        mixed $operatorOrValue,
+        mixed $value,
+    ): Predicate {
         $operator = $argumentCount === 2
             ? ComparisonOperator::Equal
             : self::operator($operatorOrValue);
         $comparisonValue = $argumentCount === 2 ? $operatorOrValue : $value;
         $binding = Binding::fromValue($comparisonValue);
-
         if ($binding->type->value === 'null') {
-            if (!$operator->supportsNull()) {
-                throw new InvalidQueryException('Ordering comparisons against null are not supported.');
-            }
-
-            return new NullPredicate($column, !$operator->isEquality());
+            return self::nullComparison($left, $operator);
         }
 
-        return new ComparisonPredicate($column, $operator, $binding);
+        return $left instanceof RawExpression
+            ? new ExpressionComparisonPredicate($left, $operator, $binding)
+            : new ComparisonPredicate($left, $operator, $binding);
+    }
+
+    private static function nullComparison(
+        RawExpression|Identifier $left,
+        ComparisonOperator $operator,
+    ): Predicate {
+        if (!$operator->supportsNull()) {
+            throw new InvalidQueryException('Ordering comparisons against null are not supported.');
+        }
+
+        return $left instanceof RawExpression
+            ? new ExpressionNullPredicate($left, !$operator->isEquality())
+            : new NullPredicate($left, !$operator->isEquality());
     }
 
     public static function columns(

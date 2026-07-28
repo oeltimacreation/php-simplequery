@@ -3,6 +3,9 @@
 declare(strict_types=1);
 
 use Oeltima\SimpleQuery\Tools\Migration\ConsumerAdoptionAuditor;
+use Oeltima\SimpleQuery\Tools\Migration\ConsumerAdoptionAuditOptions;
+use Oeltima\SimpleQuery\Tools\Migration\ConsumerPathPolicy;
+use Oeltima\SimpleQuery\Tools\Migration\ConsumerTimestampPolicy;
 
 /** @var list<string> $arguments */
 $arguments = $_SERVER['argv'] ?? [];
@@ -31,10 +34,15 @@ if ($mode === 'simplequery') {
     require dirname(__DIR__) . '/vendor/autoload.php';
 
     try {
-        $report = (new ConsumerAdoptionAuditor(
-            in_array('--include-paths', $arguments, true),
-            in_array('--deterministic', $arguments, true),
-        ))->audit($arguments[1]);
+        $options = new ConsumerAdoptionAuditOptions(
+            in_array('--include-paths', $arguments, true)
+                ? ConsumerPathPolicy::Included
+                : ConsumerPathPolicy::Redacted,
+            in_array('--deterministic', $arguments, true)
+                ? ConsumerTimestampPolicy::Deterministic
+                : ConsumerTimestampPolicy::Current,
+        );
+        $report = (new ConsumerAdoptionAuditor($options))->audit(new SplFileInfo($arguments[1]));
     } catch (RuntimeException $exception) {
         fwrite(STDERR, $exception->getMessage() . PHP_EOL);
         exit(2);

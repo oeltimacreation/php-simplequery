@@ -6,6 +6,9 @@ namespace Oeltima\SimpleQuery\Tests\Migration;
 
 use FilesystemIterator;
 use Oeltima\SimpleQuery\Tools\Migration\ConsumerAdoptionAuditor;
+use Oeltima\SimpleQuery\Tools\Migration\ConsumerAdoptionAuditOptions;
+use Oeltima\SimpleQuery\Tools\Migration\ConsumerPathPolicy;
+use Oeltima\SimpleQuery\Tools\Migration\ConsumerTimestampPolicy;
 use PHPUnit\Framework\TestCase;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -72,10 +75,12 @@ final class SimpleQueryAdoptionAuditTest extends TestCase
     public function testAuditIsDeterministicReadOnlyAndPathRedactedByDefault(): void
     {
         $before = $this->directoryDigest($this->consumerPath);
-        $auditor = new ConsumerAdoptionAuditor(deterministic: true);
+        $auditor = new ConsumerAdoptionAuditor(new ConsumerAdoptionAuditOptions(
+            timestamp: ConsumerTimestampPolicy::Deterministic,
+        ));
 
-        $first = $auditor->audit($this->consumerPath);
-        $second = $auditor->audit($this->consumerPath);
+        $first = $auditor->audit(new SplFileInfo($this->consumerPath));
+        $second = $auditor->audit(new SplFileInfo($this->consumerPath));
 
         self::assertSame($first, $second);
         self::assertSame($before, $this->directoryDigest($this->consumerPath));
@@ -91,8 +96,15 @@ final class SimpleQueryAdoptionAuditTest extends TestCase
 
     public function testAuditProfilesProductionShapedUsageAndReviewResidue(): void
     {
-        $report = (new ConsumerAdoptionAuditor(deterministic: true))->audit($this->consumerPath);
+        $report = (new ConsumerAdoptionAuditor(new ConsumerAdoptionAuditOptions(
+            timestamp: ConsumerTimestampPolicy::Deterministic,
+        )))->audit(new SplFileInfo($this->consumerPath));
         self::assertSame(1, $report['consumer_count'] ?? null);
+        $profiles = $report['profiles'] ?? null;
+        self::assertIsArray($profiles);
+        $profile = $profiles[0] ?? null;
+        self::assertIsArray($profile);
+        self::assertSame('^0.2', $profile['simplequery_version'] ?? null);
         $aggregate = $report['aggregate'] ?? null;
         self::assertIsArray($aggregate);
         $counts = $aggregate['counts'] ?? null;
@@ -128,8 +140,10 @@ final class SimpleQueryAdoptionAuditTest extends TestCase
 
     public function testPathsAreAvailableOnlyWhenExplicitlyRequested(): void
     {
-        $report = (new ConsumerAdoptionAuditor(includePaths: true, deterministic: true))
-            ->audit($this->consumerPath);
+        $report = (new ConsumerAdoptionAuditor(new ConsumerAdoptionAuditOptions(
+            ConsumerPathPolicy::Included,
+            ConsumerTimestampPolicy::Deterministic,
+        )))->audit(new SplFileInfo($this->consumerPath));
         $profiles = $report['profiles'] ?? null;
         self::assertIsArray($profiles);
         $profile = $profiles[0] ?? null;
@@ -142,12 +156,40 @@ final class SimpleQueryAdoptionAuditTest extends TestCase
         self::assertContains('src/query-shapes.php', $sources);
     }
 
+    public function testLockedPackageVersionTakesPrecedenceOverComposerConstraint(): void
+    {
+        $lock = json_encode([
+            'packages' => [],
+            'packages-dev' => [[
+                'name' => 'oeltimacreation/php-simplequery',
+                'version' => 'v0.2.7',
+            ]],
+        ], JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
+        self::assertNotFalse(file_put_contents($this->consumerPath . '/composer.lock', $lock));
+
+        $report = (new ConsumerAdoptionAuditor(new ConsumerAdoptionAuditOptions(
+            timestamp: ConsumerTimestampPolicy::Deterministic,
+        )))->audit(new SplFileInfo($this->consumerPath));
+        $profiles = $report['profiles'] ?? null;
+        self::assertIsArray($profiles);
+        $profile = $profiles[0] ?? null;
+        self::assertIsArray($profile);
+        self::assertSame('v0.2.7', $profile['simplequery_version'] ?? null);
+    }
+
+    public function testDefaultAuditIncludesGenerationTimestamp(): void
+    {
+        $report = (new ConsumerAdoptionAuditor())->audit(new SplFileInfo($this->consumerPath));
+
+        self::assertIsString($report['generated_at'] ?? null);
+    }
+
     public function testMissingWorkspaceIsRejected(): void
     {
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('workspace root does not exist');
 
-        (new ConsumerAdoptionAuditor())->audit($this->consumerPath . '/missing');
+        (new ConsumerAdoptionAuditor())->audit(new SplFileInfo($this->consumerPath . '/missing'));
     }
 
     private function directoryDigest(string $path): string
