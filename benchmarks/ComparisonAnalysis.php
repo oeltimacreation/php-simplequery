@@ -66,21 +66,57 @@ final class ComparisonAnalysis
     /** @param array<string, array<string, float>> $medians */
     private static function addScenarioMedians(array &$medians, mixed $scenario): void
     {
-        if (!is_array($scenario) || !is_string($scenario['scenario'] ?? null)) {
+        $definition = self::scenarioDefinition($scenario);
+        foreach ($definition['operations'] as $name => $operation) {
+            $medians[$definition['name']][self::operationName($name)] = self::operationMedian($operation);
+        }
+    }
+
+    /** @return array{name: string, operations: array<mixed, mixed>} */
+    private static function scenarioDefinition(mixed $scenario): array
+    {
+        if (!is_array($scenario)) {
+            throw new RuntimeException('Comparison run contains an invalid scenario.');
+        }
+        $name = $scenario['scenario'] ?? null;
+        if (!is_string($name)) {
             throw new RuntimeException('Comparison run contains an invalid scenario.');
         }
         $measurement = $scenario['measurement'] ?? null;
-        $operations = is_array($measurement) ? ($measurement['operations'] ?? null) : null;
+        if (!is_array($measurement)) {
+            throw new RuntimeException('Comparison scenario has no operation measurements.');
+        }
+        $operations = $measurement['operations'] ?? null;
         if (!is_array($operations)) {
             throw new RuntimeException('Comparison scenario has no operation measurements.');
         }
-        foreach ($operations as $name => $operationMeasurement) {
-            $median = is_array($operationMeasurement) ? ($operationMeasurement['median_ms'] ?? null) : null;
-            if (!is_string($name) || (!is_int($median) && !is_float($median))) {
-                throw new RuntimeException('Comparison operation has no median.');
-            }
-            $medians[$scenario['scenario']][$name] = (float) $median;
+
+        return ['name' => $name, 'operations' => $operations];
+    }
+
+    private static function operationName(mixed $name): string
+    {
+        if (!is_string($name)) {
+            throw new RuntimeException('Comparison operation has no median.');
         }
+
+        return $name;
+    }
+
+    private static function operationMedian(mixed $operation): float
+    {
+        if (!is_array($operation)) {
+            throw new RuntimeException('Comparison operation has no median.');
+        }
+        $median = $operation['median_ms'] ?? null;
+        if (is_int($median)) {
+            return (float) $median;
+        }
+        if (is_float($median)) {
+            return $median;
+        }
+
+        throw new RuntimeException('Comparison operation has no median.');
     }
 
     private static function percentageChange(float $baseline, float $candidate): ?float
