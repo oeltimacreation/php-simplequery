@@ -39,6 +39,23 @@ Files:
   including paired source-order and observer-profile decisions;
 - [`0.2.0` Phase 3 hardening evidence](0.2-phase-3-hardening.md), including
   external types, branch/path coverage, behavior gaps, and engine versions;
+- [`v0.2.0` development baseline](v0.2.0-development-baseline.md) and its
+  [machine-readable source, query, coverage, and benchmark record](v0.2.0-development-baseline.json);
+- [`0.3.0` production-adoption baseline](0.3-production-adoption-baseline.md),
+  containing only anonymized aggregate evidence and release-scope decisions;
+- [`0.3.0` transaction and exception ergonomics](0.3-transaction-and-exception-ergonomics.md),
+  classifying manual ownership, SQLite immediate-mode evidence, and the
+  application-owned error-inspection boundary;
+- [`0.3.0` architecture and quality audit](0.3-architecture-and-quality-audit.md),
+  recording the public signature manifest, internal seam review, hotspot and
+  extraction decisions, static-analysis fixture, style audit, and high-risk
+  branch coverage;
+- [`0.3.0` production-shaped performance evidence](0.3-production-performance.md),
+  recording paired `v0.2.0` measurements, query plans, memory, and soak gates;
+- [`0.3.0` release-candidate certification](0.3-release-candidate-certification.md),
+  recording local quality/coverage, minimum/current direct and proxy probes,
+  path-redacted consumer validation, security review, and the remaining real-
+  deployment publication blocker;
 - [edge-feature usage verification](feature-usage-verification.md).
 
 Generated reports belong in `tools/database-probes/results/`, are ignored by Git, and

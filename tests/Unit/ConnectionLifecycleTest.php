@@ -100,6 +100,22 @@ final class ConnectionLifecycleTest extends TestCase
         $connection->close();
     }
 
+    public function testCloseRejectsAnActiveCursorUntilItIsReleased(): void
+    {
+        $connection = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
+        $cursor = $connection->query('SELECT 1 AS value')->iterateAssociative();
+
+        try {
+            $connection->close();
+            self::fail('Connection close unexpectedly accepted an active cursor.');
+        } catch (TransactionStateException $exception) {
+            self::assertSame('close', $exception->operation);
+        }
+
+        $cursor->close();
+        $connection->close();
+    }
+
     public function testConnectionFailuresDoNotExposeDsnDetails(): void
     {
         try {

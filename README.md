@@ -10,7 +10,7 @@ query builder—not an ORM, migration tool, connection pool, or retry layer.
 ## Install
 
 ```bash
-composer require oeltimacreation/php-simplequery:^0.2
+composer require oeltimacreation/php-simplequery:^0.3
 ```
 
 Your PHP installation also needs `ext-pdo` and the matching driver, such as
@@ -71,19 +71,19 @@ execution unit. Do not share them between concurrent workers or coroutines.
 
 Start here:
 
-- [Getting started](docs/getting-started.md) — SQLite first query, then MySQL/MariaDB
+- [Getting started](docs/guides/getting-started.md) — SQLite first query, then MySQL/MariaDB
 - [Examples](examples/README.md) — small runnable programs, ordered for beginners
-- [Query builder](docs/query-builder.md) — filtering, joins, ordering, and compilation
-- [Results and writes](docs/results-and-writes.md) — reads, cursors, aggregates, and writes
-- [Transactions](docs/transactions.md) — callback ownership and nested savepoints
+- [Query builder](docs/guides/query-builder.md) — filtering, joins, ordering, and compilation
+- [Results and writes](docs/guides/results-and-writes.md) — reads, cursors, aggregates, and writes
+- [Transactions](docs/guides/transactions.md) — callback ownership and nested savepoints
 
 More guides:
 
-- [Raw SQL and security](docs/raw-sql-and-security.md)
-- [Database support](docs/database-support.md)
-- [Testing applications](docs/testing-applications.md)
-- [Migrating from Pixie](docs/migrating-from-pixie.md)
-- [Complete documentation index](docs/index.md)
+- [Raw SQL and security](docs/guides/raw-sql-and-security.md)
+- [Database support](docs/reference/database-support.md)
+- [Testing applications](docs/guides/testing-applications.md)
+- [Migrating from Pixie](docs/guides/migrating-from-pixie.md)
+- [Complete documentation index](docs/README.md)
 
 ## Development
 

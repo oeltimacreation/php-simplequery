@@ -1,0 +1,4411 @@
+{
+    "schema_version": 1,
+    "package": "oeltimacreation/php-simplequery",
+    "types": [
+        {
+            "name": "Oeltima\\SimpleQuery\\Binding",
+            "kind": "class",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": true,
+            "extends": null,
+            "implements": [],
+            "annotations": [],
+            "constants": [],
+            "properties": [
+                {
+                    "name": "type",
+                    "static": false,
+                    "readonly": true,
+                    "type": "Oeltima\\SimpleQuery\\ParameterType"
+                },
+                {
+                    "name": "value",
+                    "static": false,
+                    "readonly": true,
+                    "type": "mixed"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "__construct",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": null,
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "value",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "type",
+                            "type": "Oeltima\\SimpleQuery\\ParameterType",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default_constant": "Oeltima\\SimpleQuery\\ParameterType::Auto"
+                        }
+                    ]
+                },
+                {
+                    "name": "concrete",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "fromValue",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "value",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\CompiledQuery",
+            "kind": "class",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": true,
+            "extends": null,
+            "implements": [],
+            "annotations": [],
+            "constants": [],
+            "properties": [
+                {
+                    "name": "bindings",
+                    "static": false,
+                    "readonly": true,
+                    "type": "array"
+                },
+                {
+                    "name": "sql",
+                    "static": false,
+                    "readonly": true,
+                    "type": "string"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "__construct",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": null,
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param list<Binding> $bindings"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "sql",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "bindings",
+                            "type": "array",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\ConditionGroup",
+            "kind": "class",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": false,
+            "extends": null,
+            "implements": [],
+            "annotations": [],
+            "constants": [],
+            "properties": [],
+            "methods": [
+                {
+                    "name": "__construct",
+                    "compatibility": "internal",
+                    "static": false,
+                    "final": false,
+                    "return_type": null,
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "connection",
+                            "type": "Oeltima\\SimpleQuery\\Connection",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "isEmpty",
+                    "compatibility": "internal",
+                    "static": false,
+                    "final": false,
+                    "return_type": "bool",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "orWhere",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param RawExpression|(Closure(\\Oeltima\\SimpleQuery\\ConditionGroup): mixed)|string|Identifier $subject"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "subject",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\RawExpression|Closure|Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "operatorOrValue",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "value",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                },
+                {
+                    "name": "orWhereBetween",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "column",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "from",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "to",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "orWhereColumn",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "left",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "operator",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "right",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "orWhereIn",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param iterable<mixed>|QueryBuilder $values"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "column",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "values",
+                            "type": "Traversable|Oeltima\\SimpleQuery\\QueryBuilder|array",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "orWhereNot",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param RawExpression|(Closure(\\Oeltima\\SimpleQuery\\ConditionGroup): mixed)|string|Identifier $subject"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "subject",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\RawExpression|Closure|Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "operatorOrValue",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "value",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                },
+                {
+                    "name": "orWhereNotIn",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param iterable<mixed>|QueryBuilder $values"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "column",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "values",
+                            "type": "Traversable|Oeltima\\SimpleQuery\\QueryBuilder|array",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "orWhereNotNull",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "column",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "orWhereNull",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "column",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "snapshot",
+                    "compatibility": "internal",
+                    "static": false,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\Internal\\Ast\\ConditionCollection",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "where",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param RawExpression|(Closure(\\Oeltima\\SimpleQuery\\ConditionGroup): mixed)|string|Identifier $subject"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "subject",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\RawExpression|Closure|Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "operatorOrValue",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "value",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                },
+                {
+                    "name": "whereBetween",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "column",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "from",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "to",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "whereColumn",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "left",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "operator",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "right",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "whereIn",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param iterable<mixed>|QueryBuilder $values"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "column",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "values",
+                            "type": "Traversable|Oeltima\\SimpleQuery\\QueryBuilder|array",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "whereNot",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param RawExpression|(Closure(\\Oeltima\\SimpleQuery\\ConditionGroup): mixed)|string|Identifier $subject"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "subject",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\RawExpression|Closure|Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "operatorOrValue",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "value",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                },
+                {
+                    "name": "whereNotIn",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param iterable<mixed>|QueryBuilder $values"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "column",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "values",
+                            "type": "Traversable|Oeltima\\SimpleQuery\\QueryBuilder|array",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "whereNotNull",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "column",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "whereNull",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "column",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\Connection",
+            "kind": "class",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": false,
+            "extends": null,
+            "implements": [],
+            "annotations": [],
+            "constants": [],
+            "properties": [],
+            "methods": [
+                {
+                    "name": "close",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "void",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "connect",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param array<int, mixed> $pdoOptions"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "driver",
+                            "type": "Oeltima\\SimpleQuery\\Driver",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "dsn",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "username",
+                            "type": "?string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [
+                                "SensitiveParameter"
+                            ],
+                            "default": null
+                        },
+                        {
+                            "name": "password",
+                            "type": "?string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [
+                                "SensitiveParameter"
+                            ],
+                            "default": null
+                        },
+                        {
+                            "name": "pdoOptions",
+                            "type": "array",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": []
+                        },
+                        {
+                            "name": "connectionOptions",
+                            "type": "?Oeltima\\SimpleQuery\\ConnectionOptions",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "observer",
+                            "type": "?Oeltima\\SimpleQuery\\Observability\\QueryObserver",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                },
+                {
+                    "name": "connectionOptions",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\ConnectionOptions",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "driver",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\Driver",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "forCompilation",
+                    "compatibility": "internal",
+                    "static": true,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "driver",
+                            "type": "Oeltima\\SimpleQuery\\Driver",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "fromPdo",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "pdo",
+                            "type": "PDO",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "driver",
+                            "type": "Oeltima\\SimpleQuery\\Driver",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "options",
+                            "type": "?Oeltima\\SimpleQuery\\ConnectionOptions",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "observer",
+                            "type": "?Oeltima\\SimpleQuery\\Observability\\QueryObserver",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                },
+                {
+                    "name": "hasActiveCursors",
+                    "compatibility": "internal",
+                    "static": false,
+                    "final": false,
+                    "return_type": "bool",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "observer",
+                    "compatibility": "internal",
+                    "static": false,
+                    "final": false,
+                    "return_type": "?Oeltima\\SimpleQuery\\Observability\\QueryObserver",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "pdo",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "PDO",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "pdoForExecution",
+                    "compatibility": "internal",
+                    "static": false,
+                    "final": false,
+                    "return_type": "PDO",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "quarantine",
+                    "compatibility": "internal",
+                    "static": false,
+                    "final": false,
+                    "return_type": "void",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "query",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\RawQuery",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param list<mixed> $bindings"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "trustedSql",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "bindings",
+                            "type": "array",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": []
+                        }
+                    ]
+                },
+                {
+                    "name": "raw",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\Expression\\RawExpression",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param list<mixed> $bindings"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "trustedSql",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "bindings",
+                            "type": "array",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": []
+                        }
+                    ]
+                },
+                {
+                    "name": "registerCursor",
+                    "compatibility": "internal",
+                    "static": false,
+                    "final": false,
+                    "return_type": "void",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "releaseCursor",
+                    "compatibility": "internal",
+                    "static": false,
+                    "final": false,
+                    "return_type": "void",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "requireTransactionForLock",
+                    "compatibility": "internal",
+                    "static": false,
+                    "final": false,
+                    "return_type": "void",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "table",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\QueryBuilder",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "source",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|Oeltima\\SimpleQuery\\QueryBuilder|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "alias",
+                            "type": "?string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                },
+                {
+                    "name": "transaction",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "mixed",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@template T",
+                        "@param Closure(self): T $callback",
+                        "@return T"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "callback",
+                            "type": "Closure",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "transactionDepth",
+                    "compatibility": "internal",
+                    "static": false,
+                    "final": false,
+                    "return_type": "int",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                }
+            ]
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\ConnectionOptions",
+            "kind": "class",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": true,
+            "extends": null,
+            "implements": [],
+            "annotations": [],
+            "constants": [],
+            "properties": [
+                {
+                    "name": "bufferedQueries",
+                    "static": false,
+                    "readonly": true,
+                    "type": "?bool"
+                },
+                {
+                    "name": "emulatePrepares",
+                    "static": false,
+                    "readonly": true,
+                    "type": "?bool"
+                },
+                {
+                    "name": "foundRows",
+                    "static": false,
+                    "readonly": true,
+                    "type": "?bool"
+                },
+                {
+                    "name": "label",
+                    "static": false,
+                    "readonly": true,
+                    "type": "?string"
+                },
+                {
+                    "name": "persistent",
+                    "static": false,
+                    "readonly": true,
+                    "type": "?bool"
+                },
+                {
+                    "name": "sqliteBusyTimeoutMilliseconds",
+                    "static": false,
+                    "readonly": true,
+                    "type": "?int"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "__construct",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": null,
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "emulatePrepares",
+                            "type": "?bool",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "bufferedQueries",
+                            "type": "?bool",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "foundRows",
+                            "type": "?bool",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "persistent",
+                            "type": "?bool",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "sqliteBusyTimeoutMilliseconds",
+                            "type": "?int",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "label",
+                            "type": "?string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                },
+                {
+                    "name": "validateFor",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "void",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "driver",
+                            "type": "Oeltima\\SimpleQuery\\Driver",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\Cursor",
+            "kind": "class",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": false,
+            "extends": null,
+            "implements": [
+                "IteratorAggregate",
+                "Traversable"
+            ],
+            "annotations": [
+                "@template-covariant TRow of stdClass|array<string, mixed>",
+                "@implements IteratorAggregate<int, TRow>"
+            ],
+            "constants": [],
+            "properties": [],
+            "methods": [
+                {
+                    "name": "__destruct",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": null,
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "associative",
+                    "compatibility": "internal",
+                    "static": true,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@return self<array<string, mixed>>"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "statement",
+                            "type": "PDOStatement",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "connection",
+                            "type": "Oeltima\\SimpleQuery\\Connection",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "query",
+                            "type": "Oeltima\\SimpleQuery\\CompiledQuery",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "close",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "void",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "getIterator",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "Traversable",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@return Traversable<int, TRow>"
+                    ],
+                    "parameters": []
+                },
+                {
+                    "name": "isClosed",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "bool",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "objects",
+                    "compatibility": "internal",
+                    "static": true,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@return self<stdClass>"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "statement",
+                            "type": "PDOStatement",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "connection",
+                            "type": "Oeltima\\SimpleQuery\\Connection",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "query",
+                            "type": "Oeltima\\SimpleQuery\\CompiledQuery",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\Driver",
+            "kind": "enum",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": false,
+            "extends": null,
+            "implements": [
+                "BackedEnum",
+                "UnitEnum"
+            ],
+            "annotations": [],
+            "constants": [],
+            "properties": [
+                {
+                    "name": "name",
+                    "static": false,
+                    "readonly": true,
+                    "type": "string"
+                },
+                {
+                    "name": "value",
+                    "static": false,
+                    "readonly": true,
+                    "type": "string"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "cases",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "array",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "from",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "value",
+                            "type": "string|int",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "pdoDriver",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "string",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "tryFrom",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "?static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "value",
+                            "type": "string|int",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                }
+            ],
+            "cases": [
+                {
+                    "name": "MariaDb",
+                    "value": "mariadb"
+                },
+                {
+                    "name": "MySql",
+                    "value": "mysql"
+                },
+                {
+                    "name": "Sqlite",
+                    "value": "sqlite"
+                }
+            ]
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\Exception\\ConfigurationException",
+            "kind": "class",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": false,
+            "extends": "Oeltima\\SimpleQuery\\Exception\\SimpleQueryException",
+            "implements": [
+                "Stringable",
+                "Throwable"
+            ],
+            "annotations": [],
+            "constants": [],
+            "properties": [],
+            "methods": []
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\Exception\\ConnectionException",
+            "kind": "class",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": false,
+            "extends": "Oeltima\\SimpleQuery\\Exception\\SimpleQueryException",
+            "implements": [
+                "Stringable",
+                "Throwable"
+            ],
+            "annotations": [],
+            "constants": [],
+            "properties": [],
+            "methods": []
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\Exception\\ExternalTransactionException",
+            "kind": "class",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": false,
+            "extends": "Oeltima\\SimpleQuery\\Exception\\TransactionException",
+            "implements": [
+                "Stringable",
+                "Throwable"
+            ],
+            "annotations": [],
+            "constants": [],
+            "properties": [],
+            "methods": []
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\Exception\\InvalidQueryException",
+            "kind": "class",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": false,
+            "extends": "Oeltima\\SimpleQuery\\Exception\\SimpleQueryException",
+            "implements": [
+                "Stringable",
+                "Throwable"
+            ],
+            "annotations": [],
+            "constants": [],
+            "properties": [],
+            "methods": []
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\Exception\\NumericOverflowException",
+            "kind": "class",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": false,
+            "extends": "Oeltima\\SimpleQuery\\Exception\\SimpleQueryException",
+            "implements": [
+                "Stringable",
+                "Throwable"
+            ],
+            "annotations": [],
+            "constants": [],
+            "properties": [],
+            "methods": []
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\Exception\\QueryExecutionException",
+            "kind": "class",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": false,
+            "extends": "Oeltima\\SimpleQuery\\Exception\\SimpleQueryException",
+            "implements": [
+                "Stringable",
+                "Throwable"
+            ],
+            "annotations": [],
+            "constants": [],
+            "properties": [
+                {
+                    "name": "connectionLabel",
+                    "static": false,
+                    "readonly": true,
+                    "type": "?string"
+                },
+                {
+                    "name": "driver",
+                    "static": false,
+                    "readonly": true,
+                    "type": "Oeltima\\SimpleQuery\\Driver"
+                },
+                {
+                    "name": "driverCode",
+                    "static": false,
+                    "readonly": true,
+                    "type": "string|int|null"
+                },
+                {
+                    "name": "sql",
+                    "static": false,
+                    "readonly": true,
+                    "type": "string"
+                },
+                {
+                    "name": "sqlState",
+                    "static": false,
+                    "readonly": true,
+                    "type": "?string"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "__construct",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": null,
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "message",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "sqlState",
+                            "type": "?string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "driverCode",
+                            "type": "string|int|null",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "sql",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "driver",
+                            "type": "Oeltima\\SimpleQuery\\Driver",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "connectionLabel",
+                            "type": "?string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "previous",
+                            "type": "?PDOException",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                },
+                {
+                    "name": "fromPdo",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "exception",
+                            "type": "PDOException",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "sql",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "driver",
+                            "type": "Oeltima\\SimpleQuery\\Driver",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "connectionLabel",
+                            "type": "?string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "invalidResult",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "message",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "sql",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "driver",
+                            "type": "Oeltima\\SimpleQuery\\Driver",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "connectionLabel",
+                            "type": "?string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\Exception\\SimpleQueryException",
+            "kind": "class",
+            "compatibility": "public",
+            "final": false,
+            "abstract": false,
+            "readonly": false,
+            "extends": "RuntimeException",
+            "implements": [
+                "Stringable",
+                "Throwable"
+            ],
+            "annotations": [],
+            "constants": [],
+            "properties": [],
+            "methods": []
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\Exception\\TransactionException",
+            "kind": "class",
+            "compatibility": "public",
+            "final": false,
+            "abstract": false,
+            "readonly": false,
+            "extends": "Oeltima\\SimpleQuery\\Exception\\SimpleQueryException",
+            "implements": [
+                "Stringable",
+                "Throwable"
+            ],
+            "annotations": [],
+            "constants": [],
+            "properties": [
+                {
+                    "name": "callbackFailure",
+                    "static": false,
+                    "readonly": true,
+                    "type": "?Throwable"
+                },
+                {
+                    "name": "connectionLabel",
+                    "static": false,
+                    "readonly": true,
+                    "type": "?string"
+                },
+                {
+                    "name": "connectionUnusable",
+                    "static": false,
+                    "readonly": true,
+                    "type": "bool"
+                },
+                {
+                    "name": "controlFailure",
+                    "static": false,
+                    "readonly": true,
+                    "type": "?Throwable"
+                },
+                {
+                    "name": "driver",
+                    "static": false,
+                    "readonly": true,
+                    "type": "?Oeltima\\SimpleQuery\\Driver"
+                },
+                {
+                    "name": "managedDepth",
+                    "static": false,
+                    "readonly": true,
+                    "type": "int"
+                },
+                {
+                    "name": "operation",
+                    "static": false,
+                    "readonly": true,
+                    "type": "string"
+                },
+                {
+                    "name": "recoveryFailure",
+                    "static": false,
+                    "readonly": true,
+                    "type": "?Throwable"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "__construct",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": null,
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "message",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "operation",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": "transaction"
+                        },
+                        {
+                            "name": "managedDepth",
+                            "type": "int",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": 0
+                        },
+                        {
+                            "name": "driver",
+                            "type": "?Oeltima\\SimpleQuery\\Driver",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "connectionLabel",
+                            "type": "?string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "callbackFailure",
+                            "type": "?Throwable",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "controlFailure",
+                            "type": "?Throwable",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "recoveryFailure",
+                            "type": "?Throwable",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "connectionUnusable",
+                            "type": "bool",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": false
+                        },
+                        {
+                            "name": "previous",
+                            "type": "?Throwable",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\Exception\\TransactionStateException",
+            "kind": "class",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": false,
+            "extends": "Oeltima\\SimpleQuery\\Exception\\TransactionException",
+            "implements": [
+                "Stringable",
+                "Throwable"
+            ],
+            "annotations": [],
+            "constants": [],
+            "properties": [],
+            "methods": []
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\Exception\\UnsupportedFeatureException",
+            "kind": "class",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": false,
+            "extends": "Oeltima\\SimpleQuery\\Exception\\SimpleQueryException",
+            "implements": [
+                "Stringable",
+                "Throwable"
+            ],
+            "annotations": [],
+            "constants": [],
+            "properties": [],
+            "methods": []
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\Expression\\Identifier",
+            "kind": "class",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": true,
+            "extends": null,
+            "implements": [],
+            "annotations": [],
+            "constants": [],
+            "properties": [
+                {
+                    "name": "alias",
+                    "static": false,
+                    "readonly": true,
+                    "type": "?string"
+                },
+                {
+                    "name": "segments",
+                    "static": false,
+                    "readonly": true,
+                    "type": "array"
+                },
+                {
+                    "name": "wildcard",
+                    "static": false,
+                    "readonly": true,
+                    "type": "bool"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "as",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "alias",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "fromSegments",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "segment",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "segments",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": true,
+                            "optional": true,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "of",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "qualifiedName",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "wildcard",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "qualifier",
+                            "type": "?string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                },
+                {
+                    "name": "withoutAlias",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                }
+            ]
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\Expression\\RawExpression",
+            "kind": "class",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": true,
+            "extends": null,
+            "implements": [],
+            "annotations": [],
+            "constants": [],
+            "properties": [
+                {
+                    "name": "bindings",
+                    "static": false,
+                    "readonly": true,
+                    "type": "array"
+                },
+                {
+                    "name": "sql",
+                    "static": false,
+                    "readonly": true,
+                    "type": "string"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "__construct",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": null,
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param list<mixed> $bindings"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "sql",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "bindings",
+                            "type": "array",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\JoinClause",
+            "kind": "class",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": false,
+            "extends": null,
+            "implements": [],
+            "annotations": [],
+            "constants": [],
+            "properties": [],
+            "methods": [
+                {
+                    "name": "__construct",
+                    "compatibility": "internal",
+                    "static": false,
+                    "final": false,
+                    "return_type": null,
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "on",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "left",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\RawExpression|Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "operator",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "right",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                },
+                {
+                    "name": "onValue",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "expression",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\RawExpression|Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "operator",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "value",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "orOn",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "left",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\RawExpression|Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "operator",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "right",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                },
+                {
+                    "name": "orOnValue",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "expression",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\RawExpression|Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "operator",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "value",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "snapshot",
+                    "compatibility": "internal",
+                    "static": false,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\Internal\\Ast\\ConditionCollection",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "where",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "expression",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\RawExpression|Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "operatorOrValue",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "value",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\Observability\\QueryExecution",
+            "kind": "class",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": true,
+            "extends": null,
+            "implements": [],
+            "annotations": [],
+            "constants": [],
+            "properties": [
+                {
+                    "name": "affectedRows",
+                    "static": false,
+                    "readonly": true,
+                    "type": "?int"
+                },
+                {
+                    "name": "connectionLabel",
+                    "static": false,
+                    "readonly": true,
+                    "type": "?string"
+                },
+                {
+                    "name": "driver",
+                    "static": false,
+                    "readonly": true,
+                    "type": "Oeltima\\SimpleQuery\\Driver"
+                },
+                {
+                    "name": "durationMilliseconds",
+                    "static": false,
+                    "readonly": true,
+                    "type": "float"
+                },
+                {
+                    "name": "parameterTypes",
+                    "static": false,
+                    "readonly": true,
+                    "type": "array"
+                },
+                {
+                    "name": "sql",
+                    "static": false,
+                    "readonly": true,
+                    "type": "string"
+                },
+                {
+                    "name": "successful",
+                    "static": false,
+                    "readonly": true,
+                    "type": "bool"
+                },
+                {
+                    "name": "transactionDepth",
+                    "static": false,
+                    "readonly": true,
+                    "type": "int"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "__construct",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": null,
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param list<ParameterType> $parameterTypes"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "sql",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "parameterTypes",
+                            "type": "array",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "durationMilliseconds",
+                            "type": "float",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "successful",
+                            "type": "bool",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "affectedRows",
+                            "type": "?int",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "driver",
+                            "type": "Oeltima\\SimpleQuery\\Driver",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "connectionLabel",
+                            "type": "?string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "transactionDepth",
+                            "type": "int",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\Observability\\QueryObserver",
+            "kind": "interface",
+            "compatibility": "public",
+            "final": false,
+            "abstract": true,
+            "readonly": false,
+            "extends": null,
+            "implements": [],
+            "annotations": [],
+            "constants": [],
+            "properties": [],
+            "methods": [
+                {
+                    "name": "queryExecuted",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "void",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "execution",
+                            "type": "Oeltima\\SimpleQuery\\Observability\\QueryExecution",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\ParameterType",
+            "kind": "enum",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": false,
+            "extends": null,
+            "implements": [
+                "BackedEnum",
+                "UnitEnum"
+            ],
+            "annotations": [],
+            "constants": [],
+            "properties": [
+                {
+                    "name": "name",
+                    "static": false,
+                    "readonly": true,
+                    "type": "string"
+                },
+                {
+                    "name": "value",
+                    "static": false,
+                    "readonly": true,
+                    "type": "string"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "cases",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "array",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "from",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "value",
+                            "type": "string|int",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "tryFrom",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "?static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "value",
+                            "type": "string|int",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                }
+            ],
+            "cases": [
+                {
+                    "name": "Auto",
+                    "value": "auto"
+                },
+                {
+                    "name": "Null",
+                    "value": "null"
+                },
+                {
+                    "name": "Integer",
+                    "value": "integer"
+                },
+                {
+                    "name": "String",
+                    "value": "string"
+                },
+                {
+                    "name": "Lob",
+                    "value": "lob"
+                },
+                {
+                    "name": "Binary",
+                    "value": "binary"
+                }
+            ]
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\QueryBuilder",
+            "kind": "class",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": false,
+            "extends": null,
+            "implements": [],
+            "annotations": [],
+            "constants": [],
+            "properties": [],
+            "methods": [
+                {
+                    "name": "__clone",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": null,
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "__construct",
+                    "compatibility": "internal",
+                    "static": false,
+                    "final": false,
+                    "return_type": null,
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "connection",
+                            "type": "Oeltima\\SimpleQuery\\Connection",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "source",
+                            "type": "Oeltima\\SimpleQuery\\Internal\\Ast\\Source",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "as",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "alias",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "average",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "string|int|float|null",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "column",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|Oeltima\\SimpleQuery\\Expression\\RawExpression|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "belongsTo",
+                    "compatibility": "internal",
+                    "static": false,
+                    "final": false,
+                    "return_type": "bool",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "connection",
+                            "type": "Oeltima\\SimpleQuery\\Connection",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "compile",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\CompiledQuery",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "count",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "int",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "delete",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "int",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "distinct",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "driverForCompilation",
+                    "compatibility": "internal",
+                    "static": false,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\Driver",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "first",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "?stdClass",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "firstAssociative",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "?array",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@return array<string, mixed>|null"
+                    ],
+                    "parameters": []
+                },
+                {
+                    "name": "forShare",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "forUpdate",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "get",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "array",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@return list<stdClass>"
+                    ],
+                    "parameters": []
+                },
+                {
+                    "name": "getAssociative",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "array",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@return list<array<string, mixed>>"
+                    ],
+                    "parameters": []
+                },
+                {
+                    "name": "groupBy",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "columns",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|Oeltima\\SimpleQuery\\Expression\\RawExpression|string",
+                            "by_reference": false,
+                            "variadic": true,
+                            "optional": true,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "having",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param RawExpression|(Closure(ConditionGroup): mixed)|string|Identifier $subject"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "subject",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\RawExpression|Closure|Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "operatorOrValue",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "value",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                },
+                {
+                    "name": "innerJoin",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param (Closure(JoinClause): mixed)|RawExpression|string|Identifier $conditionOrLeft"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "table",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "conditionOrLeft",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\RawExpression|Closure|Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "operator",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "right",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                },
+                {
+                    "name": "insert",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "int",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param array<string, mixed> $row"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "row",
+                            "type": "array",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "insertGetId",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "string",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param array<string, mixed> $row"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "row",
+                            "type": "array",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "insertMany",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "int",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param array<array-key, array<string, mixed>> $rows"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "rows",
+                            "type": "array",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "iterate",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\Cursor",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@return Cursor<stdClass>"
+                    ],
+                    "parameters": []
+                },
+                {
+                    "name": "iterateAssociative",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\Cursor",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@return Cursor<array<string, mixed>>"
+                    ],
+                    "parameters": []
+                },
+                {
+                    "name": "join",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param (Closure(JoinClause): mixed)|RawExpression|string|Identifier $conditionOrLeft"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "table",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "conditionOrLeft",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\RawExpression|Closure|Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "operator",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "right",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                },
+                {
+                    "name": "leftJoin",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param (Closure(JoinClause): mixed)|RawExpression|string|Identifier $conditionOrLeft"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "table",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "conditionOrLeft",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\RawExpression|Closure|Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "operator",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "right",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                },
+                {
+                    "name": "limit",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "limit",
+                            "type": "int",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "max",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "mixed",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "column",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|Oeltima\\SimpleQuery\\Expression\\RawExpression|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "min",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "mixed",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "column",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|Oeltima\\SimpleQuery\\Expression\\RawExpression|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "noWait",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "offset",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "offset",
+                            "type": "int",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "orHaving",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param RawExpression|(Closure(ConditionGroup): mixed)|string|Identifier $subject"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "subject",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\RawExpression|Closure|Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "operatorOrValue",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "value",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                },
+                {
+                    "name": "orWhere",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param RawExpression|(Closure(\\Oeltima\\SimpleQuery\\ConditionGroup): mixed)|string|Identifier $subject"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "subject",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\RawExpression|Closure|Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "operatorOrValue",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "value",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                },
+                {
+                    "name": "orWhereBetween",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "column",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "from",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "to",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "orWhereColumn",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "left",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "operator",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "right",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "orWhereIn",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param iterable<mixed>|QueryBuilder $values"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "column",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "values",
+                            "type": "Traversable|Oeltima\\SimpleQuery\\QueryBuilder|array",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "orWhereNot",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param RawExpression|(Closure(\\Oeltima\\SimpleQuery\\ConditionGroup): mixed)|string|Identifier $subject"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "subject",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\RawExpression|Closure|Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "operatorOrValue",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "value",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                },
+                {
+                    "name": "orWhereNotIn",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param iterable<mixed>|QueryBuilder $values"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "column",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "values",
+                            "type": "Traversable|Oeltima\\SimpleQuery\\QueryBuilder|array",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "orWhereNotNull",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "column",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "orWhereNull",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "column",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "orderBy",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "column",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|Oeltima\\SimpleQuery\\Expression\\RawExpression|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "direction",
+                            "type": "Oeltima\\SimpleQuery\\SortDirection|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default_constant": "Oeltima\\SimpleQuery\\SortDirection::Asc"
+                        }
+                    ]
+                },
+                {
+                    "name": "select",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "columns",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|Oeltima\\SimpleQuery\\Expression\\RawExpression|string",
+                            "by_reference": false,
+                            "variadic": true,
+                            "optional": true,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "skipLocked",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "snapshotForCompilation",
+                    "compatibility": "internal",
+                    "static": false,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\Internal\\Ast\\QueryState",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "sum",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "string|int|float|null",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "column",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|Oeltima\\SimpleQuery\\Expression\\RawExpression|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "update",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "int",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param array<string, mixed> $changes"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "changes",
+                            "type": "array",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "where",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param RawExpression|(Closure(\\Oeltima\\SimpleQuery\\ConditionGroup): mixed)|string|Identifier $subject"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "subject",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\RawExpression|Closure|Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "operatorOrValue",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "value",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                },
+                {
+                    "name": "whereBetween",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "column",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "from",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "to",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "whereColumn",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "left",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "operator",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "right",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "whereIn",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param iterable<mixed>|QueryBuilder $values"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "column",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "values",
+                            "type": "Traversable|Oeltima\\SimpleQuery\\QueryBuilder|array",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "whereNot",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param RawExpression|(Closure(\\Oeltima\\SimpleQuery\\ConditionGroup): mixed)|string|Identifier $subject"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "subject",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\RawExpression|Closure|Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "operatorOrValue",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "value",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                },
+                {
+                    "name": "whereNotIn",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param iterable<mixed>|QueryBuilder $values"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "column",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "values",
+                            "type": "Traversable|Oeltima\\SimpleQuery\\QueryBuilder|array",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "whereNotNull",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "column",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "whereNull",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "column",
+                            "type": "Oeltima\\SimpleQuery\\Expression\\Identifier|string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\RawQuery",
+            "kind": "class",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": true,
+            "extends": null,
+            "implements": [],
+            "annotations": [],
+            "constants": [],
+            "properties": [],
+            "methods": [
+                {
+                    "name": "__construct",
+                    "compatibility": "internal",
+                    "static": false,
+                    "final": false,
+                    "return_type": null,
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param list<mixed> $bindings"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "connection",
+                            "type": "Oeltima\\SimpleQuery\\Connection",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "trustedSql",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "bindings",
+                            "type": "array",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": []
+                        }
+                    ]
+                },
+                {
+                    "name": "execute",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "int",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "first",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "?stdClass",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "firstAssociative",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "?array",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@return array<string, mixed>|null"
+                    ],
+                    "parameters": []
+                },
+                {
+                    "name": "get",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "array",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@return list<stdClass>"
+                    ],
+                    "parameters": []
+                },
+                {
+                    "name": "getAssociative",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "array",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@return list<array<string, mixed>>"
+                    ],
+                    "parameters": []
+                },
+                {
+                    "name": "iterate",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\Cursor",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@return Cursor<stdClass>"
+                    ],
+                    "parameters": []
+                },
+                {
+                    "name": "iterateAssociative",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\Cursor",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@return Cursor<array<string, mixed>>"
+                    ],
+                    "parameters": []
+                }
+            ]
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\SortDirection",
+            "kind": "enum",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": false,
+            "extends": null,
+            "implements": [
+                "BackedEnum",
+                "UnitEnum"
+            ],
+            "annotations": [],
+            "constants": [],
+            "properties": [
+                {
+                    "name": "name",
+                    "static": false,
+                    "readonly": true,
+                    "type": "string"
+                },
+                {
+                    "name": "value",
+                    "static": false,
+                    "readonly": true,
+                    "type": "string"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "cases",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "array",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "from",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "value",
+                            "type": "string|int",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "fromString",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "direction",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "tryFrom",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "?static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "value",
+                            "type": "string|int",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                }
+            ],
+            "cases": [
+                {
+                    "name": "Asc",
+                    "value": "ASC"
+                },
+                {
+                    "name": "Desc",
+                    "value": "DESC"
+                }
+            ]
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\Testing\\CompiledQueryAssertions",
+            "kind": "class",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": false,
+            "extends": null,
+            "implements": [],
+            "annotations": [],
+            "constants": [],
+            "properties": [],
+            "methods": [
+                {
+                    "name": "assertMatches",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "void",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param list<mixed> $expectedValues",
+                        "@param list<\\Oeltima\\SimpleQuery\\ParameterType> $expectedTypes"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "query",
+                            "type": "Oeltima\\SimpleQuery\\CompiledQuery",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "expectedSql",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "expectedValues",
+                            "type": "array",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": []
+                        },
+                        {
+                            "name": "expectedTypes",
+                            "type": "array",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\Testing\\CompiledWriteQuery",
+            "kind": "class",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": false,
+            "extends": null,
+            "implements": [],
+            "annotations": [],
+            "constants": [],
+            "properties": [],
+            "methods": [
+                {
+                    "name": "delete",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\CompiledQuery",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "builder",
+                            "type": "Oeltima\\SimpleQuery\\QueryBuilder",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "insert",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\CompiledQuery",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param array<string, mixed> $row"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "builder",
+                            "type": "Oeltima\\SimpleQuery\\QueryBuilder",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "row",
+                            "type": "array",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "insertMany",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\CompiledQuery",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param array<array-key, array<string, mixed>> $rows"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "builder",
+                            "type": "Oeltima\\SimpleQuery\\QueryBuilder",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "rows",
+                            "type": "array",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "update",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\CompiledQuery",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@param array<string, mixed> $changes"
+                    ],
+                    "parameters": [
+                        {
+                            "name": "builder",
+                            "type": "Oeltima\\SimpleQuery\\QueryBuilder",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "changes",
+                            "type": "array",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\Testing\\CompilerConnection",
+            "kind": "class",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": false,
+            "extends": null,
+            "implements": [],
+            "annotations": [],
+            "constants": [],
+            "properties": [],
+            "methods": [
+                {
+                    "name": "for",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\Connection",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "driver",
+                            "type": "Oeltima\\SimpleQuery\\Driver",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Oeltima\\SimpleQuery\\Testing\\RecordingQueryObserver",
+            "kind": "class",
+            "compatibility": "public",
+            "final": true,
+            "abstract": false,
+            "readonly": false,
+            "extends": null,
+            "implements": [
+                "Oeltima\\SimpleQuery\\Observability\\QueryObserver"
+            ],
+            "annotations": [],
+            "constants": [],
+            "properties": [],
+            "methods": [
+                {
+                    "name": "__construct",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": null,
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "capacity",
+                            "type": "int",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": 100
+                        }
+                    ]
+                },
+                {
+                    "name": "clear",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "void",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "executions",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "array",
+                    "returns_reference": false,
+                    "annotations": [
+                        "@return list<QueryExecution>"
+                    ],
+                    "parameters": []
+                },
+                {
+                    "name": "queryExecuted",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "void",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "execution",
+                            "type": "Oeltima\\SimpleQuery\\Observability\\QueryExecution",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

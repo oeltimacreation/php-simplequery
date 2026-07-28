@@ -1,0 +1,62 @@
+<?php
+
+declare(strict_types=1);
+
+use Oeltima\SimpleQuery\Connection;
+
+final class SyntheticProductionWriter
+{
+    public function __construct(private Connection $database)
+    {
+    }
+
+    public function immediate(array $row): string
+    {
+        return $this->database->table('records')->insertGetId($row);
+    }
+
+    public function affectedRows(array $row): int
+    {
+        return $this->database->table('records')->insert($row);
+    }
+
+    public function split(array $row): string
+    {
+        $this->database->table('records')->insert($row);
+        $id = $this->database->pdo()->lastInsertId();
+
+        return $id;
+    }
+
+    public function delayed(array $row): string
+    {
+        $this->database->table('records')->insert($row);
+        $this->recordMetric();
+        $id = $this->database->pdo()->lastInsertId();
+
+        return $id;
+    }
+
+    public function interveningStatement(array $row): string
+    {
+        $this->database->table('records')->insert($row);
+        $this->database->table('records')->where('state', 'queued')->update(['state' => 'seen']);
+        $id = $this->database->pdo()->lastInsertId();
+
+        return $id;
+    }
+
+    public function batch(array $rows): int
+    {
+        return $this->database->table('records')->insertMany($rows);
+    }
+
+    public function stream(): iterable
+    {
+        return $this->database->table('records')->cursorAssociative();
+    }
+
+    private function recordMetric(): void
+    {
+    }
+}

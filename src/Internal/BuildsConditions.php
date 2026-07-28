@@ -11,6 +11,7 @@ use Oeltima\SimpleQuery\Expression\RawExpression;
 use Oeltima\SimpleQuery\Internal\Ast\ConditionCollection;
 use Oeltima\SimpleQuery\Internal\Ast\ConditionFactory;
 use Oeltima\SimpleQuery\Internal\Ast\ConditionTerm;
+use Oeltima\SimpleQuery\Internal\Ast\ExpressionNullPredicate;
 use Oeltima\SimpleQuery\Internal\Ast\NullPredicate;
 use Oeltima\SimpleQuery\QueryBuilder;
 
@@ -55,6 +56,22 @@ trait BuildsConditions
         mixed $value = null,
     ): static {
         return $this->addCondition(true, true, func_num_args(), $subject, $operatorOrValue, $value);
+    }
+
+    public function whereColumn(
+        string|Identifier $left,
+        string $operator,
+        string|Identifier $right,
+    ): static {
+        return $this->addColumnCondition(false, $left, $operator, $right);
+    }
+
+    public function orWhereColumn(
+        string|Identifier $left,
+        string $operator,
+        string|Identifier $right,
+    ): static {
+        return $this->addColumnCondition(true, $left, $operator, $right);
     }
 
     /** @param iterable<mixed>|QueryBuilder $values */
@@ -132,6 +149,10 @@ trait BuildsConditions
             $predicate = new NullPredicate($predicate->column, !$predicate->negated);
             $negated = false;
         }
+        if ($negated && $predicate instanceof ExpressionNullPredicate) {
+            $predicate = new ExpressionNullPredicate($predicate->expression, !$predicate->negated);
+            $negated = false;
+        }
 
         $this->conditionCollection()->add(new ConditionTerm($predicate, $or, $negated));
 
@@ -146,6 +167,18 @@ trait BuildsConditions
         iterable|QueryBuilder $values,
     ): static {
         $predicate = ConditionFactory::in($this->conditionConnection(), $column, $values, $negated);
+        $this->conditionCollection()->add(new ConditionTerm($predicate, $or));
+
+        return $this;
+    }
+
+    private function addColumnCondition(
+        bool $or,
+        string|Identifier $left,
+        string $operator,
+        string|Identifier $right,
+    ): static {
+        $predicate = ConditionFactory::columns($left, $operator, $right);
         $this->conditionCollection()->add(new ConditionTerm($predicate, $or));
 
         return $this;

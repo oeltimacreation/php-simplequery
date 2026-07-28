@@ -13,6 +13,7 @@ enum BenchmarkSuite: string
     case HydrationExperiment = 'hydration-experiment';
     case ObserverProfile = 'observer-profile';
     case Soak = 'soak';
+    case Production = 'production';
     case Ci = 'ci';
     case Full = 'full';
 
@@ -62,6 +63,7 @@ enum BenchmarkSuite: string
                 ScenarioName::OBSERVER_BINDINGS_50,
             ],
             self::Soak => [ScenarioName::COMPILER_REPEATED, ScenarioName::LIFECYCLE_SOAK],
+            self::Production => self::productionScenarios(),
             self::Ci, self::Full => self::maintainedScenarios(),
         };
     }
@@ -88,6 +90,18 @@ enum BenchmarkSuite: string
             ScenarioName::BATCH_EXECUTE,
             ScenarioName::TRANSACTIONS,
             ScenarioName::LIFECYCLE,
+            ...self::productionScenarios(),
+        ];
+    }
+
+    /** @return list<string> */
+    private static function productionScenarios(): array
+    {
+        return [
+            ScenarioName::PRODUCTION_REPORT_COMPILE,
+            ScenarioName::PRODUCTION_COUNT_COMPILE,
+            ScenarioName::PRODUCTION_REPORT_EXECUTE,
+            ScenarioName::PRODUCTION_BATCH_EXECUTE,
         ];
     }
 }

@@ -2,10 +2,16 @@
 
 declare(strict_types=1);
 
+use Oeltima\SimpleQuery\Benchmark\ComparisonAnalysis;
+
+require __DIR__ . '/bootstrap.php';
+
 /** @var array<string, false|string> $options */
 $options = getopt('', [
     'baseline-autoload:',
     'candidate-autoload:',
+    'baseline-label:',
+    'candidate-label:',
     'suite:',
     'profile:',
     'iterations:',
@@ -14,6 +20,8 @@ $options = getopt('', [
 ]);
 $baseline = $options['baseline-autoload'] ?? null;
 $candidate = $options['candidate-autoload'] ?? dirname(__DIR__) . '/vendor/autoload.php';
+$baselineLabel = $options['baseline-label'] ?? 'baseline';
+$candidateLabel = $options['candidate-label'] ?? 'candidate';
 $suite = $options['suite'] ?? 'baseline';
 $profile = $options['profile'] ?? 'ci';
 $iterations = $options['iterations'] ?? '5';
@@ -21,6 +29,14 @@ $warmups = $options['warmups'] ?? '1';
 $sourceOrder = $options['source-order'] ?? 'baseline-first';
 if (!is_string($baseline) || !is_file($baseline) || !is_string($candidate) || !is_file($candidate)) {
     throw new RuntimeException('Both baseline and candidate autoloaders are required.');
+}
+if (
+    !is_string($baselineLabel)
+    || trim($baselineLabel) === ''
+    || !is_string($candidateLabel)
+    || trim($candidateLabel) === ''
+) {
+    throw new RuntimeException('Baseline and candidate labels must be non-empty strings.');
 }
 if (!is_string($sourceOrder) || !in_array($sourceOrder, ['baseline-first', 'candidate-first'], true)) {
     throw new RuntimeException('Source order must be baseline-first or candidate-first.');
@@ -89,14 +105,17 @@ if ($baselineDigests !== $candidateDigests) {
 
 fwrite(STDOUT, json_encode([
     'schema_version' => 2,
-    'benchmark' => 'v0.1.0-to-candidate-comparison',
+    'benchmark' => 'php-simplequery-release-comparison',
     'collected_at' => gmdate(DATE_ATOM),
+    'baseline_label' => $baselineLabel,
+    'candidate_label' => $candidateLabel,
     'execution_order' => $sourceOrder === 'baseline-first'
-        ? ['baseline', 'candidate']
-        : ['candidate', 'baseline'],
+        ? [$baselineLabel, $candidateLabel]
+        : [$candidateLabel, $baselineLabel],
     'fresh_process_per_scenario' => true,
     'correctness_parity' => true,
     'correctness_digests' => $baselineDigests,
+    'performance_review' => ComparisonAnalysis::between($baselineRun, $candidateRun),
     'baseline' => $baselineRun,
     'candidate' => $candidateRun,
 ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . PHP_EOL);

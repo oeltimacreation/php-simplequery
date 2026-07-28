@@ -31,7 +31,7 @@ bash tools/database-probes/run-services.sh
 
 `composer check` is the fast, container-free clean-checkout contract. The
 service command runs exact disposable direct/proxy fixtures and removes their
-volumes. See [testing architecture](docs/testing-architecture.md) before adding
+volumes. See [testing architecture](docs/maintainers/testing-architecture.md) before adding
 a live fixture.
 
 The required quality baseline is:

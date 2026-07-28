@@ -110,6 +110,9 @@ final class TransactionManager
     {
         try {
             $this->begin($pdo);
+            if (!$this->physicalTransactionActive($pdo, 'begin_verify')) {
+                throw new RuntimeException('PDO did not report an active transaction after begin.');
+            }
         } catch (Throwable $failure) {
             $this->throwOuterStartFailure(
                 $pdo,
@@ -452,7 +455,7 @@ final class TransactionManager
 
     private function begin(PDO $pdo): void
     {
-        if (!$pdo->beginTransaction()) {
+        if ($pdo->beginTransaction() === false) {
             throw new RuntimeException('PDO returned false while beginning a transaction.');
         }
     }

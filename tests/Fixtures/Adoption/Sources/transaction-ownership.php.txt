@@ -1,0 +1,104 @@
+<?php
+
+declare(strict_types=1);
+
+use Oeltima\SimpleQuery\Connection;
+use Oeltima\SimpleQuery\Driver;
+use Oeltima\SimpleQuery\Exception\ExternalTransactionException;
+use Oeltima\SimpleQuery\Exception\QueryExecutionException;
+use Oeltima\SimpleQuery\Exception\TransactionStateException;
+
+final class SyntheticProductionTransaction
+{
+    public function __construct(private Connection $database)
+    {
+    }
+
+    public function externallyOwned(): void
+    {
+        $pdo = $this->database->pdo();
+        $pdo->beginTransaction();
+        $this->database->table('jobs')->where('state', 'open')->first();
+        $pdo->commit();
+    }
+
+    public function ordinaryManaged(array $record): string
+    {
+        return $this->database->transaction(function (Connection $database) use ($record): string {
+            $id = $database->table('records')->insertGetId($record);
+            $database->transaction(static function (Connection $nested) use ($id): void {
+                $nested->table('audit_records')->insert(['record_id' => $id]);
+            });
+
+            return $id;
+        });
+    }
+
+    public function callbackFailureIdentity(\Throwable $failure): bool
+    {
+        try {
+            $this->database->transaction(static function () use ($failure): never {
+                throw $failure;
+            });
+        } catch (\Throwable $caught) {
+            return $caught === $failure;
+        }
+
+        return false;
+    }
+
+    public function sqliteImmediate(): void
+    {
+        $pdo = $this->database->pdo();
+        $pdo->exec('BEGIN IMMEDIATE');
+        $this->database->table('locks')->where('key', 'synthetic')->update(['held' => true]);
+        $pdo->rollBack();
+    }
+
+    public function nestedManaged(): void
+    {
+        $this->database->transaction(function (): void {
+            $this->database->transaction(function (): void {
+                $this->database->table('jobs')->delete();
+            });
+        });
+    }
+
+    public function refusesExternalOwnership(): bool
+    {
+        try {
+            $this->database->transaction(static function (): void {
+            });
+        } catch (ExternalTransactionException) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function isLockConflict(QueryExecutionException $exception): bool
+    {
+        $code = (string) $exception->driverCode;
+
+        return match ($exception->driver) {
+            Driver::MariaDb, Driver::MySql => in_array($code, ['1205', '1213'], true),
+            Driver::Sqlite => $exception->sqlState === 'HY000' && in_array($code, ['5', '6'], true),
+        };
+    }
+
+    public function activeCursorRequiresExplicitClose(): bool
+    {
+        $cursor = null;
+        try {
+            $this->database->transaction(function (Connection $database) use (&$cursor): void {
+                $cursor = $database->table('records')->iterateAssociative();
+            });
+        } catch (TransactionStateException) {
+            $cursor?->close();
+
+            return true;
+        }
+
+        return false;
+    }
+}

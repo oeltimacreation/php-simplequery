@@ -4,7 +4,7 @@
 
 - Package: `oeltimacreation/php-simplequery`
 - Namespace: `Oeltima\SimpleQuery`
-- Release line: `0.2.x` (ZeroVer)
+- Release line: `0.3.x` (ZeroVer)
 - Runtime: PHP 8.2+ with PDO
 - Supported engines: MariaDB 11.8, MySQL 8.0, SQLite 3.39.2+
 
@@ -23,7 +23,12 @@ src/Testing/         Public compile-testing helpers
 src/Internal/        Non-public AST, compiler, executor, transactions
 tests/               Unit, compiler, integration, compatibility, migration tests
 examples/            Runnable user-facing examples
-docs/                User guides, API reference, operations, and ADRs
+docs/guides/         User-facing task guides
+docs/reference/      Current API, architecture, and compatibility reference
+docs/maintainers/    Testing, benchmarking, release, and contributor operations
+docs/plans/          Active release planning only
+docs/adr/            Durable architecture decisions
+docs/evidence/       Durable compatibility and release evidence
 tools/                Reproducible database probes and migration analysis
 ```
 
@@ -74,7 +79,7 @@ MariaDB, MySQL, and proxy integration coverage and uses disposable fixtures.
 
 Stable releases use a branch `release/<version>` (for example
 `release/0.1.0`) and are merged through required CI. Update the dated
-`CHANGELOG.md` section, `docs/upgrading.md`, user-facing documentation, and
+`CHANGELOG.md` section, `docs/guides/upgrading.md`, user-facing documentation, and
 release evidence before opening the release pull request.
 
 After the release PR is merged, tag that default-branch commit as `v<version>`
@@ -85,4 +90,5 @@ a new patch version, never by moving or recreating a tag.
 
 Before publishing, run `composer validate --strict`, `composer audit`,
 `composer check`, coverage checks, relevant direct/proxy probes, and a clean
-no-dev consumer installation. See [docs/release-process.md](docs/release-process.md).
+no-dev consumer installation. See
+[docs/maintainers/release-process.md](docs/maintainers/release-process.md).

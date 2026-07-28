@@ -30,6 +30,23 @@ final class CursorFailureTest extends TestCase
         $cursor->getIterator();
     }
 
+    public function testCursorCannotCreateASecondIterator(): void
+    {
+        [$connection, $statement] = $this->statement();
+        $cursor = Cursor::associative($statement, $connection, new CompiledQuery('SELECT 1 AS value'));
+        $cursor->getIterator();
+
+        try {
+            $cursor->getIterator();
+            self::fail('A second cursor iterator was unexpectedly created.');
+        } catch (InvalidQueryException) {
+            self::addToAssertionCount(1);
+        }
+
+        $cursor->close();
+        $connection->close();
+    }
+
     public function testCloseExceptionIsTranslatedAndQuarantinesConnection(): void
     {
         [$connection, $statement] = $this->statement(ThrowingCloseStatement::class);

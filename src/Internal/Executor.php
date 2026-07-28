@@ -128,19 +128,8 @@ final readonly class Executor
                 if ($row === false) {
                     return null;
                 }
-                if (!is_array($row)) {
-                    throw $this->invalidResult('PDO returned an invalid associative row.', $query);
-                }
 
-                $result = [];
-                foreach ($row as $key => $value) {
-                    if (!is_string($key)) {
-                        throw $this->invalidResult('PDO returned a non-string column name.', $query);
-                    }
-                    $result[$key] = $value;
-                }
-
-                return $result;
+                return $this->validateAssociativeRow($row, $query);
             },
         );
     }

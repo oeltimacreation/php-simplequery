@@ -12,6 +12,7 @@ use Oeltima\SimpleQuery\Exception\TransactionStateException;
 use Oeltima\SimpleQuery\Observability\QueryExecution;
 use Oeltima\SimpleQuery\Testing\RecordingQueryObserver;
 use Oeltima\SimpleQuery\Tools\DatabaseProbe\ProbeTarget;
+use Oeltima\SimpleQuery\Tools\DatabaseProbe\SqliteImmediateProbe;
 
 require dirname(__DIR__, 2) . '/vendor/autoload.php';
 
@@ -147,6 +148,11 @@ try {
         $caught === $rollbackFailure
         && $admin->table('simplequery_transaction_probe')->where('label', 'outer-rollback')->count() === 0,
     );
+
+    if ($driver === Driver::Sqlite) {
+        $serverVersion = is_string($runtime['server_version']) ? $runtime['server_version'] : null;
+        $observations[] = (new SqliteImmediateProbe($connect, $serverVersion))->run();
+    }
 
     $typeFailure = new TypeError('controlled callback type failure');
     $caught = null;

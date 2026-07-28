@@ -21,6 +21,8 @@ final class ControlledTransactionPdo extends PDO
 
     public bool $pretendRollbackSuccess = false;
 
+    public bool $failTransactionInspection = false;
+
     public ?string $failControlPrefix = null;
 
     public ?string $failControlAfterDispatchPrefix = null;
@@ -71,6 +73,16 @@ final class ControlledTransactionPdo extends PDO
         }
 
         return parent::rollBack();
+    }
+
+    #[\Override]
+    public function inTransaction(): bool
+    {
+        if ($this->failTransactionInspection) {
+            throw new PDOException('Controlled transaction-state inspection failure.');
+        }
+
+        return parent::inTransaction();
     }
 
     #[\Override]

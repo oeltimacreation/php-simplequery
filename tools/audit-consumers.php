@@ -2,12 +2,54 @@
 
 declare(strict_types=1);
 
+use Oeltima\SimpleQuery\Tools\Migration\ConsumerAdoptionAuditor;
+use Oeltima\SimpleQuery\Tools\Migration\ConsumerAdoptionAuditOptions;
+use Oeltima\SimpleQuery\Tools\Migration\ConsumerPathPolicy;
+use Oeltima\SimpleQuery\Tools\Migration\ConsumerTimestampPolicy;
+
 /** @var list<string> $arguments */
 $arguments = $_SERVER['argv'] ?? [];
 
 if (count($arguments) < 2) {
-    fwrite(STDERR, "Usage: audit-consumers.php <workspace-root> [--include-paths] [--deterministic]\n");
+    fwrite(
+        STDERR,
+        "Usage: audit-consumers.php <workspace-root> [--mode=pixie|simplequery] "
+            . "[--include-paths] [--deterministic]\n",
+    );
     exit(2);
+}
+
+$mode = 'pixie';
+foreach ($arguments as $argument) {
+    if (str_starts_with($argument, '--mode=')) {
+        $mode = substr($argument, strlen('--mode='));
+    }
+}
+if (!in_array($mode, ['pixie', 'simplequery'], true)) {
+    fwrite(STDERR, "Audit mode must be pixie or simplequery.\n");
+    exit(2);
+}
+
+if ($mode === 'simplequery') {
+    require dirname(__DIR__) . '/vendor/autoload.php';
+
+    try {
+        $options = new ConsumerAdoptionAuditOptions(
+            in_array('--include-paths', $arguments, true)
+                ? ConsumerPathPolicy::Included
+                : ConsumerPathPolicy::Redacted,
+            in_array('--deterministic', $arguments, true)
+                ? ConsumerTimestampPolicy::Deterministic
+                : ConsumerTimestampPolicy::Current,
+        );
+        $report = (new ConsumerAdoptionAuditor($options))->audit(new SplFileInfo($arguments[1]));
+    } catch (RuntimeException $exception) {
+        fwrite(STDERR, $exception->getMessage() . PHP_EOL);
+        exit(2);
+    }
+
+    fwrite(STDOUT, json_encode($report, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR) . PHP_EOL);
+    exit(0);
 }
 
 $countMatches = static function (string $pattern, string $contents): int {

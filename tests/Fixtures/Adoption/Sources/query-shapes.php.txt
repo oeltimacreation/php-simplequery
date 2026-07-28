@@ -1,0 +1,56 @@
+<?php
+
+declare(strict_types=1);
+
+use Oeltima\SimpleQuery\ConditionGroup;
+use Oeltima\SimpleQuery\Connection;
+use Oeltima\SimpleQuery\Expression\Identifier;
+use Oeltima\SimpleQuery\JoinClause;
+
+final class SyntheticProductionReport
+{
+    public function __construct(private Connection $database)
+    {
+    }
+
+    public function page(string $from, string $until, string $kind): array
+    {
+        return $this->database->table('events', 'e')
+            ->select(
+                'e.id',
+                'e.occurred_at',
+                Identifier::of('members.name')->as('member_name'),
+                $this->database->raw('teams.id, teams.name AS team_name'),
+                $this->database->raw('COALESCE(e.minutes, 0) AS minutes'),
+            )
+            ->join('members', function (JoinClause $join): void {
+                $join->on('members.id', '=', 'e.member_id')
+                    ->on('members.tenant_id', '=', 'e.tenant_id');
+            })
+            ->leftJoin('teams', function (JoinClause $join) use ($kind): void {
+                $join->on($this->database->raw('teams.id = members.team_id AND teams.kind = ?', [$kind]));
+            })
+            ->where(function (ConditionGroup $group): void {
+                $group->where('e.approved', true)->orWhere('e.state', 'pending');
+            })
+            ->where('e.occurred_at', '>=', $from)
+            ->where('e.occurred_at', '<', $until)
+            ->where($this->database->raw('DATE(e.occurred_at) = ?', [$from]))
+            ->where($this->database->raw('MATCH(e.notes) AGAINST (? IN BOOLEAN MODE)', [$kind]))
+            ->groupBy('e.id')
+            ->orderBy('e.occurred_at', 'desc')
+            ->limit(100)
+            ->offset(0)
+            ->get();
+    }
+
+    public function dynamicTable(string $allowedTable): array
+    {
+        return $this->database->table($allowedTable)->select('*')->getAssociative();
+    }
+
+    public function rawExport(string $unsafe): array
+    {
+        return $this->database->query("SELECT * FROM export_rows WHERE kind = '$unsafe'")->get();
+    }
+}
