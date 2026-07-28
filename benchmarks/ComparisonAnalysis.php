@@ -75,23 +75,59 @@ final class ComparisonAnalysis
     /** @return array{name: string, operations: array<mixed, mixed>} */
     private static function scenarioDefinition(mixed $scenario): array
     {
+        $scenario = self::scenarioArray($scenario);
+
+        return [
+            'name' => self::scenarioName($scenario['scenario'] ?? null),
+            'operations' => self::scenarioOperations($scenario['measurement'] ?? null),
+        ];
+    }
+
+    /** @return array<mixed, mixed> */
+    private static function scenarioArray(mixed $scenario): array
+    {
         if (!is_array($scenario)) {
             throw new RuntimeException('Comparison run contains an invalid scenario.');
         }
-        $name = $scenario['scenario'] ?? null;
+
+        return $scenario;
+    }
+
+    private static function scenarioName(mixed $name): string
+    {
         if (!is_string($name)) {
             throw new RuntimeException('Comparison run contains an invalid scenario.');
         }
-        $measurement = $scenario['measurement'] ?? null;
+
+        return $name;
+    }
+
+    /** @return array<mixed, mixed> */
+    private static function scenarioOperations(mixed $measurement): array
+    {
+        $measurement = self::scenarioMeasurement($measurement);
+
+        return self::operationMap($measurement['operations'] ?? null);
+    }
+
+    /** @return array<mixed, mixed> */
+    private static function scenarioMeasurement(mixed $measurement): array
+    {
         if (!is_array($measurement)) {
             throw new RuntimeException('Comparison scenario has no operation measurements.');
         }
-        $operations = $measurement['operations'] ?? null;
+
+        return $measurement;
+    }
+
+    /** @return array<mixed, mixed> */
+    private static function operationMap(mixed $operations): array
+    {
         if (!is_array($operations)) {
             throw new RuntimeException('Comparison scenario has no operation measurements.');
         }
 
-        return ['name' => $name, 'operations' => $operations];
+        return $operations;
     }
 
     private static function operationName(mixed $name): string
