@@ -15,21 +15,7 @@ final class DocumentationLinkChecker
     {
         $errors = [];
         foreach ($this->markdownFiles($root) as $file) {
-            $contents = file_get_contents($file);
-            if (!is_string($contents)) {
-                $errors[] = sprintf('Could not read %s.', $this->relativePath($root, $file));
-                continue;
-            }
-            foreach ($this->relativeTargets($contents) as $target) {
-                $path = $this->targetPath($file, $target);
-                if (!file_exists($path)) {
-                    $errors[] = sprintf(
-                        '%s links to missing target %s.',
-                        $this->relativePath($root, $file),
-                        $target,
-                    );
-                }
-            }
+            array_push($errors, ...$this->fileErrors($root, $file));
         }
 
         sort($errors);
@@ -40,6 +26,16 @@ final class DocumentationLinkChecker
     /** @return list<string> */
     private function markdownFiles(string $root): array
     {
+        $files = $this->rootMarkdownFiles($root);
+        array_push($files, ...$this->documentationMarkdownFiles($root));
+        sort($files);
+
+        return $files;
+    }
+
+    /** @return list<string> */
+    private function rootMarkdownFiles(string $root): array
+    {
         $files = [];
         foreach (['README.md', 'CHANGELOG.md', 'SECURITY.md'] as $rootFile) {
             $path = rtrim($root, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $rootFile;
@@ -48,18 +44,74 @@ final class DocumentationLinkChecker
             }
         }
 
+        return $files;
+    }
+
+    /** @return list<string> */
+    private function documentationMarkdownFiles(string $root): array
+    {
         $docs = rtrim($root, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'docs';
-        if (is_dir($docs)) {
-            $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($docs));
-            foreach ($iterator as $file) {
-                if ($file instanceof SplFileInfo && $file->isFile() && $file->getExtension() === 'md') {
-                    $files[] = $file->getPathname();
-                }
+        if (!is_dir($docs)) {
+            return [];
+        }
+
+        $files = [];
+        $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($docs));
+        foreach ($iterator as $file) {
+            $path = $this->markdownPath($file);
+            if ($path !== null) {
+                $files[] = $path;
             }
         }
-        sort($files);
 
         return $files;
+    }
+
+    private function markdownPath(mixed $file): ?string
+    {
+        if (!$file instanceof SplFileInfo) {
+            return null;
+        }
+        if (!$file->isFile()) {
+            return null;
+        }
+        if ($file->getExtension() !== 'md') {
+            return null;
+        }
+
+        return $file->getPathname();
+    }
+
+    /** @return list<string> */
+    private function fileErrors(string $root, string $file): array
+    {
+        $contents = file_get_contents($file);
+        if (!is_string($contents)) {
+            return [sprintf('Could not read %s.', $this->relativePath($root, $file))];
+        }
+
+        $errors = [];
+        foreach ($this->relativeTargets($contents) as $target) {
+            $error = $this->targetError($root, $file, $target);
+            if ($error !== null) {
+                $errors[] = $error;
+            }
+        }
+
+        return $errors;
+    }
+
+    private function targetError(string $root, string $file, string $target): ?string
+    {
+        if (file_exists($this->targetPath($file, $target))) {
+            return null;
+        }
+
+        return sprintf(
+            '%s links to missing target %s.',
+            $this->relativePath($root, $file),
+            $target,
+        );
     }
 
     /** @return list<string> */

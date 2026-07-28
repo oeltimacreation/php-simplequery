@@ -57,20 +57,36 @@ final class PublicApiManifest
         $names = [];
         $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($sourceRoot));
         foreach ($iterator as $file) {
-            if (!$file instanceof SplFileInfo || !$file->isFile() || $file->getExtension() !== 'php') {
-                continue;
+            $name = $this->publicTypeName($sourceRoot, $file);
+            if ($name !== null) {
+                $names[] = $name;
             }
-            $relative = substr($file->getPathname(), strlen($sourceRoot) + 1, -4);
-            if (str_starts_with($relative, 'Internal' . DIRECTORY_SEPARATOR)) {
-                continue;
-            }
-            /** @var class-string $name */
-            $name = 'Oeltima\\SimpleQuery\\' . str_replace(DIRECTORY_SEPARATOR, '\\', $relative);
-            $names[] = $name;
         }
         sort($names);
 
         return $names;
+    }
+
+    /** @return class-string|null */
+    private function publicTypeName(string $sourceRoot, mixed $file): ?string
+    {
+        if (!$file instanceof SplFileInfo) {
+            return null;
+        }
+        if (!$file->isFile()) {
+            return null;
+        }
+        if ($file->getExtension() !== 'php') {
+            return null;
+        }
+
+        $relative = substr($file->getPathname(), strlen($sourceRoot) + 1, -4);
+        if (str_starts_with($relative, 'Internal' . DIRECTORY_SEPARATOR)) {
+            return null;
+        }
+
+        /** @var class-string */
+        return 'Oeltima\\SimpleQuery\\' . str_replace(DIRECTORY_SEPARATOR, '\\', $relative);
     }
 
     /** @param class-string $typeName */
