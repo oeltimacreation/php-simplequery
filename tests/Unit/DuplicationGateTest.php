@@ -34,10 +34,7 @@ final class DuplicationGateTest extends TestCase
         $root = $this->cleanRoot();
         unlink($root . '/tests/Fixtures/Compiler/mariadb.json');
 
-        self::assertStringContainsString(
-            'Missing or invalid golden fixture',
-            implode("\n", (new DuplicationGate())->check($root)),
-        );
+        $this->assertGateReports('Missing or invalid golden fixture', $root);
     }
 
     public function testDuplicateGoldenCaseIdIsReported(): void
@@ -45,10 +42,7 @@ final class DuplicationGateTest extends TestCase
         $root = $this->cleanRoot();
         $this->appendCase($root, 'mariadb', 'mariadb-select', 'SELECT * FROM `second` WHERE `id` = ?');
 
-        self::assertStringContainsString(
-            'Golden fixture case id "mariadb-select" is duplicated',
-            implode("\n", (new DuplicationGate())->check($root)),
-        );
+        $this->assertGateReports('Golden fixture case id "mariadb-select" is duplicated', $root);
     }
 
     public function testRepeatedGoldenSqlIsReported(): void
@@ -56,10 +50,7 @@ final class DuplicationGateTest extends TestCase
         $root = $this->cleanRoot();
         $this->appendCase($root, 'mysql', 'mysql-copy', 'SELECT * FROM `mariadb` WHERE `id` = ?');
 
-        self::assertStringContainsString(
-            'Golden SQL is repeated',
-            implode("\n", (new DuplicationGate())->check($root)),
-        );
+        $this->assertGateReports('Golden SQL is repeated', $root);
     }
 
     public function testDuplicateTestMethodNameIsReported(): void
@@ -70,10 +61,7 @@ final class DuplicationGateTest extends TestCase
             '<?php class OtherTest { public function testWorks(): void {} }',
         );
 
-        self::assertStringContainsString(
-            'Test method "testWorks" is defined in more than one file',
-            implode("\n", (new DuplicationGate())->check($root)),
-        );
+        $this->assertGateReports('Test method "testWorks" is defined in more than one file', $root);
     }
 
     public function testReaddedAddHavingDispatchIsReported(): void
@@ -84,10 +72,7 @@ final class DuplicationGateTest extends TestCase
             '<?php class QueryBuilder { private function addHaving(): void {} }',
         );
 
-        self::assertStringContainsString(
-            'QueryBuilder::addHaving() was re-added',
-            implode("\n", (new DuplicationGate())->check($root)),
-        );
+        $this->assertGateReports('QueryBuilder::addHaving() was re-added', $root);
     }
 
     public function testExtraStatementDoubleIsReported(): void
@@ -95,10 +80,7 @@ final class DuplicationGateTest extends TestCase
         $root = $this->cleanRoot();
         file_put_contents($root . '/tests/Unit/ThrowingStatement.php', '<?php class ThrowingStatement {}');
 
-        self::assertStringContainsString(
-            'Unexpected PDOStatement test doubles beyond',
-            implode("\n", (new DuplicationGate())->check($root)),
-        );
+        $this->assertGateReports('Unexpected PDOStatement test doubles beyond', $root);
     }
 
     public function testInlineWriteGoldenAssertionsAreReported(): void
@@ -109,10 +91,7 @@ final class DuplicationGateTest extends TestCase
             '<?php class SqliteCompilerTest { public function compile(): void { new CompiledWriteQuery(); } }',
         );
 
-        self::assertStringContainsString(
-            're-adds inline write golden assertions',
-            implode("\n", (new DuplicationGate())->check($root)),
-        );
+        $this->assertGateReports('re-adds inline write golden assertions', $root);
     }
 
     public function testFuncNumArgsGrowthIsReported(): void
@@ -124,10 +103,7 @@ final class DuplicationGateTest extends TestCase
         }
         file_put_contents($root . '/src/Internal/BuildsConditions.php', $body);
 
-        self::assertStringContainsString(
-            'func_num_args() dispatch grew to 13 sites',
-            implode("\n", (new DuplicationGate())->check($root)),
-        );
+        $this->assertGateReports('func_num_args() dispatch grew to 13 sites', $root);
     }
 
     public function testMagicStringGrowthIsReported(): void
@@ -138,10 +114,12 @@ final class DuplicationGateTest extends TestCase
             '<?php class QueryBuilder { private function x(): void { ' . str_repeat("'INNER'", 8) . '; } }',
         );
 
-        self::assertStringContainsString(
-            'QueryBuilder magic-string literal sites grew to 8',
-            implode("\n", (new DuplicationGate())->check($root)),
-        );
+        $this->assertGateReports('QueryBuilder magic-string literal sites grew to 8', $root);
+    }
+
+    private function assertGateReports(string $expected, string $root): void
+    {
+        self::assertStringContainsString($expected, implode("\n", (new DuplicationGate())->check($root)));
     }
 
     private function cleanRoot(): string

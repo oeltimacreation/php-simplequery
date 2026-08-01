@@ -35,6 +35,15 @@ final class DuplicationGate
 
     private const ALLOWED_STATEMENT_DOUBLE = 'ConfigurableStatement.php';
 
+    /** @var list<string> */
+    private const FUNC_NUM_ARGS_FILES = [
+        'src/Internal/BuildsConditions.php',
+        'src/QueryBuilder.php',
+        'src/JoinClause.php',
+    ];
+
+    private const QUERY_BUILDER_MAGIC_STRING_PATTERN = "'update'|'share'|'NOWAIT'|'SKIP LOCKED'|'INNER'|'LEFT'";
+
     private const FUNC_NUM_ARGS_BASELINE = 12;
 
     private const QUERY_BUILDER_MAGIC_STRING_BASELINE = 7;
@@ -42,10 +51,11 @@ final class DuplicationGate
     /** @return list<string> */
     public function check(string $root): array
     {
-        $errors = [];
-        array_push($errors, ...$this->goldenFixtureErrors($root));
-        array_push($errors, ...$this->duplicateTestNameErrors($root));
-        array_push($errors, ...$this->hotspotErrors($root));
+        $errors = array_merge(
+            $this->goldenFixtureErrors($root),
+            $this->duplicateTestNameErrors($root),
+            $this->hotspotErrors($root),
+        );
         sort($errors);
 
         return $errors;
@@ -54,11 +64,16 @@ final class DuplicationGate
     /** @return list<string> */
     private function goldenFixtureErrors(string $root): array
     {
+        [$cases, $errors] = $this->goldenCases($root);
+
+        return array_merge($errors, $this->duplicateCaseErrors($cases), $this->duplicateSqlErrors($cases));
+    }
+
+    /** @return array{list<array{id: string, sql: string, location: string}>, list<string>} */
+    private function goldenCases(string $root): array
+    {
+        $cases = [];
         $errors = [];
-        /** @var array<string, string> $ids */
-        $ids = [];
-        /** @var array<string, list<string>> $sqlByNormalized */
-        $sqlByNormalized = [];
         foreach (self::GOLDEN_DRIVERS as $driver) {
             $path = $root . '/' . self::GOLDEN_FIXTURE_DIRECTORY . '/' . $driver . '.json';
             $fixture = $this->readFixture($path);
@@ -66,37 +81,66 @@ final class DuplicationGate
                 $errors[] = sprintf('Missing or invalid golden fixture: %s.', $path);
                 continue;
             }
-            $cases = $fixture['cases'] ?? null;
-            if (!is_array($cases)) {
+            $fixtureCases = $fixture['cases'] ?? null;
+            if (!is_array($fixtureCases)) {
                 $errors[] = sprintf('%s has no cases array.', $path);
                 continue;
             }
-            foreach ($cases as $case) {
-                if (!is_array($case)) {
+            foreach ($fixtureCases as $fixtureCase) {
+                if (!is_array($fixtureCase)) {
                     continue;
                 }
-                $id = $case['id'] ?? null;
-                $sql = $case['sql'] ?? null;
+                $id = $fixtureCase['id'] ?? null;
+                $sql = $fixtureCase['sql'] ?? null;
                 if (!is_string($id) || !is_string($sql)) {
                     $errors[] = sprintf('%s contains a case without a string id and sql.', $path);
                     continue;
                 }
-                $location = $driver . '#' . $id;
-                if (isset($ids[$id])) {
-                    $errors[] = sprintf(
-                        'Golden fixture case id "%s" is duplicated (%s and %s).',
-                        $id,
-                        $ids[$id],
-                        $location,
-                    );
-                } else {
-                    $ids[$id] = $location;
-                }
-                $normalized = $this->normalizeSql($sql);
-                $sqlByNormalized[$normalized][] = $location;
+                $cases[] = ['id' => $id, 'sql' => $sql, 'location' => $driver . '#' . $id];
             }
         }
-        foreach ($sqlByNormalized as $normalized => $locations) {
+
+        return [$cases, $errors];
+    }
+
+    /**
+     * @param list<array{id: string, sql: string, location: string}> $cases
+     * @return list<string>
+     */
+    private function duplicateCaseErrors(array $cases): array
+    {
+        $errors = [];
+        $locationsById = [];
+        foreach ($cases as $case) {
+            $id = $case['id'];
+            $location = $case['location'];
+            if (isset($locationsById[$id])) {
+                $errors[] = sprintf(
+                    'Golden fixture case id "%s" is duplicated (%s and %s).',
+                    $id,
+                    $locationsById[$id],
+                    $location,
+                );
+            } else {
+                $locationsById[$id] = $location;
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * @param list<array{id: string, sql: string, location: string}> $cases
+     * @return list<string>
+     */
+    private function duplicateSqlErrors(array $cases): array
+    {
+        $errors = [];
+        $locationsBySql = [];
+        foreach ($cases as $case) {
+            $locationsBySql[$this->normalizeSql($case['sql'])][] = $case['location'];
+        }
+        foreach ($locationsBySql as $normalized => $locations) {
             if (count($locations) > 1) {
                 $errors[] = sprintf(
                     'Golden SQL is repeated in %s: %s',
@@ -144,33 +188,8 @@ final class DuplicationGate
     /** @return list<string> */
     private function duplicateTestNameErrors(string $root): array
     {
-        $tests = new SplFileInfo($root . '/tests');
-        if (!$tests->isDir()) {
-            return [];
-        }
-
         $errors = [];
-        /** @var array<string, list<string>> $names */
-        $names = [];
-        $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($tests->getPathname()));
-        foreach ($iterator as $file) {
-            $testFile = $this->testFile($file);
-            if ($testFile === null) {
-                continue;
-            }
-            $contents = file_get_contents($testFile->getPathname());
-            if (!is_string($contents)) {
-                continue;
-            }
-            $matched = preg_match_all('/\bpublic\s+function\s+(test[A-Za-z0-9_]+)\s*\(/', $contents, $matches);
-            if ($matched === false) {
-                continue;
-            }
-            foreach ($matches[1] as $name) {
-                $names[$name][] = $testFile->getFilename();
-            }
-        }
-        foreach ($names as $name => $files) {
+        foreach ($this->testMethodNames($this->testFiles($root)) as $name => $files) {
             $uniqueFiles = array_values(array_unique($files));
             if (count($uniqueFiles) > 1) {
                 $errors[] = sprintf(
@@ -182,6 +201,50 @@ final class DuplicationGate
         }
 
         return $errors;
+    }
+
+    /** @return list<SplFileInfo> */
+    private function testFiles(string $root): array
+    {
+        $tests = new SplFileInfo($root . '/tests');
+        if (!$tests->isDir()) {
+            return [];
+        }
+
+        $files = [];
+        $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($tests->getPathname()));
+        foreach ($iterator as $file) {
+            $testFile = $this->testFile($file);
+            if ($testFile !== null) {
+                $files[] = $testFile;
+            }
+        }
+
+        return $files;
+    }
+
+    /**
+     * @param list<SplFileInfo> $files
+     * @return array<string, list<string>>
+     */
+    private function testMethodNames(array $files): array
+    {
+        $names = [];
+        foreach ($files as $file) {
+            $contents = file_get_contents($file->getPathname());
+            if (!is_string($contents)) {
+                continue;
+            }
+            $matched = preg_match_all('/\bpublic\s+function\s+(test[A-Za-z0-9_]+)\s*\(/', $contents, $matches);
+            if ($matched === false) {
+                continue;
+            }
+            foreach ($matches[1] as $name) {
+                $names[$name][] = $file->getFilename();
+            }
+        }
+
+        return $names;
     }
 
     private function testFile(mixed $file): ?SplFileInfo
@@ -196,6 +259,17 @@ final class DuplicationGate
     /** @return list<string> */
     private function hotspotErrors(string $root): array
     {
+        return array_merge(
+            $this->conditionDispatchErrors($root),
+            $this->statementDoubleErrors($root),
+            $this->writeGoldenAssertionErrors($root),
+            $this->magicDispatchErrors($root),
+        );
+    }
+
+    /** @return list<string> */
+    private function conditionDispatchErrors(string $root): array
+    {
         $errors = [];
         if ($this->countOccurrences($root . '/src/QueryBuilder.php', 'function addHaving') !== 0) {
             $errors[] = 'QueryBuilder::addHaving() was re-added; use the shared BuildsConditions dispatch (SQ-0412).';
@@ -204,10 +278,17 @@ final class DuplicationGate
             $errors[] = 'BuildsConditions must define exactly one addCondition() dispatch (SQ-0412).';
         }
 
+        return $errors;
+    }
+
+    /** @return list<string> */
+    private function statementDoubleErrors(string $root): array
+    {
         $doubles = glob($root . '/' . self::STATEMENT_DOUBLE_DIRECTORY . '/*Statement.php');
         if (!is_array($doubles)) {
-            $doubles = [];
+            return [];
         }
+
         $extraDoubles = [];
         foreach ($doubles as $double) {
             if (basename($double) !== self::ALLOWED_STATEMENT_DOUBLE) {
@@ -215,27 +296,39 @@ final class DuplicationGate
             }
         }
         sort($extraDoubles);
-        if ($extraDoubles !== []) {
+        if ($extraDoubles === []) {
+            return [];
+        }
+
+        return [sprintf(
+            'Unexpected PDOStatement test doubles beyond %s: %s (SQ-0422).',
+            self::ALLOWED_STATEMENT_DOUBLE,
+            implode(', ', $extraDoubles),
+        )];
+    }
+
+    /** @return list<string> */
+    private function writeGoldenAssertionErrors(string $root): array
+    {
+        $errors = [];
+        foreach (self::DIALECT_COMPILER_TESTS as $relative) {
+            if ($this->countOccurrences($root . '/' . $relative, 'CompiledWriteQuery') === 0) {
+                continue;
+            }
             $errors[] = sprintf(
-                'Unexpected PDOStatement test doubles beyond %s: %s (SQ-0422).',
-                self::ALLOWED_STATEMENT_DOUBLE,
-                implode(', ', $extraDoubles),
+                '%s re-adds inline write golden assertions; use tests/Fixtures/Compiler (SQ-0421).',
+                $relative,
             );
         }
 
-        foreach (self::DIALECT_COMPILER_TESTS as $relative) {
-            if ($this->countOccurrences($root . '/' . $relative, 'CompiledWriteQuery') !== 0) {
-                $errors[] = sprintf(
-                    '%s re-adds inline write golden assertions; use tests/Fixtures/Compiler (SQ-0421).',
-                    $relative,
-                );
-            }
-        }
+        return $errors;
+    }
 
-        $funcNumArgs = 0;
-        foreach (['src/Internal/BuildsConditions.php', 'src/QueryBuilder.php', 'src/JoinClause.php'] as $relative) {
-            $funcNumArgs += $this->countOccurrences($root . '/' . $relative, 'func_num_args');
-        }
+    /** @return list<string> */
+    private function magicDispatchErrors(string $root): array
+    {
+        $errors = [];
+        $funcNumArgs = $this->funcNumArgsCount($root);
         if ($funcNumArgs > self::FUNC_NUM_ARGS_BASELINE) {
             $errors[] = sprintf(
                 'func_num_args() dispatch grew to %d sites (baseline %d); prefer explicit parameter'
@@ -247,7 +340,7 @@ final class DuplicationGate
 
         $magicStrings = $this->countOccurrences(
             $root . '/src/QueryBuilder.php',
-            "'update'|'share'|'NOWAIT'|'SKIP LOCKED'|'INNER'|'LEFT'",
+            self::QUERY_BUILDER_MAGIC_STRING_PATTERN,
         );
         if ($magicStrings > self::QUERY_BUILDER_MAGIC_STRING_BASELINE) {
             $errors[] = sprintf(
@@ -259,6 +352,16 @@ final class DuplicationGate
         }
 
         return $errors;
+    }
+
+    private function funcNumArgsCount(string $root): int
+    {
+        $count = 0;
+        foreach (self::FUNC_NUM_ARGS_FILES as $relative) {
+            $count += $this->countOccurrences($root . '/' . $relative, 'func_num_args');
+        }
+
+        return $count;
     }
 
     private function countOccurrences(string $path, string $pattern): int

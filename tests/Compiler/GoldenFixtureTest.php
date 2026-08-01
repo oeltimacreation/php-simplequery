@@ -105,6 +105,21 @@ final class GoldenFixtureTest extends TestCase
 
     private function compileCase(string $case): CompiledQuery
     {
+        if (str_starts_with($case, 'mariadb-')) {
+            return $this->compileMariaDbCase($case);
+        }
+        if (str_starts_with($case, 'mysql-')) {
+            return $this->compileMySqlCase($case);
+        }
+        if (str_starts_with($case, 'sqlite-')) {
+            return $this->compileSqliteCase($case);
+        }
+
+        throw new LogicException(sprintf('Unknown golden fixture: %s.', $case));
+    }
+
+    private function compileMariaDbCase(string $case): CompiledQuery
+    {
         return match ($case) {
             'mariadb-filter-order' => CompilerConnection::for(Driver::MariaDb)
                 ->table('users')->select('id', 'email')->where('active', true)->orderBy('id', 'DESC')->limit(5)
@@ -138,6 +153,13 @@ final class GoldenFixtureTest extends TestCase
             'mariadb-delete' => CompiledWriteQuery::delete(
                 CompilerConnection::for(Driver::MariaDb)->table('users')->whereNotNull('deleted_at'),
             ),
+            default => $this->unknownCase($case),
+        };
+    }
+
+    private function compileMySqlCase(string $case): CompiledQuery
+    {
+        return match ($case) {
             'mysql-list-filter' => CompilerConnection::for(Driver::MySql)
                 ->table('users', 'u')->select('u.*')->whereIn('u.status', ['active', 'pending'])->compile(),
             'mysql-shared-lock' => CompilerConnection::for(Driver::MySql)
@@ -163,6 +185,13 @@ final class GoldenFixtureTest extends TestCase
                 ['kind' => 'logout'],
             ),
             'mysql-delete' => CompiledWriteQuery::delete(CompilerConnection::for(Driver::MySql)->table('events')),
+            default => $this->unknownCase($case),
+        };
+    }
+
+    private function compileSqliteCase(string $case): CompiledQuery
+    {
+        return match ($case) {
             'sqlite-null-empty-list' => CompilerConnection::for(Driver::Sqlite)
                 ->table('users')->whereNull('deleted_at')->whereIn('id', [])->compile(),
             'sqlite-subquery' => $this->sqliteSubquery(),
@@ -188,8 +217,14 @@ final class GoldenFixtureTest extends TestCase
             'sqlite-delete-enabled' => CompiledWriteQuery::delete(
                 CompilerConnection::for(Driver::Sqlite)->table('users')->where('enabled', false),
             ),
-            default => throw new \LogicException(sprintf('Unknown golden fixture: %s.', $case)),
+            default => $this->unknownCase($case),
         };
+    }
+
+    /** @return never */
+    private function unknownCase(string $case): CompiledQuery
+    {
+        throw new LogicException(sprintf('Unknown golden fixture: %s.', $case));
     }
 
     private function sqliteSubquery(): CompiledQuery
