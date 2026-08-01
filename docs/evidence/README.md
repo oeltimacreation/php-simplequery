@@ -46,6 +46,9 @@ Files:
   benchmark record](v0.3.0-development-baseline.json);
 - [`0.4.0` duplication and complexity inventory](0.4-duplication-and-complexity-inventory.md)
   and its [machine-readable before-metrics record](0.4-duplication-and-complexity-inventory.json);
+- [`0.4.0` contract freeze](0.4-contract-freeze.md), recording the zero-change
+  pledge, the deferred feature backlog, and the compilation hot-path allocation
+  targets;
 - [`0.3.0` production-adoption baseline](0.3-production-adoption-baseline.md),
   containing only anonymized aggregate evidence and release-scope decisions;
 - [`0.3.0` transaction and exception ergonomics](0.3-transaction-and-exception-ergonomics.md),
