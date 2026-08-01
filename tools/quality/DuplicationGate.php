@@ -35,6 +35,8 @@ final class DuplicationGate
 
     private const ALLOWED_STATEMENT_DOUBLE = 'ConfigurableStatement.php';
 
+    private const TEST_FILE_SUFFIX = 'Test.php';
+
     /** @var list<string> */
     private const FUNC_NUM_ARGS_FILES = [
         'src/Internal/BuildsConditions.php',
@@ -249,11 +251,22 @@ final class DuplicationGate
 
     private function testFile(mixed $file): ?SplFileInfo
     {
-        if (!$file instanceof SplFileInfo || !$file->isFile() || !str_ends_with($file->getFilename(), 'Test.php')) {
+        if (!$file instanceof SplFileInfo) {
+            return null;
+        }
+        if (!$file->isFile()) {
+            return null;
+        }
+        if (!$this->isTestFileName($file->getFilename())) {
             return null;
         }
 
         return $file;
+    }
+
+    private function isTestFileName(string $filename): bool
+    {
+        return str_ends_with($filename, self::TEST_FILE_SUFFIX);
     }
 
     /** @return list<string> */
