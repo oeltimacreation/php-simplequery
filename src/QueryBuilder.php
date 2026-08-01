@@ -10,8 +10,6 @@ use Oeltima\SimpleQuery\Exception\QueryExecutionException;
 use Oeltima\SimpleQuery\Expression\Identifier;
 use Oeltima\SimpleQuery\Expression\RawExpression;
 use Oeltima\SimpleQuery\Internal\Ast\ConditionCollection;
-use Oeltima\SimpleQuery\Internal\Ast\ConditionFactory;
-use Oeltima\SimpleQuery\Internal\Ast\ConditionTerm;
 use Oeltima\SimpleQuery\Internal\Ast\JoinState;
 use Oeltima\SimpleQuery\Internal\Ast\OrderClause;
 use Oeltima\SimpleQuery\Internal\Ast\QueryState;
@@ -121,7 +119,15 @@ final class QueryBuilder
         mixed $operatorOrValue = null,
         mixed $value = null,
     ): self {
-        return $this->addHaving(false, func_num_args(), $subject, $operatorOrValue, $value);
+        return $this->addCondition(
+            $this->state->having,
+            false,
+            false,
+            func_num_args(),
+            $subject,
+            $operatorOrValue,
+            $value,
+        );
     }
 
     /** @param RawExpression|(Closure(ConditionGroup): mixed)|string|Identifier $subject */
@@ -130,7 +136,15 @@ final class QueryBuilder
         mixed $operatorOrValue = null,
         mixed $value = null,
     ): self {
-        return $this->addHaving(true, func_num_args(), $subject, $operatorOrValue, $value);
+        return $this->addCondition(
+            $this->state->having,
+            true,
+            false,
+            func_num_args(),
+            $subject,
+            $operatorOrValue,
+            $value,
+        );
     }
 
     public function orderBy(
@@ -349,26 +363,6 @@ final class QueryBuilder
         }
 
         $this->state->joins[] = new JoinState($type, $source, $clause->snapshot());
-
-        return $this;
-    }
-
-    /** @param RawExpression|(Closure(ConditionGroup): mixed)|string|Identifier $subject */
-    private function addHaving(
-        bool $or,
-        int $argumentCount,
-        RawExpression|Closure|string|Identifier $subject,
-        mixed $operatorOrValue,
-        mixed $value,
-    ): self {
-        $predicate = ConditionFactory::condition(
-            $this->connection,
-            $argumentCount,
-            $subject,
-            $operatorOrValue,
-            $value,
-        );
-        $this->state->having->add(new ConditionTerm($predicate, $or));
 
         return $this;
     }
