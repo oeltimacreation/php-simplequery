@@ -411,7 +411,7 @@ final class QueryBuilderBehaviorTest extends TestCase
     }
 
     /** @return iterable<string, array{callable(): mixed}> */
-    public static function invalidWriteReadClauseFactories(): iterable
+    public static function invalidInsertReadClauseFactories(): iterable
     {
         $db = CompilerConnection::for(Driver::Sqlite);
         $mysql = CompilerConnection::for(Driver::MySql);
@@ -452,6 +452,14 @@ final class QueryBuilderBehaviorTest extends TestCase
             $mysql->table('users')->forUpdate(),
             ['name' => 'A'],
         )];
+    }
+
+    /** @return iterable<string, array{callable(): mixed}> */
+    public static function invalidUpdateDeleteReadClauseFactories(): iterable
+    {
+        $db = CompilerConnection::for(Driver::Sqlite);
+        $mysql = CompilerConnection::for(Driver::MySql);
+
         yield 'update projection' => [static fn () => CompiledWriteQuery::update(
             $db->table('users')->select('name'),
             ['name' => 'A'],
@@ -505,8 +513,15 @@ final class QueryBuilderBehaviorTest extends TestCase
         )];
     }
 
-    #[DataProvider('invalidWriteReadClauseFactories')]
-    public function testWriteValidationRejectsEveryNonPredicateReadClause(callable $write): void
+    #[DataProvider('invalidInsertReadClauseFactories')]
+    public function testInsertValidationRejectsEveryReadClause(callable $write): void
+    {
+        $this->expectException(UnsupportedFeatureException::class);
+        $write();
+    }
+
+    #[DataProvider('invalidUpdateDeleteReadClauseFactories')]
+    public function testUpdateDeleteValidationRejectsEveryNonPredicateReadClause(callable $write): void
     {
         $this->expectException(UnsupportedFeatureException::class);
         $write();

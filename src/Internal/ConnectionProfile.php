@@ -78,20 +78,23 @@ final class ConnectionProfile
      */
     private static function mysqlFamilyOptions(array $pdoOptions, ConnectionOptions $connectionOptions): array
     {
-        $pdoOptions[PDO::ATTR_EMULATE_PREPARES] = self::requestedBooleanOption(
-            $pdoOptions,
-            PDO::ATTR_EMULATE_PREPARES,
-            $connectionOptions->emulatePrepares,
-            false,
-            'prepare emulation',
-        );
-        $pdoOptions[PDO::MYSQL_ATTR_USE_BUFFERED_QUERY] = self::requestedBooleanOption(
-            $pdoOptions,
-            PDO::MYSQL_ATTR_USE_BUFFERED_QUERY,
-            $connectionOptions->bufferedQueries,
-            true,
-            'query buffering',
-        );
+        $requests = [
+            new RequestedBooleanOption(
+                PDO::ATTR_EMULATE_PREPARES,
+                $connectionOptions->emulatePrepares,
+                false,
+                'prepare emulation',
+            ),
+            new RequestedBooleanOption(
+                PDO::MYSQL_ATTR_USE_BUFFERED_QUERY,
+                $connectionOptions->bufferedQueries,
+                true,
+                'query buffering',
+            ),
+        ];
+        foreach ($requests as $request) {
+            $pdoOptions[$request->attribute] = self::requestedBooleanOption($pdoOptions, $request);
+        }
         self::assertOption($pdoOptions, PDO::MYSQL_ATTR_FOUND_ROWS, false, 'changed-row counting');
         $pdoOptions[PDO::MYSQL_ATTR_FOUND_ROWS] = false;
 
@@ -99,17 +102,12 @@ final class ConnectionProfile
     }
 
     /** @param array<int, mixed> $pdoOptions */
-    private static function requestedBooleanOption(
-        array $pdoOptions,
-        int $attribute,
-        ?bool $declared,
-        bool $default,
-        string $name,
-    ): bool {
-        $raw = self::booleanShape($pdoOptions[$attribute] ?? null, $name);
-        self::assertNoConflict($raw, $declared, $name);
+    private static function requestedBooleanOption(array $pdoOptions, RequestedBooleanOption $request): bool
+    {
+        $raw = self::booleanShape($pdoOptions[$request->attribute] ?? null, $request->name);
+        self::assertNoConflict($raw, $request->declared, $request->name);
 
-        return $declared ?? $raw ?? $default;
+        return $request->declared ?? $raw ?? $request->default;
     }
 
     private static function booleanShape(mixed $raw, string $name): ?bool

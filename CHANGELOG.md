@@ -85,9 +85,10 @@ with ZeroVer releases before `1.0.0`.
   `phpVersion: 80200` PHPStan analysis floor that rejects accidental PHP 8.3+
   syntax; document the deliberate `#[Override]` (PHP 8.3+) attribute policy for
   an 8.2-supported library in ADR-015 (SQ-0434).
-- Collapse the single-use `Internal\RequestedBooleanOption` value object into
-  `ConnectionProfile::requestedBooleanOption()`; the closed `@internal`
-  boundary is unchanged and no public behavior changed (SQ-0435, ADR-013).
+- Collapse the single-use `AbstractDialectCompiler::writeRow()` wrapper into the
+  `insert()` path while keeping the shared write column/value helpers; the
+  closed `@internal` boundary is unchanged and no public behavior changed
+  (SQ-0435, ADR-013).
 - Run the correctness pass: replace the `'null'` binding-type magic-string
   comparison with the `ParameterType::Null` enum and add edge tests pinning the
   two- versus three-operand null comparison equivalence, `having()` null

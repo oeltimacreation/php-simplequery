@@ -69,7 +69,10 @@ final class ConditionFactory
         mixed $value,
         array $extra,
     ): GroupPredicate {
-        if ($operatorOrValue !== MissingArgument::Value || $value !== MissingArgument::Value || $extra !== []) {
+        if ($operatorOrValue !== MissingArgument::Value || $value !== MissingArgument::Value) {
+            throw new InvalidQueryException('A condition group does not accept additional arguments.');
+        }
+        if ($extra !== []) {
             throw new InvalidQueryException('A condition group does not accept additional arguments.');
         }
 

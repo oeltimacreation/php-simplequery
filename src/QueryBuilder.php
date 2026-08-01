@@ -344,21 +344,51 @@ final class QueryBuilder
         }
         $source = Source::table($identifier->withoutAlias(), $identifier->alias);
         $clause = new JoinClause();
-        if ($conditionOrLeft instanceof Closure) {
-            if ($operator !== self::MISSING || $right !== self::MISSING || $extra !== []) {
-                throw new InvalidQueryException('A join closure does not accept additional arguments.');
-            }
-            $conditionOrLeft($clause);
-        } else {
-            if ($operator === self::MISSING || $right === self::MISSING || $extra !== []) {
-                throw new InvalidQueryException('A direct join requires table, left, operator, and right.');
-            }
-            $clause->on($conditionOrLeft, $operator, $right);
-        }
+        $this->applyJoinCondition($clause, $conditionOrLeft, $operator, $right, $extra);
 
         $this->state->joins[] = new JoinState($type, $source, $clause->snapshot());
 
         return $this;
+    }
+
+    /** @param (Closure(JoinClause): mixed)|RawExpression|string|Identifier $conditionOrLeft
+     * @param array<array-key, mixed> $extra
+     */
+    private function applyJoinCondition(
+        JoinClause $clause,
+        RawExpression|Closure|string|Identifier $conditionOrLeft,
+        mixed $operator,
+        mixed $right,
+        array $extra,
+    ): void {
+        $supplied = $this->joinArgumentCount($operator, $right, $extra);
+        if ($conditionOrLeft instanceof Closure) {
+            if ($supplied !== 0) {
+                throw new InvalidQueryException('A join closure does not accept additional arguments.');
+            }
+            $conditionOrLeft($clause);
+
+            return;
+        }
+
+        if ($supplied !== 2) {
+            throw new InvalidQueryException('A direct join requires table, left, operator, and right.');
+        }
+        $clause->on($conditionOrLeft, $operator, $right);
+    }
+
+    /** @param array<array-key, mixed> $extra */
+    private function joinArgumentCount(mixed $operator, mixed $right, array $extra): int
+    {
+        $count = count($extra);
+        if ($operator !== self::MISSING) {
+            ++$count;
+        }
+        if ($right !== self::MISSING) {
+            ++$count;
+        }
+
+        return $count;
     }
 
     private function setLockMode(LockMode $mode): self

@@ -206,7 +206,8 @@ abstract class AbstractDialectCompiler implements DialectCompiler
         }
 
         $context = new CompilationContext();
-        [$columns, $values] = $this->writeRow($row, $context);
+        $columns = $this->compileWriteColumns(array_keys($row));
+        $values = $this->compileWriteValues($row, $context);
         $sql = sprintf(
             'INSERT INTO %s (%s) VALUES (%s)',
             $this->physicalTable($state->source),
@@ -478,15 +479,6 @@ abstract class AbstractDialectCompiler implements DialectCompiler
         }
 
         throw new InvalidQueryException('Unknown predicate type.');
-    }
-
-    /**
-     * @param array<string, mixed> $row
-     * @return array{list<string>, list<string>}
-     */
-    private function writeRow(array $row, CompilationContext $context): array
-    {
-        return [$this->compileWriteColumns(array_keys($row)), $this->compileWriteValues($row, $context)];
     }
 
     /**
