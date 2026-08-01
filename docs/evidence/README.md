@@ -41,6 +41,9 @@ Files:
   external types, branch/path coverage, behavior gaps, and engine versions;
 - [`v0.2.0` development baseline](v0.2.0-development-baseline.md) and its
   [machine-readable source, query, coverage, and benchmark record](v0.2.0-development-baseline.json);
+- [`v0.3.0` development baseline](v0.3.0-development-baseline.md) and its
+  [machine-readable source, public-contract, query, coverage, test, and
+  benchmark record](v0.3.0-development-baseline.json);
 - [`0.3.0` production-adoption baseline](0.3-production-adoption-baseline.md),
   containing only anonymized aggregate evidence and release-scope decisions;
 - [`0.3.0` transaction and exception ergonomics](0.3-transaction-and-exception-ergonomics.md),
