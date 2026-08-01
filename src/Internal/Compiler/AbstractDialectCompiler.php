@@ -36,48 +36,86 @@ abstract class AbstractDialectCompiler implements DialectCompiler
         }
 
         $context = new CompilationContext();
+        $sql = $this->selectClause($state, $context)
+            . $this->joinClause($state, $context)
+            . $this->whereClause($state, $context)
+            . $this->groupByClause($state, $context)
+            . $this->havingClause($state, $context)
+            . $this->orderByClause($state, $context)
+            . $this->paginationClause($state)
+            . $this->lock($state);
+
+        return new CompiledQuery($sql, $context->bindings());
+    }
+
+    private function selectClause(QueryState $state, CompilationContext $context): string
+    {
         $projection = $state->projections === [] ? [Identifier::wildcard()] : $state->projections;
         $projectionSql = [];
         foreach ($projection as $expression) {
             $projectionSql[] = $this->expression($expression, $context);
         }
 
-        $sql = 'SELECT ' . ($state->distinct ? 'DISTINCT ' : '') . implode(', ', $projectionSql);
-        $sql .= ' FROM ' . $this->source($state->source, $context);
+        return 'SELECT ' . ($state->distinct ? 'DISTINCT ' : '') . implode(', ', $projectionSql)
+            . ' FROM ' . $this->source($state->source, $context);
+    }
 
+    private function joinClause(QueryState $state, CompilationContext $context): string
+    {
+        $sql = '';
         foreach ($state->joins as $join) {
             $sql .= sprintf(
                 ' %s JOIN %s ON %s',
-                $join->type,
+                $join->type->value,
                 $this->source($join->source, $context),
                 $this->conditions($join->conditions, $context),
             );
         }
 
-        if (!$state->where->isEmpty()) {
-            $sql .= ' WHERE ' . $this->conditions($state->where, $context);
+        return $sql;
+    }
+
+    private function whereClause(QueryState $state, CompilationContext $context): string
+    {
+        return $state->where->isEmpty() ? '' : ' WHERE ' . $this->conditions($state->where, $context);
+    }
+
+    private function groupByClause(QueryState $state, CompilationContext $context): string
+    {
+        if ($state->groups === []) {
+            return '';
         }
 
-        if ($state->groups !== []) {
-            $groups = [];
-            foreach ($state->groups as $group) {
-                $groups[] = $this->expression($group, $context);
-            }
-            $sql .= ' GROUP BY ' . implode(', ', $groups);
+        $groups = [];
+        foreach ($state->groups as $group) {
+            $groups[] = $this->expression($group, $context);
         }
 
-        if (!$state->having->isEmpty()) {
-            $sql .= ' HAVING ' . $this->conditions($state->having, $context);
+        return ' GROUP BY ' . implode(', ', $groups);
+    }
+
+    private function havingClause(QueryState $state, CompilationContext $context): string
+    {
+        return $state->having->isEmpty() ? '' : ' HAVING ' . $this->conditions($state->having, $context);
+    }
+
+    private function orderByClause(QueryState $state, CompilationContext $context): string
+    {
+        if ($state->orders === []) {
+            return '';
         }
 
-        if ($state->orders !== []) {
-            $orders = [];
-            foreach ($state->orders as $order) {
-                $orders[] = $this->expression($order->expression, $context) . ' ' . $order->direction->value;
-            }
-            $sql .= ' ORDER BY ' . implode(', ', $orders);
+        $orders = [];
+        foreach ($state->orders as $order) {
+            $orders[] = $this->expression($order->expression, $context) . ' ' . $order->direction->value;
         }
 
+        return ' ORDER BY ' . implode(', ', $orders);
+    }
+
+    private function paginationClause(QueryState $state): string
+    {
+        $sql = '';
         if ($state->limit !== null) {
             $sql .= ' LIMIT ' . $state->limit;
         }
@@ -85,9 +123,7 @@ abstract class AbstractDialectCompiler implements DialectCompiler
             $sql .= ' OFFSET ' . $state->offset;
         }
 
-        $sql .= $this->lock($state);
-
-        return new CompiledQuery($sql, $context->bindings());
+        return $sql;
     }
 
     #[\Override]

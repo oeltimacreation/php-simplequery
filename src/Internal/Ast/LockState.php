@@ -7,8 +7,8 @@ namespace Oeltima\SimpleQuery\Internal\Ast;
 /** @internal */
 final class LockState
 {
-    public ?string $mode = null;
-    public ?string $modifier = null;
+    public ?LockMode $mode = null;
+    public ?LockModifier $modifier = null;
 
     public function copy(): self
     {

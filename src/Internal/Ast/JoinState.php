@@ -8,7 +8,7 @@ namespace Oeltima\SimpleQuery\Internal\Ast;
 final class JoinState
 {
     public function __construct(
-        public readonly string $type,
+        public readonly JoinType $type,
         public readonly Source $source,
         public ConditionCollection $conditions,
     ) {

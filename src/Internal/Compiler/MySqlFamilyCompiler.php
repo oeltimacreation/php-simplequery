@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Oeltima\SimpleQuery\Internal\Compiler;
 
+use Oeltima\SimpleQuery\Internal\Ast\LockMode;
 use Oeltima\SimpleQuery\Internal\Ast\QueryState;
 
 /**
@@ -28,9 +29,9 @@ abstract class MySqlFamilyCompiler extends AbstractDialectCompiler
             return '';
         }
 
-        $sql = $state->lock->mode === 'update' ? ' FOR UPDATE' : ' ' . $this->sharedLockClause();
+        $sql = $state->lock->mode === LockMode::Update ? ' FOR UPDATE' : ' ' . $this->sharedLockClause();
 
-        return $sql . ($state->lock->modifier === null ? '' : ' ' . $state->lock->modifier);
+        return $sql . ($state->lock->modifier === null ? '' : ' ' . $state->lock->modifier->value);
     }
 
     abstract protected function sharedLockClause(): string;

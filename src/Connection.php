@@ -72,11 +72,7 @@ final class Connection
 
         try {
             $pdo = new PDO($dsn, $username, $password, $effectiveOptions);
-            if ($driver === Driver::Sqlite) {
-                $timeout = $declaredOptions->sqliteBusyTimeoutMilliseconds ?? 5000;
-                $pdo->exec('PRAGMA foreign_keys = ON');
-                $pdo->exec('PRAGMA busy_timeout = ' . $timeout);
-            }
+            self::applySqliteConstruction($pdo, $driver, $declaredOptions);
 
             return self::fromPdo($pdo, $driver, $declaredOptions, $observer);
         } catch (ConfigurationException $exception) {
@@ -84,6 +80,20 @@ final class Connection
         } catch (PDOException) {
             throw new ConnectionException('Could not establish the database connection.');
         }
+    }
+
+    private static function applySqliteConstruction(
+        PDO $pdo,
+        Driver $driver,
+        ConnectionOptions $declaredOptions,
+    ): void {
+        if ($driver !== Driver::Sqlite) {
+            return;
+        }
+
+        $timeout = $declaredOptions->sqliteBusyTimeoutMilliseconds ?? 5000;
+        $pdo->exec('PRAGMA foreign_keys = ON');
+        $pdo->exec('PRAGMA busy_timeout = ' . $timeout);
     }
 
     /** @internal Used by the first-party compiler testing toolkit. */

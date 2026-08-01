@@ -17,9 +17,12 @@ use Oeltima\SimpleQuery\Internal\Ast\IdentifierComparisonPredicate;
 use Oeltima\SimpleQuery\Internal\Ast\Predicate;
 use Oeltima\SimpleQuery\Internal\Ast\RawPredicate;
 use Oeltima\SimpleQuery\Internal\InputNormalizer;
+use Oeltima\SimpleQuery\Internal\MissingArgument;
 
 final class JoinClause
 {
+    private const MISSING = MissingArgument::Value;
+
     private readonly ConditionCollection $conditions;
 
     /** @internal */
@@ -30,18 +33,20 @@ final class JoinClause
 
     public function on(
         RawExpression|string|Identifier $left,
-        mixed $operator = null,
-        mixed $right = null,
+        mixed $operator = self::MISSING,
+        mixed $right = self::MISSING,
+        mixed ...$extra,
     ): self {
-        return $this->addIdentifierCondition(false, func_num_args(), $left, $operator, $right);
+        return $this->addIdentifierCondition(false, $left, $operator, $right, $extra);
     }
 
     public function orOn(
         RawExpression|string|Identifier $left,
-        mixed $operator = null,
-        mixed $right = null,
+        mixed $operator = self::MISSING,
+        mixed $right = self::MISSING,
+        mixed ...$extra,
     ): self {
-        return $this->addIdentifierCondition(true, func_num_args(), $left, $operator, $right);
+        return $this->addIdentifierCondition(true, $left, $operator, $right, $extra);
     }
 
     public function onValue(
@@ -63,11 +68,10 @@ final class JoinClause
     public function where(
         RawExpression|string|Identifier $expression,
         mixed $operatorOrValue,
-        mixed $value = null,
+        mixed $value = self::MISSING,
     ): self {
-        $argumentCount = func_num_args();
-        $operator = $argumentCount === 2 ? '=' : $operatorOrValue;
-        $comparisonValue = $argumentCount === 2 ? $operatorOrValue : $value;
+        $operator = $value === self::MISSING ? '=' : $operatorOrValue;
+        $comparisonValue = $value === self::MISSING ? $operatorOrValue : $value;
         if (!is_string($operator)) {
             throw new InvalidQueryException('Join value operator must be a string.');
         }
@@ -85,17 +89,18 @@ final class JoinClause
         return $this->conditions->copy();
     }
 
+    /** @param array<array-key, mixed> $extra */
     private function addIdentifierCondition(
         bool $or,
-        int $argumentCount,
         RawExpression|string|Identifier $left,
         mixed $operator,
         mixed $right,
+        array $extra = [],
     ): self {
-        if ($argumentCount === 1) {
+        if ($operator === self::MISSING && $extra === []) {
             return $this->addRawCondition($or, $left);
         }
-        if ($argumentCount !== 3) {
+        if ($right === self::MISSING || $extra !== []) {
             throw new InvalidQueryException(
                 'Join on() requires expression/identifier, operator, and expression/identifier operands.',
             );

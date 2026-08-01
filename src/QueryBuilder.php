@@ -11,6 +11,9 @@ use Oeltima\SimpleQuery\Expression\Identifier;
 use Oeltima\SimpleQuery\Expression\RawExpression;
 use Oeltima\SimpleQuery\Internal\Ast\ConditionCollection;
 use Oeltima\SimpleQuery\Internal\Ast\JoinState;
+use Oeltima\SimpleQuery\Internal\Ast\JoinType;
+use Oeltima\SimpleQuery\Internal\Ast\LockMode;
+use Oeltima\SimpleQuery\Internal\Ast\LockModifier;
 use Oeltima\SimpleQuery\Internal\Ast\OrderClause;
 use Oeltima\SimpleQuery\Internal\Ast\QueryState;
 use Oeltima\SimpleQuery\Internal\Ast\Source;
@@ -74,30 +77,33 @@ final class QueryBuilder
     public function join(
         string|Identifier $table,
         RawExpression|Closure|string|Identifier $conditionOrLeft,
-        mixed $operator = null,
-        mixed $right = null,
+        mixed $operator = self::MISSING,
+        mixed $right = self::MISSING,
+        mixed ...$extra,
     ): self {
-        return $this->addJoin('INNER', func_num_args(), $table, $conditionOrLeft, $operator, $right);
+        return $this->addJoin(JoinType::Inner, $table, $conditionOrLeft, $operator, $right, $extra);
     }
 
     /** @param (Closure(JoinClause): mixed)|RawExpression|string|Identifier $conditionOrLeft */
     public function innerJoin(
         string|Identifier $table,
         RawExpression|Closure|string|Identifier $conditionOrLeft,
-        mixed $operator = null,
-        mixed $right = null,
+        mixed $operator = self::MISSING,
+        mixed $right = self::MISSING,
+        mixed ...$extra,
     ): self {
-        return $this->addJoin('INNER', func_num_args(), $table, $conditionOrLeft, $operator, $right);
+        return $this->addJoin(JoinType::Inner, $table, $conditionOrLeft, $operator, $right, $extra);
     }
 
     /** @param (Closure(JoinClause): mixed)|RawExpression|string|Identifier $conditionOrLeft */
     public function leftJoin(
         string|Identifier $table,
         RawExpression|Closure|string|Identifier $conditionOrLeft,
-        mixed $operator = null,
-        mixed $right = null,
+        mixed $operator = self::MISSING,
+        mixed $right = self::MISSING,
+        mixed ...$extra,
     ): self {
-        return $this->addJoin('LEFT', func_num_args(), $table, $conditionOrLeft, $operator, $right);
+        return $this->addJoin(JoinType::Left, $table, $conditionOrLeft, $operator, $right, $extra);
     }
 
     public function groupBy(string|Identifier|RawExpression ...$columns): self
@@ -116,23 +122,21 @@ final class QueryBuilder
     /** @param RawExpression|(Closure(ConditionGroup): mixed)|string|Identifier $subject */
     public function having(
         RawExpression|Closure|string|Identifier $subject,
-        mixed $operatorOrValue = null,
-        mixed $value = null,
+        mixed $operatorOrValue = self::MISSING,
+        mixed $value = self::MISSING,
+        mixed ...$extra,
     ): self {
-        $having = $this->state->having;
-
-        return $this->addCondition(false, false, func_num_args(), $subject, $operatorOrValue, $value, $having);
+        return $this->addCondition(false, false, $subject, $operatorOrValue, $value, $this->state->having, $extra);
     }
 
     /** @param RawExpression|(Closure(ConditionGroup): mixed)|string|Identifier $subject */
     public function orHaving(
         RawExpression|Closure|string|Identifier $subject,
-        mixed $operatorOrValue = null,
-        mixed $value = null,
+        mixed $operatorOrValue = self::MISSING,
+        mixed $value = self::MISSING,
+        mixed ...$extra,
     ): self {
-        $having = $this->state->having;
-
-        return $this->addCondition(true, false, func_num_args(), $subject, $operatorOrValue, $value, $having);
+        return $this->addCondition(true, false, $subject, $operatorOrValue, $value, $this->state->having, $extra);
     }
 
     public function orderBy(
@@ -170,22 +174,22 @@ final class QueryBuilder
 
     public function forUpdate(): self
     {
-        return $this->setLockMode('update');
+        return $this->setLockMode(LockMode::Update);
     }
 
     public function forShare(): self
     {
-        return $this->setLockMode('share');
+        return $this->setLockMode(LockMode::Share);
     }
 
     public function noWait(): self
     {
-        return $this->setLockModifier('NOWAIT');
+        return $this->setLockModifier(LockModifier::NoWait);
     }
 
     public function skipLocked(): self
     {
-        return $this->setLockModifier('SKIP LOCKED');
+        return $this->setLockModifier(LockModifier::SkipLocked);
     }
 
     public function compile(): CompiledQuery
@@ -323,14 +327,16 @@ final class QueryBuilder
         return $this->state->where;
     }
 
-    /** @param (Closure(JoinClause): mixed)|RawExpression|string|Identifier $conditionOrLeft */
+    /** @param (Closure(JoinClause): mixed)|RawExpression|string|Identifier $conditionOrLeft
+     * @param array<array-key, mixed> $extra
+     */
     private function addJoin(
-        string $type,
-        int $argumentCount,
+        JoinType $type,
         string|Identifier $table,
         RawExpression|Closure|string|Identifier $conditionOrLeft,
         mixed $operator,
         mixed $right,
+        array $extra = [],
     ): self {
         $identifier = InputNormalizer::identifier($table);
         if ($identifier->wildcard) {
@@ -339,12 +345,12 @@ final class QueryBuilder
         $source = Source::table($identifier->withoutAlias(), $identifier->alias);
         $clause = new JoinClause();
         if ($conditionOrLeft instanceof Closure) {
-            if ($argumentCount !== 2) {
+            if ($operator !== self::MISSING || $right !== self::MISSING || $extra !== []) {
                 throw new InvalidQueryException('A join closure does not accept additional arguments.');
             }
             $conditionOrLeft($clause);
         } else {
-            if ($argumentCount !== 4) {
+            if ($operator === self::MISSING || $right === self::MISSING || $extra !== []) {
                 throw new InvalidQueryException('A direct join requires table, left, operator, and right.');
             }
             $clause->on($conditionOrLeft, $operator, $right);
@@ -355,7 +361,7 @@ final class QueryBuilder
         return $this;
     }
 
-    private function setLockMode(string $mode): self
+    private function setLockMode(LockMode $mode): self
     {
         if ($this->state->lock->mode !== null && $this->state->lock->mode !== $mode) {
             throw new InvalidQueryException('Exactly one row-lock mode can be selected.');
@@ -365,7 +371,7 @@ final class QueryBuilder
         return $this;
     }
 
-    private function setLockModifier(string $modifier): self
+    private function setLockModifier(LockModifier $modifier): self
     {
         if ($this->state->lock->mode === null) {
             throw new InvalidQueryException('A lock modifier requires a row-lock mode.');

@@ -12,55 +12,64 @@ use Oeltima\SimpleQuery\Exception\InvalidQueryException;
 use Oeltima\SimpleQuery\Expression\Identifier;
 use Oeltima\SimpleQuery\Expression\RawExpression;
 use Oeltima\SimpleQuery\Internal\InputNormalizer;
+use Oeltima\SimpleQuery\Internal\MissingArgument;
+use Oeltima\SimpleQuery\ParameterType;
 use Oeltima\SimpleQuery\QueryBuilder;
 
 /** @internal */
 final class ConditionFactory
 {
-    /** @param RawExpression|(Closure(ConditionGroup): mixed)|string|Identifier $subject */
+    /** @param RawExpression|(Closure(ConditionGroup): mixed)|string|Identifier $subject
+     * @param array<array-key, mixed> $extra
+     */
     public static function condition(
         Connection $connection,
-        int $argumentCount,
         RawExpression|Closure|string|Identifier $subject,
         mixed $operatorOrValue,
         mixed $value,
+        array $extra = [],
     ): Predicate {
         if ($subject instanceof RawExpression) {
-            return self::rawCondition($argumentCount, $subject, $operatorOrValue, $value);
+            return self::rawCondition($subject, $operatorOrValue, $value, $extra);
         }
 
         if ($subject instanceof Closure) {
-            return self::groupCondition($connection, $argumentCount, $subject);
+            return self::groupCondition($connection, $subject, $operatorOrValue, $value, $extra);
         }
 
-        return self::identifierCondition($argumentCount, $subject, $operatorOrValue, $value);
+        return self::identifierCondition($subject, $operatorOrValue, $value, $extra);
     }
 
+    /** @param array<array-key, mixed> $extra */
     private static function rawCondition(
-        int $argumentCount,
         RawExpression $expression,
         mixed $operatorOrValue,
         mixed $value,
+        array $extra,
     ): Predicate {
-        if ($argumentCount === 1) {
-            return new RawPredicate($expression);
-        }
-        if ($argumentCount !== 2 && $argumentCount !== 3) {
+        if ($extra !== []) {
             throw new InvalidQueryException(
                 'An expression comparison requires an expression/value or expression/operator/value shape.',
             );
         }
+        if ($operatorOrValue === MissingArgument::Value) {
+            return new RawPredicate($expression);
+        }
 
-        return self::comparison($argumentCount, $expression, $operatorOrValue, $value);
+        return self::comparison($expression, $operatorOrValue, $value);
     }
 
-    /** @param Closure(ConditionGroup): mixed $groupCallback */
+    /** @param Closure(ConditionGroup): mixed $groupCallback
+     * @param array<array-key, mixed> $extra
+     */
     private static function groupCondition(
         Connection $connection,
-        int $argumentCount,
         Closure $groupCallback,
+        mixed $operatorOrValue,
+        mixed $value,
+        array $extra,
     ): GroupPredicate {
-        if ($argumentCount !== 1) {
+        if ($operatorOrValue !== MissingArgument::Value || $value !== MissingArgument::Value || $extra !== []) {
             throw new InvalidQueryException('A condition group does not accept additional arguments.');
         }
 
@@ -73,36 +82,30 @@ final class ConditionFactory
         return new GroupPredicate($group->snapshot());
     }
 
+    /** @param array<array-key, mixed> $extra */
     private static function identifierCondition(
-        int $argumentCount,
         string|Identifier $column,
         mixed $operatorOrValue,
         mixed $value,
+        array $extra,
     ): Predicate {
-        if ($argumentCount !== 2 && $argumentCount !== 3) {
+        if ($operatorOrValue === MissingArgument::Value || $extra !== []) {
             throw new InvalidQueryException('A comparison requires a column/value or column/operator/value shape.');
         }
 
-        return self::comparison(
-            $argumentCount,
-            InputNormalizer::identifier($column),
-            $operatorOrValue,
-            $value,
-        );
+        return self::comparison(InputNormalizer::identifier($column), $operatorOrValue, $value);
     }
 
     private static function comparison(
-        int $argumentCount,
         RawExpression|Identifier $left,
         mixed $operatorOrValue,
         mixed $value,
     ): Predicate {
-        $operator = $argumentCount === 2
-            ? ComparisonOperator::Equal
-            : self::operator($operatorOrValue);
-        $comparisonValue = $argumentCount === 2 ? $operatorOrValue : $value;
+        $twoOperandShape = $value === MissingArgument::Value;
+        $operator = $twoOperandShape ? ComparisonOperator::Equal : self::operator($operatorOrValue);
+        $comparisonValue = $twoOperandShape ? $operatorOrValue : $value;
         $binding = Binding::fromValue($comparisonValue);
-        if ($binding->type->value === 'null') {
+        if ($binding->type === ParameterType::Null) {
             return self::nullComparison($left, $operator);
         }
 
