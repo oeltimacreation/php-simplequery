@@ -20,25 +20,23 @@ final class AssociativeHydrationTest extends TestCase
     #[\Override]
     protected function setUp(): void
     {
-        ControlledAssociativeStatement::$row = false;
-        ControlledAssociativeStatement::$throwOnFetch = false;
-        ControlledAssociativeStatement::$closed = false;
+        ConfigurableStatement::reset();
     }
 
     public function testOnePassHydrationReturnsValidatedRowsAndClosesStatement(): void
     {
-        ControlledAssociativeStatement::$row = ['value' => 42];
+        ConfigurableStatement::returns(['value' => 42], once: true);
         [$connection] = $this->connection();
 
         self::assertSame([['value' => 42]], $connection->query('SELECT 42 AS value')->getAssociative());
-        self::assertTrue(ControlledAssociativeStatement::$closed);
+        self::assertTrue(ConfigurableStatement::$closed);
         $connection->close();
     }
 
     #[DataProvider('invalidRows')]
     public function testOnePassHydrationRejectsInvalidRowsAndRecordsFailure(mixed $row): void
     {
-        ControlledAssociativeStatement::$row = $row;
+        ConfigurableStatement::returns($row, once: true);
         [$connection, $observer] = $this->connection();
 
         try {
@@ -48,7 +46,7 @@ final class AssociativeHydrationTest extends TestCase
             self::assertSame('SELECT 42 AS value', $exception->sql);
         }
 
-        self::assertTrue(ControlledAssociativeStatement::$closed);
+        self::assertTrue(ConfigurableStatement::$closed);
         self::assertCount(1, $observer->executions());
         self::assertFalse($observer->executions()[0]->successful);
         $connection->close();
@@ -56,7 +54,7 @@ final class AssociativeHydrationTest extends TestCase
 
     public function testOnePassHydrationTranslatesFetchFailureAndClosesStatement(): void
     {
-        ControlledAssociativeStatement::$throwOnFetch = true;
+        ConfigurableStatement::fetchThrows();
         [$connection, $observer] = $this->connection();
 
         try {
@@ -65,12 +63,12 @@ final class AssociativeHydrationTest extends TestCase
         } catch (QueryExecutionException $exception) {
             self::assertInstanceOf(PDOException::class, $exception->getPrevious());
             self::assertSame(
-                'Controlled associative hydration fetch failure.',
+                ConfigurableStatement::DEFAULT_FETCH_FAILURE,
                 $exception->getPrevious()->getMessage(),
             );
         }
 
-        self::assertTrue(ControlledAssociativeStatement::$closed);
+        self::assertTrue(ConfigurableStatement::$closed);
         self::assertCount(1, $observer->executions());
         self::assertFalse($observer->executions()[0]->successful);
         $connection->close();
@@ -78,7 +76,7 @@ final class AssociativeHydrationTest extends TestCase
 
     public function testCursorObservationEndsAtHandoffAndFetchFailureDoesNotEmitASecondEvent(): void
     {
-        ControlledAssociativeStatement::$throwOnFetch = true;
+        ConfigurableStatement::fetchThrows();
         [$connection, $observer] = $this->connection();
 
         $cursor = $connection->query('SELECT 42 AS value')->iterateAssociative();
@@ -96,7 +94,7 @@ final class AssociativeHydrationTest extends TestCase
 
         self::assertCount(1, $observer->executions());
         self::assertTrue($observer->executions()[0]->successful);
-        self::assertTrue(ControlledAssociativeStatement::$closed);
+        self::assertTrue(ConfigurableStatement::$closed);
         $connection->close();
     }
 
@@ -113,7 +111,7 @@ final class AssociativeHydrationTest extends TestCase
         $observer = new RecordingQueryObserver();
         $pdo = new PDO('sqlite::memory:', null, null, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_STATEMENT_CLASS => [ControlledAssociativeStatement::class],
+            PDO::ATTR_STATEMENT_CLASS => [ConfigurableStatement::class],
         ]);
         $pdo->exec('PRAGMA foreign_keys = ON');
         $pdo->exec('PRAGMA busy_timeout = 5000');
