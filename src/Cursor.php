@@ -53,7 +53,9 @@ final class Cursor implements IteratorAggregate
             $statement,
             $connection,
             $query,
-            self::objectRowsFor(...),
+            static function (self $cursor): Traversable {
+                return $cursor->objectRows();
+            },
         );
     }
 
@@ -70,7 +72,9 @@ final class Cursor implements IteratorAggregate
             $statement,
             $connection,
             $query,
-            self::associativeRowsFor(...),
+            static function (self $cursor): Traversable {
+                return $cursor->associativeRows();
+            },
         );
     }
 
@@ -150,15 +154,6 @@ final class Cursor implements IteratorAggregate
         }
     }
 
-    /**
-     * @param self<stdClass> $cursor
-     * @return Traversable<int, stdClass>
-     */
-    private static function objectRowsFor(self $cursor): Traversable
-    {
-        return $cursor->objectRows();
-    }
-
     /** @return Generator<int, array<string, mixed>, mixed, void> */
     private function associativeRows(): Generator
     {
@@ -209,15 +204,6 @@ final class Cursor implements IteratorAggregate
                 }
             }
         }
-    }
-
-    /**
-     * @param self<array<string, mixed>> $cursor
-     * @return Traversable<int, array<string, mixed>>
-     */
-    private static function associativeRowsFor(self $cursor): Traversable
-    {
-        return $cursor->associativeRows();
     }
 
     private function finalize(): void
