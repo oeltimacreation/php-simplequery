@@ -8,6 +8,26 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+### Added
+
+- Freeze the `v0.3.0` development baseline: public-source blob manifest,
+  reflection-based public API signature manifest, synthetic-query digests,
+  coverage metrics, test results, and benchmark control digests recorded before
+  any `0.4.0` refactor (SQ-0401).
+- Record the `0.4.0` duplication and complexity inventory as a
+  machine-checkable before-metrics record covering per-dialect golden SQL,
+  per-test-layer assertions, `func_num_args()` dispatch, magic strings, AST
+  copy sites, and documentation overlap (SQ-0402).
+- Lock the `0.4.0` contract freeze: zero breaking changes, zero new public API
+  surface, the deferred `0.5.x` feature backlog, and compilation hot-path
+  allocation targets (SQ-0404).
+
+### Changed
+
+- Retire the completed `0.3.0` development plan from the plan index and keep
+  only the active `0.4` plan; the `0.3.0` outcome remains in the changelog,
+  the upgrade guide, ADR-019/020, and the `0.3.*` evidence records (SQ-0403).
+
 ## [0.3.0] - 2026-07-28
 
 ### Added
