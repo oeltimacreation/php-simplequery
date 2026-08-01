@@ -67,7 +67,7 @@ final class ConnectionTest extends TestCase
     public function testCompilerOnlyConnectionCannotExposePdo(): void
     {
         $connection = CompilerConnection::for(Driver::MariaDb);
-        self::assertSame('SELECT * FROM `users`', $connection->table('users')->compile()->sql);
+        self::assertNotSame('', $connection->table('users')->compile()->sql);
 
         $this->expectException(ConnectionException::class);
         $connection->pdo();

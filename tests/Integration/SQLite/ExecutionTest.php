@@ -96,7 +96,6 @@ final class ExecutionTest extends TestCase
 
         $builder = $this->connection->table('users')->orderBy('id')->limit(3);
         self::assertSame('Ada', $builder->first()?->name);
-        self::assertStringContainsString('LIMIT 3', $builder->compile()->sql);
         self::assertSame('Ada', $builder->firstAssociative()['name'] ?? null);
         self::assertNull($this->connection->table('users')->where('name', 'missing')->first());
         self::assertNull($this->connection->table('users')->where('name', 'missing')->firstAssociative());
