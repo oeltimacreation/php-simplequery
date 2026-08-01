@@ -104,15 +104,29 @@ final class ConnectionProfile
     /** @param array<int, mixed> $pdoOptions */
     private static function requestedBooleanOption(array $pdoOptions, RequestedBooleanOption $request): bool
     {
-        $raw = $pdoOptions[$request->attribute] ?? null;
-        if ($raw !== null && !is_bool($raw)) {
-            throw new ConfigurationException(sprintf('The PDO %s option must be Boolean.', $request->name));
-        }
-        if ($request->declared !== null && $raw !== null && $request->declared !== $raw) {
-            throw new ConfigurationException(sprintf('Conflicting %s declarations were supplied.', $request->name));
-        }
+        $raw = self::booleanShape($pdoOptions[$request->attribute] ?? null, $request->name);
+        self::assertNoConflict($raw, $request->declared, $request->name);
 
         return $request->declared ?? $raw ?? $request->default;
+    }
+
+    private static function booleanShape(mixed $raw, string $name): ?bool
+    {
+        if ($raw !== null && !is_bool($raw)) {
+            throw new ConfigurationException(sprintf('The PDO %s option must be Boolean.', $name));
+        }
+
+        return $raw;
+    }
+
+    private static function assertNoConflict(mixed $raw, ?bool $declared, string $name): void
+    {
+        if ($declared === null || $raw === null) {
+            return;
+        }
+        if ($declared !== $raw) {
+            throw new ConfigurationException(sprintf('Conflicting %s declarations were supplied.', $name));
+        }
     }
 
     /** @param array<int, mixed> $pdoOptions */
