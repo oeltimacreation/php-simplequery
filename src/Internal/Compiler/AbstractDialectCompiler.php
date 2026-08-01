@@ -35,7 +35,11 @@ abstract class AbstractDialectCompiler implements DialectCompiler
             throw new InvalidQueryException('An offset requires a limit.');
         }
 
-        $context = new CompilationContext();
+        return $this->compileSelect($state, new CompilationContext());
+    }
+
+    private function compileSelect(QueryState $state, CompilationContext $context): CompiledQuery
+    {
         $sql = $this->selectClause($state, $context)
             . $this->joinClause($state, $context)
             . $this->whereClause($state, $context)
@@ -158,15 +162,12 @@ abstract class AbstractDialectCompiler implements DialectCompiler
         $this->validateAggregateColumn($column);
         $this->validateScalarAggregateShape($state);
 
-        $expressionContext = new CompilationContext();
-        $columnSql = $this->expression($column, $expressionContext);
+        $context = new CompilationContext();
+        $columnSql = $this->expression($column, $context);
         $aggregateState = $this->withoutTopLevelPaginationAndLock($state);
-        $aggregateState->projections = [new RawExpression(
-            sprintf('%s(%s)', $function, $columnSql),
-            $expressionContext->bindings(),
-        )];
+        $aggregateState->projections = [new RawExpression(sprintf('%s(%s)', $function, $columnSql))];
 
-        return $this->select($aggregateState);
+        return $this->compileSelect($aggregateState, $context);
     }
 
     private function validateAggregateFunction(string $function): void
@@ -576,7 +577,7 @@ abstract class AbstractDialectCompiler implements DialectCompiler
 
     private function withoutTopLevelPaginationAndLock(QueryState $state): QueryState
     {
-        $copy = $state->copy();
+        $copy = $state->copyForCompilation();
         $copy->orders = [];
         $copy->limit = null;
         $copy->offset = null;

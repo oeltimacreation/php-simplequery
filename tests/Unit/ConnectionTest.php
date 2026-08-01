@@ -73,6 +73,18 @@ final class ConnectionTest extends TestCase
         $connection->pdo();
     }
 
+    #[RequiresPhpExtension('pdo_sqlite')]
+    public function testCompilerAndExecutorInstancesAreReusedPerConnection(): void
+    {
+        $first = Connection::fromPdo($this->sqlitePdo(), Driver::Sqlite);
+        $second = Connection::fromPdo($this->sqlitePdo(), Driver::Sqlite);
+
+        self::assertSame($first->compilerForQueryBuilding(), $first->compilerForQueryBuilding());
+        self::assertSame($first->executorForQueryBuilding(), $first->executorForQueryBuilding());
+        self::assertNotSame($first->compilerForQueryBuilding(), $second->compilerForQueryBuilding());
+        self::assertNotSame($first->executorForQueryBuilding(), $second->executorForQueryBuilding());
+    }
+
     private function sqlitePdo(): PDO
     {
         $pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);

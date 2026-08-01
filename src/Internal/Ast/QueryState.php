@@ -54,4 +54,27 @@ final class QueryState
 
         return $copy;
     }
+
+    /**
+     * Shallow snapshot for read-only compiler work. Condition collections and
+     * join states are shared because compilation never mutates them; only the
+     * lock state (cleared by count/aggregate rewrites) needs an independent
+     * copy. Callers must not expose the snapshot to mutation.
+     */
+    public function copyForCompilation(): self
+    {
+        $copy = new self($this->source);
+        $copy->projections = $this->projections;
+        $copy->distinct = $this->distinct;
+        $copy->where = $this->where;
+        $copy->joins = $this->joins;
+        $copy->groups = $this->groups;
+        $copy->having = $this->having;
+        $copy->orders = $this->orders;
+        $copy->limit = $this->limit;
+        $copy->offset = $this->offset;
+        $copy->lock = $this->lock->copy();
+
+        return $copy;
+    }
 }

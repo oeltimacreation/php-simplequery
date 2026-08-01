@@ -12,7 +12,10 @@ use Oeltima\SimpleQuery\Exception\TransactionStateException;
 use Oeltima\SimpleQuery\Expression\Identifier;
 use Oeltima\SimpleQuery\Expression\RawExpression;
 use Oeltima\SimpleQuery\Internal\Ast\Source;
+use Oeltima\SimpleQuery\Internal\Compiler\CompilerFactory;
+use Oeltima\SimpleQuery\Internal\Compiler\DialectCompiler;
 use Oeltima\SimpleQuery\Internal\ConnectionProfile;
+use Oeltima\SimpleQuery\Internal\Executor;
 use Oeltima\SimpleQuery\Internal\Transaction\TransactionManager;
 use Oeltima\SimpleQuery\Observability\QueryObserver;
 use PDO;
@@ -23,6 +26,10 @@ final class Connection
     private bool $closed = false;
 
     private int $activeCursors = 0;
+
+    private ?DialectCompiler $compilerForQueryBuilding = null;
+
+    private ?Executor $executorForQueryBuilding = null;
 
     private readonly TransactionManager $transactionManager;
 
@@ -204,6 +211,29 @@ final class Connection
     public function observer(): ?QueryObserver
     {
         return $this->observer;
+    }
+
+    /**
+     * Returns the connection's shared stateless dialect compiler, creating it on
+     * first use so repeated compile()/terminal calls do not allocate a compiler
+     * per compilation.
+     *
+     * @internal
+     */
+    public function compilerForQueryBuilding(): DialectCompiler
+    {
+        return $this->compilerForQueryBuilding ??= CompilerFactory::for($this->selectedDriver);
+    }
+
+    /**
+     * Returns the connection's shared stateless executor, creating it on first
+     * use so repeated terminal calls do not allocate an executor per terminal.
+     *
+     * @internal
+     */
+    public function executorForQueryBuilding(): Executor
+    {
+        return $this->executorForQueryBuilding ??= new Executor($this);
     }
 
     /** @internal */

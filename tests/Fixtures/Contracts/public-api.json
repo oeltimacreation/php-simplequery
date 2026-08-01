@@ -743,6 +743,16 @@
                     "parameters": []
                 },
                 {
+                    "name": "compilerForQueryBuilding",
+                    "compatibility": "internal",
+                    "static": false,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\Internal\\Compiler\\DialectCompiler",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
                     "name": "connect",
                     "compatibility": "public",
                     "static": true,
@@ -836,6 +846,16 @@
                     "static": false,
                     "final": false,
                     "return_type": "Oeltima\\SimpleQuery\\Driver",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "executorForQueryBuilding",
+                    "compatibility": "internal",
+                    "static": false,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\Internal\\Executor",
                     "returns_reference": false,
                     "annotations": [],
                     "parameters": []

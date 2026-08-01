@@ -19,7 +19,6 @@ use Oeltima\SimpleQuery\Internal\Ast\QueryState;
 use Oeltima\SimpleQuery\Internal\Ast\Source;
 use Oeltima\SimpleQuery\Internal\AggregateResult;
 use Oeltima\SimpleQuery\Internal\BuildsConditions;
-use Oeltima\SimpleQuery\Internal\Compiler\CompilerFactory;
 use Oeltima\SimpleQuery\Internal\Compiler\DialectCompiler;
 use Oeltima\SimpleQuery\Internal\Executor;
 use Oeltima\SimpleQuery\Internal\InputNormalizer;
@@ -416,19 +415,19 @@ final class QueryBuilder
 
     private function compiler(): DialectCompiler
     {
-        return CompilerFactory::for($this->connection->driver());
+        return $this->connection->compilerForQueryBuilding();
     }
 
     private function executor(): Executor
     {
-        return new Executor($this->connection);
+        return $this->connection->executorForQueryBuilding();
     }
 
     private function compiledForExecution(bool $first = false): CompiledQuery
     {
         $state = $this->state;
         if ($first) {
-            $state = $this->state->copy();
+            $state = $this->state->copyForCompilation();
             $state->limit = min($state->limit ?? 1, 1);
         }
 
@@ -444,11 +443,7 @@ final class QueryBuilder
         string $function,
         string|Identifier|RawExpression $column,
     ): mixed {
-        $query = $this->compiler()->aggregate(
-            $this->state,
-            $function,
-            InputNormalizer::structuredExpression($column),
-        );
+        $query = $this->aggregateCompiled($function, $column);
 
         return $this->executor()->scalar($query);
     }
@@ -457,17 +452,22 @@ final class QueryBuilder
         string $function,
         string|Identifier|RawExpression $column,
     ): int|float|string|null {
-        $query = $this->compiler()->aggregate(
-            $this->state,
-            $function,
-            InputNormalizer::structuredExpression($column),
-        );
+        $query = $this->aggregateCompiled($function, $column);
         $value = $this->executor()->scalar($query);
         if ($value !== null && !is_int($value) && !is_float($value) && !is_string($value)) {
             throw $this->invalidAggregate('A numeric aggregate returned an unsupported scalar type.', $query);
         }
 
         return $value;
+    }
+
+    private function aggregateCompiled(string $function, string|Identifier|RawExpression $column): CompiledQuery
+    {
+        return $this->compiler()->aggregate(
+            $this->state,
+            $function,
+            InputNormalizer::structuredExpression($column),
+        );
     }
 
     private function invalidAggregate(string $message, CompiledQuery $query): QueryExecutionException

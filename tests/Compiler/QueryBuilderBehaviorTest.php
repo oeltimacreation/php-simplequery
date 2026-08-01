@@ -9,6 +9,8 @@ use Oeltima\SimpleQuery\Driver;
 use Oeltima\SimpleQuery\Exception\InvalidQueryException;
 use Oeltima\SimpleQuery\Exception\UnsupportedFeatureException;
 use Oeltima\SimpleQuery\Expression\Identifier;
+use Oeltima\SimpleQuery\Internal\Ast\ConditionTerm;
+use Oeltima\SimpleQuery\Internal\Ast\NullPredicate;
 use Oeltima\SimpleQuery\Internal\Compiler\CompilerFactory;
 use Oeltima\SimpleQuery\JoinClause;
 use Oeltima\SimpleQuery\Testing\CompiledQueryAssertions;
@@ -72,6 +74,20 @@ final class QueryBuilderBehaviorTest extends TestCase
             $clone->compile()->sql,
         );
         self::assertSame('SELECT * FROM "users"', $fresh->compile()->sql);
+    }
+
+    public function testSnapshotForCompilationIsDeeplyIsolatedFromBuilderMutations(): void
+    {
+        $db = CompilerConnection::for(Driver::Sqlite);
+        $query = $db->table('users')->where('active', true);
+        $snapshot = $query->snapshotForCompilation();
+
+        $snapshot->where->add(new ConditionTerm(
+            new NullPredicate(Identifier::of('deleted'), false),
+            false,
+        ));
+
+        self::assertSame('SELECT * FROM "users" WHERE "active" = ?', $query->compile()->sql);
     }
 
     public function testSubqueryIsSnapshottedAndBindingsFollowSqlOccurrenceOrder(): void

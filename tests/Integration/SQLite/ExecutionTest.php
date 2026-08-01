@@ -127,6 +127,21 @@ final class ExecutionTest extends TestCase
         self::assertNull($this->connection->query('SELECT id FROM users WHERE id < 0')->first());
     }
 
+    public function testTerminalRewritesPreserveBuilderStateAfterExecution(): void
+    {
+        $this->seedUsers();
+        $query = $this->connection->table('users')->where('active', true)->orderBy('id')->limit(2);
+        $baseline = 'SELECT * FROM "users" WHERE "active" = ? ORDER BY "id" ASC LIMIT 2';
+
+        self::assertSame($baseline, $query->compile()->sql);
+        self::assertSame(3, $query->count());
+        self::assertSame($baseline, $query->compile()->sql);
+        self::assertSame(40.5, $query->sum('score'));
+        self::assertSame($baseline, $query->compile()->sql);
+        self::assertSame(1, $query->first()?->id);
+        self::assertSame($baseline, $query->compile()->sql);
+    }
+
     public function testAggregatesPreserveLogicalCountAndDriverScalars(): void
     {
         $this->seedUsers();
