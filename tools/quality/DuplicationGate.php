@@ -71,7 +71,9 @@ final class DuplicationGate
         return array_merge($errors, $this->duplicateCaseErrors($cases), $this->duplicateSqlErrors($cases));
     }
 
-    /** @return array{list<array{id: string, sql: string, location: string}>, list<string>} */
+    /**
+     * @return array{list<GoldenCase>, list<string>}
+     */
     private function goldenCases(string $root): array
     {
         $cases = [];
@@ -98,7 +100,7 @@ final class DuplicationGate
                     $errors[] = sprintf('%s contains a case without a string id and sql.', $path);
                     continue;
                 }
-                $cases[] = ['id' => $id, 'sql' => $sql, 'location' => $driver . '#' . $id];
+                $cases[] = new GoldenCase($id, $sql, $driver . '#' . $id);
             }
         }
 
@@ -106,7 +108,7 @@ final class DuplicationGate
     }
 
     /**
-     * @param list<array{id: string, sql: string, location: string}> $cases
+     * @param list<GoldenCase> $cases
      * @return list<string>
      */
     private function duplicateCaseErrors(array $cases): array
@@ -114,17 +116,15 @@ final class DuplicationGate
         $errors = [];
         $locationsById = [];
         foreach ($cases as $case) {
-            $id = $case['id'];
-            $location = $case['location'];
-            if (isset($locationsById[$id])) {
+            if (isset($locationsById[$case->id])) {
                 $errors[] = sprintf(
                     'Golden fixture case id "%s" is duplicated (%s and %s).',
-                    $id,
-                    $locationsById[$id],
-                    $location,
+                    $case->id,
+                    $locationsById[$case->id],
+                    $case->location,
                 );
             } else {
-                $locationsById[$id] = $location;
+                $locationsById[$case->id] = $case->location;
             }
         }
 
@@ -132,7 +132,7 @@ final class DuplicationGate
     }
 
     /**
-     * @param list<array{id: string, sql: string, location: string}> $cases
+     * @param list<GoldenCase> $cases
      * @return list<string>
      */
     private function duplicateSqlErrors(array $cases): array
@@ -140,7 +140,7 @@ final class DuplicationGate
         $errors = [];
         $locationsBySql = [];
         foreach ($cases as $case) {
-            $locationsBySql[$this->normalizeSql($case['sql'])][] = $case['location'];
+            $locationsBySql[$this->normalizeSql($case->sql)][] = $case->location;
         }
         foreach ($locationsBySql as $normalized => $locations) {
             if (count($locations) > 1) {
