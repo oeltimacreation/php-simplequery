@@ -20,19 +20,14 @@ final class ConnectionProfile
 {
     public static function validateDsn(Driver $driver, string $dsn): void
     {
-        $expectedPrefix = $driver === Driver::Sqlite ? 'sqlite:' : 'mysql:';
-        if (!str_starts_with(strtolower($dsn), $expectedPrefix)) {
+        if (!str_starts_with(strtolower($dsn), self::dsnPrefix($driver))) {
             throw new ConfigurationException('The DSN does not match the selected driver.');
         }
         if ($driver === Driver::Sqlite) {
             return;
         }
 
-        preg_match_all('/(?:^|;)charset=([^;]*)/i', $dsn, $matches);
-        $charsets = $matches[1];
-        if (count($charsets) !== 1 || strtolower($charsets[0]) !== 'utf8mb4') {
-            throw new ConfigurationException('MariaDB/MySQL DSNs must specify exactly one charset=utf8mb4 option.');
-        }
+        self::validateMySqlCharset($dsn);
     }
 
     /** @param array<mixed> $pdoOptions */
@@ -59,34 +54,65 @@ final class ConnectionProfile
         $pdoOptions[PDO::ATTR_ERRMODE] = PDO::ERRMODE_EXCEPTION;
         $pdoOptions[PDO::ATTR_PERSISTENT] = false;
 
-        if ($driver === Driver::Sqlite) {
-            if (array_key_exists(PDO::ATTR_EMULATE_PREPARES, $pdoOptions)) {
-                throw new ConfigurationException('Prepare emulation is not a supported SQLite option.');
-            }
+        return $driver === Driver::Sqlite
+            ? self::sqliteOptions($pdoOptions)
+            : self::mysqlFamilyOptions($pdoOptions, $connectionOptions);
+    }
 
-            return $pdoOptions;
+    /**
+     * @param array<int, mixed> $pdoOptions
+     * @return array<int, mixed>
+     */
+    private static function sqliteOptions(array $pdoOptions): array
+    {
+        if (array_key_exists(PDO::ATTR_EMULATE_PREPARES, $pdoOptions)) {
+            throw new ConfigurationException('Prepare emulation is not a supported SQLite option.');
         }
 
-        $emulate = self::requestedBooleanOption(
-            $pdoOptions,
-            PDO::ATTR_EMULATE_PREPARES,
-            $connectionOptions->emulatePrepares,
-            false,
-            'prepare emulation',
-        );
-        $buffered = self::requestedBooleanOption(
-            $pdoOptions,
-            PDO::MYSQL_ATTR_USE_BUFFERED_QUERY,
-            $connectionOptions->bufferedQueries,
-            true,
-            'query buffering',
-        );
+        return $pdoOptions;
+    }
+
+    /**
+     * @param array<int, mixed> $pdoOptions
+     * @return array<int, mixed>
+     */
+    private static function mysqlFamilyOptions(array $pdoOptions, ConnectionOptions $connectionOptions): array
+    {
+        $requests = [
+            new RequestedBooleanOption(
+                PDO::ATTR_EMULATE_PREPARES,
+                $connectionOptions->emulatePrepares,
+                false,
+                'prepare emulation',
+            ),
+            new RequestedBooleanOption(
+                PDO::MYSQL_ATTR_USE_BUFFERED_QUERY,
+                $connectionOptions->bufferedQueries,
+                true,
+                'query buffering',
+            ),
+        ];
+        foreach ($requests as $request) {
+            $pdoOptions[$request->attribute] = self::requestedBooleanOption($pdoOptions, $request);
+        }
         self::assertOption($pdoOptions, PDO::MYSQL_ATTR_FOUND_ROWS, false, 'changed-row counting');
-        $pdoOptions[PDO::ATTR_EMULATE_PREPARES] = $emulate;
-        $pdoOptions[PDO::MYSQL_ATTR_USE_BUFFERED_QUERY] = $buffered;
         $pdoOptions[PDO::MYSQL_ATTR_FOUND_ROWS] = false;
 
         return $pdoOptions;
+    }
+
+    /** @param array<int, mixed> $pdoOptions */
+    private static function requestedBooleanOption(array $pdoOptions, RequestedBooleanOption $request): bool
+    {
+        $raw = $pdoOptions[$request->attribute] ?? null;
+        if ($raw !== null && !is_bool($raw)) {
+            throw new ConfigurationException(sprintf('The PDO %s option must be Boolean.', $request->name));
+        }
+        if ($request->declared !== null && $raw !== null && $request->declared !== $raw) {
+            throw new ConfigurationException(sprintf('Conflicting %s declarations were supplied.', $request->name));
+        }
+
+        return $request->declared ?? $raw ?? $request->default;
     }
 
     /** @param array<int, mixed> $pdoOptions */
@@ -96,25 +122,6 @@ final class ConnectionProfile
             throw new ConfigurationException(sprintf('PDO options conflict with required %s.', $policy));
         }
     }
-
-    /** @param array<int, mixed> $pdoOptions */
-    private static function requestedBooleanOption(
-        array $pdoOptions,
-        int $attribute,
-        ?bool $declared,
-        bool $default,
-        string $name,
-    ): bool {
-        $raw = $pdoOptions[$attribute] ?? null;
-        if ($raw !== null && !is_bool($raw)) {
-            throw new ConfigurationException(sprintf('The PDO %s option must be Boolean.', $name));
-        }
-        if ($declared !== null && $raw !== null && $declared !== $raw) {
-            throw new ConfigurationException(sprintf('Conflicting %s declarations were supplied.', $name));
-        }
-
-        return $declared ?? $raw ?? $default;
-    }
     /**
      * @param array<int, mixed> $pdoOptions
      */
@@ -123,14 +130,27 @@ final class ConnectionProfile
         array $pdoOptions,
         ConnectionOptions $declared,
     ): ConnectionOptions {
-        if ($driver === Driver::Sqlite) {
-            return new ConnectionOptions(
-                persistent: false,
-                sqliteBusyTimeoutMilliseconds: $declared->sqliteBusyTimeoutMilliseconds ?? 5000,
-                label: $declared->label,
-            );
-        }
+        return $driver === Driver::Sqlite
+            ? self::sqliteConnectionOptions($declared)
+            : self::mysqlFamilyConnectionOptions($pdoOptions, $declared);
+    }
 
+    private static function sqliteConnectionOptions(ConnectionOptions $declared): ConnectionOptions
+    {
+        return new ConnectionOptions(
+            persistent: false,
+            sqliteBusyTimeoutMilliseconds: $declared->sqliteBusyTimeoutMilliseconds ?? 5000,
+            label: $declared->label,
+        );
+    }
+
+    /**
+     * @param array<int, mixed> $pdoOptions
+     */
+    private static function mysqlFamilyConnectionOptions(
+        array $pdoOptions,
+        ConnectionOptions $declared,
+    ): ConnectionOptions {
         return new ConnectionOptions(
             emulatePrepares: (bool) $pdoOptions[PDO::ATTR_EMULATE_PREPARES],
             bufferedQueries: (bool) $pdoOptions[PDO::MYSQL_ATTR_USE_BUFFERED_QUERY],
@@ -143,21 +163,8 @@ final class ConnectionProfile
     public static function validatePdo(PDO $pdo, Driver $driver, ConnectionOptions $options): void
     {
         try {
-            $actualDriver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
-            if (!is_string($actualDriver) || $actualDriver !== $driver->pdoDriver()) {
-                throw new ConfigurationException(sprintf(
-                    'PDO driver %s does not match selected driver %s.',
-                    is_scalar($actualDriver) ? (string) $actualDriver : 'unknown',
-                    $driver->value,
-                ));
-            }
-            if ($pdo->getAttribute(PDO::ATTR_ERRMODE) !== PDO::ERRMODE_EXCEPTION) {
-                throw new ConfigurationException('PDO exception mode is required.');
-            }
-            if ((bool) $pdo->getAttribute(PDO::ATTR_PERSISTENT)) {
-                throw new ConfigurationException('Persistent PDO connections are outside the supported profile.');
-            }
-
+            self::validateDriver($pdo, $driver);
+            self::validateRequiredAttributes($pdo);
             if ($driver === Driver::Sqlite) {
                 self::validateSqlite($pdo, $options->sqliteBusyTimeoutMilliseconds ?? 5000);
             } else {
@@ -170,18 +177,67 @@ final class ConnectionProfile
         }
     }
 
+    private static function dsnPrefix(Driver $driver): string
+    {
+        return $driver === Driver::Sqlite ? 'sqlite:' : 'mysql:';
+    }
+
+    private static function validateMySqlCharset(string $dsn): void
+    {
+        preg_match_all('/(?:^|;)charset=([^;]*)/i', $dsn, $matches);
+        $charsets = $matches[1];
+        if (count($charsets) !== 1 || strtolower($charsets[0]) !== 'utf8mb4') {
+            throw new ConfigurationException('MariaDB/MySQL DSNs must specify exactly one charset=utf8mb4 option.');
+        }
+    }
+
+    private static function validateDriver(PDO $pdo, Driver $driver): void
+    {
+        $actualDriver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+        if (!is_string($actualDriver) || $actualDriver !== $driver->pdoDriver()) {
+            throw new ConfigurationException(sprintf(
+                'PDO driver %s does not match selected driver %s.',
+                is_scalar($actualDriver) ? (string) $actualDriver : 'unknown',
+                $driver->value,
+            ));
+        }
+    }
+
+    private static function validateRequiredAttributes(PDO $pdo): void
+    {
+        if ($pdo->getAttribute(PDO::ATTR_ERRMODE) !== PDO::ERRMODE_EXCEPTION) {
+            throw new ConfigurationException('PDO exception mode is required.');
+        }
+        if ((bool) $pdo->getAttribute(PDO::ATTR_PERSISTENT)) {
+            throw new ConfigurationException('Persistent PDO connections are outside the supported profile.');
+        }
+    }
+
     private static function validateMySqlFamily(PDO $pdo, ConnectionOptions $options): void
+    {
+        self::validateEmulatePrepares($pdo, $options);
+        self::validateBufferedQueries($pdo, $options);
+        self::validateCharacterSet($pdo);
+    }
+
+    private static function validateEmulatePrepares(PDO $pdo, ConnectionOptions $options): void
     {
         $emulate = (bool) $pdo->getAttribute(PDO::ATTR_EMULATE_PREPARES);
         if ($emulate !== ($options->emulatePrepares ?? false)) {
             throw new ConfigurationException('PDO prepare-emulation state does not match its declaration.');
         }
+    }
 
+    private static function validateBufferedQueries(PDO $pdo, ConnectionOptions $options): void
+    {
         $buffered = (bool) $pdo->getAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY);
         if ($buffered !== ($options->bufferedQueries ?? true)) {
             throw new ConfigurationException('PDO query-buffering state does not match its declaration.');
         }
+    }
 
+    private static function validateCharacterSet(PDO $pdo): void
+    {
         $statement = $pdo->query('SELECT @@character_set_connection');
         $charset = $statement === false ? false : $statement->fetchColumn();
         if (!is_string($charset) || strtolower($charset) !== 'utf8mb4') {
@@ -191,18 +247,31 @@ final class ConnectionProfile
 
     private static function validateSqlite(PDO $pdo, int $expectedBusyTimeout): void
     {
+        self::validateSqliteVersion($pdo);
+        self::validateForeignKeys($pdo);
+        self::validateBusyTimeout($pdo, $expectedBusyTimeout);
+    }
+
+    private static function validateSqliteVersion(PDO $pdo): void
+    {
         $version = $pdo->query('SELECT sqlite_version()');
         $versionValue = $version === false ? false : $version->fetchColumn();
         if (!is_string($versionValue) || version_compare($versionValue, '3.39.2', '<')) {
             throw new ConfigurationException('SQLite 3.39.2 or later is required.');
         }
+    }
 
+    private static function validateForeignKeys(PDO $pdo): void
+    {
         $foreignKeys = $pdo->query('PRAGMA foreign_keys');
         $foreignKeysValue = $foreignKeys === false ? false : $foreignKeys->fetchColumn();
         if ((int) $foreignKeysValue !== 1) {
             throw new ConfigurationException('SQLite foreign-key enforcement must be enabled.');
         }
+    }
 
+    private static function validateBusyTimeout(PDO $pdo, int $expectedBusyTimeout): void
+    {
         $busyTimeout = $pdo->query('PRAGMA busy_timeout');
         $busyTimeoutValue = $busyTimeout === false ? false : $busyTimeout->fetchColumn();
         if ((int) $busyTimeoutValue !== $expectedBusyTimeout) {

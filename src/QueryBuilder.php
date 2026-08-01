@@ -119,15 +119,9 @@ final class QueryBuilder
         mixed $operatorOrValue = null,
         mixed $value = null,
     ): self {
-        return $this->addCondition(
-            $this->state->having,
-            false,
-            false,
-            func_num_args(),
-            $subject,
-            $operatorOrValue,
-            $value,
-        );
+        $having = $this->state->having;
+
+        return $this->addCondition(false, false, func_num_args(), $subject, $operatorOrValue, $value, $having);
     }
 
     /** @param RawExpression|(Closure(ConditionGroup): mixed)|string|Identifier $subject */
@@ -136,15 +130,9 @@ final class QueryBuilder
         mixed $operatorOrValue = null,
         mixed $value = null,
     ): self {
-        return $this->addCondition(
-            $this->state->having,
-            true,
-            false,
-            func_num_args(),
-            $subject,
-            $operatorOrValue,
-            $value,
-        );
+        $having = $this->state->having;
+
+        return $this->addCondition(true, false, func_num_args(), $subject, $operatorOrValue, $value, $having);
     }
 
     public function orderBy(

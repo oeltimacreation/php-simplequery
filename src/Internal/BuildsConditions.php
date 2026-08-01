@@ -28,15 +28,7 @@ trait BuildsConditions
         mixed $operatorOrValue = null,
         mixed $value = null,
     ): static {
-        return $this->addCondition(
-            $this->conditionCollection(),
-            false,
-            false,
-            func_num_args(),
-            $subject,
-            $operatorOrValue,
-            $value,
-        );
+        return $this->addCondition(false, false, func_num_args(), $subject, $operatorOrValue, $value);
     }
 
     /** @param RawExpression|(Closure(\Oeltima\SimpleQuery\ConditionGroup): mixed)|string|Identifier $subject */
@@ -45,15 +37,7 @@ trait BuildsConditions
         mixed $operatorOrValue = null,
         mixed $value = null,
     ): static {
-        return $this->addCondition(
-            $this->conditionCollection(),
-            true,
-            false,
-            func_num_args(),
-            $subject,
-            $operatorOrValue,
-            $value,
-        );
+        return $this->addCondition(true, false, func_num_args(), $subject, $operatorOrValue, $value);
     }
 
     /** @param RawExpression|(Closure(\Oeltima\SimpleQuery\ConditionGroup): mixed)|string|Identifier $subject */
@@ -62,15 +46,7 @@ trait BuildsConditions
         mixed $operatorOrValue = null,
         mixed $value = null,
     ): static {
-        return $this->addCondition(
-            $this->conditionCollection(),
-            false,
-            true,
-            func_num_args(),
-            $subject,
-            $operatorOrValue,
-            $value,
-        );
+        return $this->addCondition(false, true, func_num_args(), $subject, $operatorOrValue, $value);
     }
 
     /** @param RawExpression|(Closure(\Oeltima\SimpleQuery\ConditionGroup): mixed)|string|Identifier $subject */
@@ -79,15 +55,7 @@ trait BuildsConditions
         mixed $operatorOrValue = null,
         mixed $value = null,
     ): static {
-        return $this->addCondition(
-            $this->conditionCollection(),
-            true,
-            true,
-            func_num_args(),
-            $subject,
-            $operatorOrValue,
-            $value,
-        );
+        return $this->addCondition(true, true, func_num_args(), $subject, $operatorOrValue, $value);
     }
 
     public function whereColumn(
@@ -162,14 +130,15 @@ trait BuildsConditions
 
     /** @param RawExpression|(Closure(\Oeltima\SimpleQuery\ConditionGroup): mixed)|string|Identifier $subject */
     private function addCondition(
-        ConditionCollection $collection,
         bool $or,
         bool $negated,
         int $argumentCount,
         RawExpression|Closure|string|Identifier $subject,
         mixed $operatorOrValue,
         mixed $value,
+        ?ConditionCollection $collection = null,
     ): static {
+        $collection ??= $this->conditionCollection();
         $predicate = ConditionFactory::condition(
             $this->conditionConnection(),
             $argumentCount,

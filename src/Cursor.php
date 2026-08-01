@@ -115,19 +115,10 @@ final class Cursor implements IteratorAggregate
     /** @return Generator<int, stdClass, mixed, void> */
     private function objectRows(): Generator
     {
-        $primaryFailure = null;
-
-        try {
-            while (!$this->closed) {
-                try {
-                    $row = $this->statement->fetch(PDO::FETCH_OBJ);
-                } catch (PDOException $exception) {
-                    throw $this->executionException($exception);
-                }
-
-                if ($row === false) {
-                    return;
-                }
+        /** @var Generator<int, stdClass, mixed, void> $rows */
+        $rows = $this->rows(
+            fn (): mixed => $this->statement->fetch(PDO::FETCH_OBJ),
+            function (mixed $row): void {
                 if (!$row instanceof stdClass) {
                     throw QueryExecutionException::invalidResult(
                         'PDO returned an invalid cursor row.',
@@ -136,40 +127,19 @@ final class Cursor implements IteratorAggregate
                         $this->connection->connectionOptions()->label,
                     );
                 }
+            },
+        );
 
-                yield $row;
-            }
-        } catch (Throwable $failure) {
-            $primaryFailure = $failure;
-
-            throw $failure;
-        } finally {
-            try {
-                $this->finalize();
-            } catch (Throwable $cleanupFailure) {
-                if ($primaryFailure === null) {
-                    throw $cleanupFailure;
-                }
-            }
-        }
+        return $rows;
     }
 
     /** @return Generator<int, array<string, mixed>, mixed, void> */
     private function associativeRows(): Generator
     {
-        $primaryFailure = null;
-
-        try {
-            while (!$this->closed) {
-                try {
-                    $row = $this->statement->fetch(PDO::FETCH_ASSOC);
-                } catch (PDOException $exception) {
-                    throw $this->executionException($exception);
-                }
-
-                if ($row === false) {
-                    return;
-                }
+        /** @var Generator<int, array<string, mixed>, mixed, void> $rows */
+        $rows = $this->rows(
+            fn (): mixed => $this->statement->fetch(PDO::FETCH_ASSOC),
+            function (mixed $row): void {
                 if (!is_array($row)) {
                     throw QueryExecutionException::invalidResult(
                         'PDO returned an invalid associative cursor row.',
@@ -188,6 +158,33 @@ final class Cursor implements IteratorAggregate
                         );
                     }
                 }
+            },
+        );
+
+        return $rows;
+    }
+
+    /**
+     * @param Closure(): mixed $fetch
+     * @param Closure(mixed): void $validateRow
+     * @return Generator<int, mixed, mixed, void>
+     */
+    private function rows(Closure $fetch, Closure $validateRow): Generator
+    {
+        $primaryFailure = null;
+
+        try {
+            while (!$this->closed) {
+                try {
+                    $row = $fetch();
+                } catch (PDOException $exception) {
+                    throw $this->executionException($exception);
+                }
+
+                if ($row === false) {
+                    return;
+                }
+                $validateRow($row);
 
                 yield $row;
             }
