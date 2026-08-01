@@ -21,6 +21,9 @@ with ZeroVer releases before `1.0.0`.
 - Lock the `0.4.0` contract freeze: zero breaking changes, zero new public API
   surface, the deferred `0.5.x` feature backlog, and compilation hot-path
   allocation targets (SQ-0404).
+- Add a duplication gate (`composer duplication:check`) that flags repeated
+  golden SQL and fixture case ids, duplicate test method names, and re-added
+  Phase 1/2 hotspot patterns, wired into `composer check` (SQ-0424).
 
 ### Changed
 
@@ -45,6 +48,19 @@ with ZeroVer releases before `1.0.0`.
 - Collapse the single-use internal cursor row-factory wrapper methods into the
   `Cursor` factories; fetch, cleanup, and quarantine semantics are unchanged
   (SQ-0415).
+- Make dialect golden tests data-driven: move the per-dialect select and write
+  golden assertions into the versioned `tests/Fixtures/Compiler/*.json`
+  fixtures (including additive binding-type cases) so each behavior is asserted
+  exactly once by `GoldenFixtureTest`; the dialect test files keep only lock
+  syntax and rejection tests (SQ-0421).
+- Consolidate the seven overlapping `PDOStatement` test doubles into one
+  configurable `ConfigurableStatement` double that expresses fetch results,
+  fetch/close failures, and false-close outcomes without losing failure-
+  injection clarity (SQ-0422).
+- Remove layer-duplicated assertions from unit and integration tests that
+  re-proved compiler SQL output already pinned by the compiler-layer golden
+  fixtures, while keeping the count-rewrite SQL-shape checks the integration
+  layer requires (SQ-0423).
 
 ## [0.3.0] - 2026-07-28
 

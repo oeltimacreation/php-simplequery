@@ -14,6 +14,7 @@ composer coverage:check:branch # 80 overall and 90 compiler branch gates
 composer phpstan:consumer      # independent public-contract inference
 composer public-api:check      # reviewed reflection-signature manifest
 composer docs:check            # relative Markdown link targets
+composer duplication:check     # repeated golden SQL/ids, duplicate test names, re-added hotspots
 composer examples:check        # executable compiler and SQLite examples
 composer probe:sqlite          # JSON PDO/SQLite evidence
 composer probe:execution -- sqlite    # public executor smoke
@@ -28,7 +29,12 @@ composer benchmark:reference   # reference-size fresh-process suite
 composer benchmark:soak        # repeated compile/lifecycle stress
 ```
 
-`composer check` is the clean-checkout contract. The service-backed command
+`composer check` is the clean-checkout contract. It includes the duplication
+gate (`composer duplication:check`), which flags repeated golden SQL and
+fixture case ids, duplicate test method names, and re-added Phase 1/2 hotspot
+patterns (extra `PDOStatement` doubles, inline per-dialect write golden
+assertions, `QueryBuilder::addHaving()`, and growth of `func_num_args()` /
+magic-string sites beyond the inventory baselines). The service-backed command
 starts only the exact synthetic Docker fixtures in
 [`compose.yaml`](../../tools/database-probes/compose.yaml), records native/emulated and
 buffered/unbuffered reports plus public execution and transaction smokes under

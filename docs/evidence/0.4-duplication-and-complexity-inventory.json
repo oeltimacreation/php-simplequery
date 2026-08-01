@@ -47,7 +47,16 @@
         "sqlite_assertion_count": 4,
         "write_golden_files": 3
       },
-      "after": null,
+      "after": {
+        "mariadb_test_lines": 26,
+        "mysql_test_lines": 23,
+        "sqlite_test_lines": 21,
+        "mariadb_assertion_count": 2,
+        "mysql_assertion_count": 2,
+        "sqlite_assertion_count": 0,
+        "write_golden_files": 0,
+        "golden_fixture_cases": 24
+      },
       "target_phase": 2,
       "reproduce": "grep -c 'assertMatches\\|assertSame' tests/Compiler/{MariaDb,MySql,Sqlite}CompilerTest.php"
     },
@@ -68,7 +77,10 @@
         "pdo_statement_doubles": 7,
         "double_files": 7
       },
-      "after": null,
+      "after": {
+        "pdo_statement_doubles": 1,
+        "double_files": 1
+      },
       "target_phase": 2,
       "reproduce": "ls tests/Unit/*Statement.php | wc -l"
     },
@@ -189,6 +201,27 @@
       "after": null,
       "target_phase": 5,
       "reproduce": "wc -l docs/reference/public-api.md tests/Fixtures/Contracts/public-api.json docs/maintainers/testing-strategy.md docs/maintainers/testing-architecture.md"
+    },
+    {
+      "id": "SQ-0402-10",
+      "hotspot": "Layer-duplicated assertions",
+      "locations": [
+        "tests/Unit/ConnectionTest.php",
+        "tests/Unit/ConnectionLifecycleTest.php",
+        "tests/Migration/RepresentativeSlicesTest.php",
+        "tests/Integration/SQLite/ExecutionTest.php"
+      ],
+      "observation": "Unit and migration/integration tests re-asserted exact or substring compiled-SQL output that the compiler-layer golden fixtures already pin; the connection lifecycle contract only needs compilation to succeed. The aggregate count-rewrite SQL-shape checks in ExecutionTest are retained because the integration layer must verify the executed count query shape.",
+      "before": {
+        "unit_exact_sql_assertions": 2,
+        "cross_layer_sql_substring_assertions": 2
+      },
+      "after": {
+        "unit_exact_sql_assertions": 0,
+        "cross_layer_sql_substring_assertions": 0
+      },
+      "target_phase": 2,
+      "reproduce": "grep -rn 'assertSame(.*compile()->sql' tests/Unit/ tests/Integration/ tests/Migration/"
     }
   ]
 }
