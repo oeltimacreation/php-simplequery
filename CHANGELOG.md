@@ -27,6 +27,24 @@ with ZeroVer releases before `1.0.0`.
 - Retire the completed `0.3.0` development plan from the plan index and keep
   only the active `0.4` plan; the `0.3.0` outcome remains in the changelog,
   the upgrade guide, ADR-019/020, and the `0.3.*` evidence records (SQ-0403).
+- Consolidate the MySQL/MariaDB compilers behind one closed `@internal`
+  `MySqlFamilyCompiler` base so the two dialect classes differ only in the
+  shared-lock clause (`LOCK IN SHARE MODE` vs `FOR SHARE`); compiled SQL,
+  bindings, and lock-rejection behavior are unchanged (SQ-0411).
+- Unify condition construction into a single private `BuildsConditions`
+  dispatch shared by `where()`/`orWhere()`/`whereNot()`/`orWhereNot()` and
+  `having()`/`orHaving()`; null-predicate negation semantics are preserved
+  exactly and `QueryBuilder::addHaving()` is removed (SQ-0412).
+- Consolidate `insert()`/`insertMany()`/`update()`/`delete()` write
+  compilation in `AbstractDialectCompiler` around shared state-validation and
+  row/column helpers with identical validation order and error messages
+  (SQ-0413).
+- Extract DSN validation, PDO option merging, and supported-profile checks
+  from `Connection` into one cohesive `@internal` `ConnectionProfile` class;
+  construction, exception, and lifecycle behavior is unchanged (SQ-0414).
+- Collapse the single-use internal cursor row-factory wrapper methods into the
+  `Cursor` factories; fetch, cleanup, and quarantine semantics are unchanged
+  (SQ-0415).
 
 ## [0.3.0] - 2026-07-28
 

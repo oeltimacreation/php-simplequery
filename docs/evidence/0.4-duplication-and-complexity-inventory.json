@@ -19,7 +19,13 @@
         "lock_literal_sites": 2,
         "shared_lock_sql": "LOCK IN SHARE MODE / FOR SHARE"
       },
-      "after": null,
+      "after": {
+        "mariadb_compiler_lines": 15,
+        "mysql_compiler_lines": 15,
+        "mysql_family_compiler_lines": 37,
+        "lock_literal_sites": 2,
+        "shared_lock_sql": "LOCK IN SHARE MODE / FOR SHARE"
+      },
       "target_phase": 1,
       "reproduce": "grep -n \"'update'\" src/Internal/Compiler/MariaDbCompiler.php src/Internal/Compiler/MySqlCompiler.php"
     },
@@ -79,7 +85,11 @@
         "addCondition_sites": 4,
         "condition_dispatch_implementations": 2
       },
-      "after": null,
+      "after": {
+        "addHaving_sites": 0,
+        "addCondition_sites": 1,
+        "condition_dispatch_implementations": 1
+      },
       "target_phase": 1,
       "reproduce": "grep -n 'private function addHaving\\|private function addCondition' src/QueryBuilder.php src/Internal/BuildsConditions.php"
     },
@@ -133,7 +143,9 @@
       "before": {
         "connection_lines": 458
       },
-      "after": null,
+      "after": {
+        "connection_lines": 270
+      },
       "target_phase": 1,
       "reproduce": "wc -l src/Connection.php"
     },
