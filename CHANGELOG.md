@@ -61,6 +61,38 @@ with ZeroVer releases before `1.0.0`.
   re-proved compiler SQL output already pinned by the compiler-layer golden
   fixtures, while keeping the count-rewrite SQL-shape checks the integration
   layer requires (SQ-0423).
+- Replace the `func_num_args()` overload dispatch for `where()`/`orWhere()`/
+  `whereNot()`/`orWhereNot()`/`having()`/`orHaving()`/`join()`/`innerJoin()`/
+  `leftJoin()`/`on()`/`orOn()` with explicit private sentinel defaults
+  (`self::MISSING`, backed by the closed `Internal\MissingArgument` enum) plus
+  explicit variadic catch-alls. The exact `where('column', null)` two-operand
+  distinction and the too-many-arguments rejection are preserved; the public
+  API manifest was regenerated for the reflection-visible default constants and
+  variadic parameters only (SQ-0431).
+- Extract `AbstractDialectCompiler::select()` clause assembly into named
+  per-clause steps (select/join/where/group/having/order/pagination) and move
+  SQLite construction PRAGMAs into `Connection::applySqliteConstruction()`,
+  lowering `select()` cyclomatic complexity from 15 to 3 and `connect()` from 9
+  to 8 with identical SQL output (SQ-0432).
+- Replace the untyped lock/join strings in the internal AST with closed enums:
+  `LockMode` (`update`/`share`), `LockModifier` (`NOWAIT`/`SKIP LOCKED`), and
+  `JoinType` (`INNER`/`LEFT`); `LockState` and `JoinState` now carry typed
+  state, and the MySQL-family lock clause uses the enum values with unchanged
+  compiled SQL (SQ-0433).
+- Formalize the PHP 8.2 runtime floor in the local `composer check` path: add
+  `composer check-platform-reqs` to the check chain and extend
+  `scripts/lint-php.php` to verify the pinned 8.2 platform and the
+  `phpVersion: 80200` PHPStan analysis floor that rejects accidental PHP 8.3+
+  syntax; document the deliberate `#[Override]` (PHP 8.3+) attribute policy for
+  an 8.2-supported library in ADR-015 (SQ-0434).
+- Collapse the single-use `Internal\RequestedBooleanOption` value object into
+  `ConnectionProfile::requestedBooleanOption()`; the closed `@internal`
+  boundary is unchanged and no public behavior changed (SQ-0435, ADR-013).
+- Run the correctness pass: replace the `'null'` binding-type magic-string
+  comparison with the `ParameterType::Null` enum and add edge tests pinning the
+  two- versus three-operand null comparison equivalence, `having()` null
+  semantics, and the full insert/update/delete read-clause validation matrix;
+  the audit recorded zero unresolved findings (SQ-0436).
 
 ## [0.3.0] - 2026-07-28
 

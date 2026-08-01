@@ -121,7 +121,16 @@
         "total_sites": 12,
         "files_affected": 3
       },
-      "after": null,
+      "after": {
+        "builds_conditions_sites": 0,
+        "query_builder_sites": 0,
+        "join_clause_sites": 0,
+        "total_sites": 0,
+        "files_affected": 0,
+        "sentinel_dispatch": "private const MISSING (Internal\\MissingArgument::Value) with explicit variadic catch-all",
+        "select_cyclomatic_complexity_before": 15,
+        "select_cyclomatic_complexity_after": 3
+      },
       "target_phase": 3,
       "reproduce": "grep -rc 'func_num_args' src/Internal/BuildsConditions.php src/QueryBuilder.php src/JoinClause.php"
     },
@@ -143,14 +152,29 @@
         "compiler_literal_sites": 2,
         "total_literal_sites": 9
       },
-      "after": null,
+      "after": {
+        "lock_state_string_fields": 0,
+        "join_state_string_field": 0,
+        "query_builder_literal_sites": 0,
+        "compiler_literal_sites": 0,
+        "total_literal_sites": 0,
+        "ast_enums": [
+          "LockMode",
+          "LockModifier",
+          "JoinType"
+        ],
+        "connection_connect_cyclomatic_complexity_before": 9,
+        "connection_connect_cyclomatic_complexity_after": 8
+      },
       "target_phase": 3,
       "reproduce": "grep -c \"'update'\\|'share'\\|'NOWAIT'\\|'SKIP LOCKED'\\|'INNER'\\|'LEFT'\" src/QueryBuilder.php"
     },
     {
       "id": "SQ-0402-07",
       "hotspot": "Connection construction surface",
-      "locations": ["src/Connection.php"],
+      "locations": [
+        "src/Connection.php"
+      ],
       "observation": "458 lines mixing lifecycle, DSN validation, PDO option merging, and supported-profile checks in one class.",
       "before": {
         "connection_lines": 458
@@ -225,4 +249,3 @@
     }
   ]
 }
-

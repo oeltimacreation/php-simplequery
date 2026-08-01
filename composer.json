@@ -64,6 +64,7 @@
         "docs:check": "php scripts/check-documentation-links.php",
         "duplication:check": "php scripts/check-duplication.php",
         "lint": "php scripts/lint-php.php",
+        "platform:check": "composer check-platform-reqs",
         "public-api:check": "php scripts/public-api-manifest.php",
         "public-api:update": "php scripts/public-api-manifest.php --write",
         "probe:sqlite": "php tools/database-probes/run.php sqlite",
@@ -97,6 +98,7 @@
         "verify": "php scripts/verify-repository.php",
         "check": [
             "@lint",
+            "@platform:check",
             "@test",
             "@phpstan",
             "@phpstan:consumer",
