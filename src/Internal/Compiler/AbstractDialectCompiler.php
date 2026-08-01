@@ -195,18 +195,14 @@ abstract class AbstractDialectCompiler implements DialectCompiler
         }
 
         $context = new CompilationContext();
-        $compiledColumns = [];
-        foreach ($firstColumns as $column) {
-            $compiledColumns[] = $this->writeColumn($column);
-        }
+        $compiledColumns = $this->compileWriteColumns($firstColumns);
 
         $valueGroups = [];
         foreach ($rows as $row) {
             if (array_keys($row) !== $firstColumns) {
                 throw new InvalidQueryException('Every batch insert row must have identical ordered columns.');
             }
-            [, $values] = $this->writeRow($row, $context);
-            $valueGroups[] = '(' . implode(', ', $values) . ')';
+            $valueGroups[] = '(' . implode(', ', $this->compileWriteValues($row, $context)) . ')';
         }
 
         $sql = sprintf(
@@ -454,14 +450,35 @@ abstract class AbstractDialectCompiler implements DialectCompiler
      */
     private function writeRow(array $row, CompilationContext $context): array
     {
-        $columns = [];
+        return [$this->compileWriteColumns(array_keys($row)), $this->compileWriteValues($row, $context)];
+    }
+
+    /**
+     * @param list<string> $columns
+     * @return list<string>
+     */
+    private function compileWriteColumns(array $columns): array
+    {
+        $compiled = [];
+        foreach ($columns as $column) {
+            $compiled[] = $this->writeColumn($column);
+        }
+
+        return $compiled;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return list<string>
+     */
+    private function compileWriteValues(array $row, CompilationContext $context): array
+    {
         $values = [];
-        foreach ($row as $column => $value) {
-            $columns[] = $this->writeColumn($column);
+        foreach ($row as $value) {
             $values[] = $this->writeValue($value, $context);
         }
 
-        return [$columns, $values];
+        return $values;
     }
 
     private function writeValue(mixed $value, CompilationContext $context): string
@@ -498,29 +515,21 @@ abstract class AbstractDialectCompiler implements DialectCompiler
 
     private function validateInsertState(QueryState $state): void
     {
-        $this->physicalTable($state->source);
-        if (
-            $state->projections !== []
-            || $state->distinct
-            || !$state->where->isEmpty()
-            || $state->joins !== []
-            || $state->groups !== []
-            || !$state->having->isEmpty()
-            || $state->orders !== []
-            || $state->limit !== null
-            || $state->offset !== null
-            || $state->lock->mode !== null
-        ) {
-            throw new UnsupportedFeatureException('Insert does not accept read clauses.');
-        }
+        $this->validateWriteState($state, allowPredicates: false);
     }
 
     private function validateUpdateDeleteState(QueryState $state): void
+    {
+        $this->validateWriteState($state, allowPredicates: true);
+    }
+
+    private function validateWriteState(QueryState $state, bool $allowPredicates): void
     {
         $this->physicalTable($state->source);
         if (
             $state->projections !== []
             || $state->distinct
+            || (!$allowPredicates && !$state->where->isEmpty())
             || $state->joins !== []
             || $state->groups !== []
             || !$state->having->isEmpty()
@@ -529,7 +538,11 @@ abstract class AbstractDialectCompiler implements DialectCompiler
             || $state->offset !== null
             || $state->lock->mode !== null
         ) {
-            throw new UnsupportedFeatureException('Update and delete accept predicates but no other read clauses.');
+            throw new UnsupportedFeatureException(
+                $allowPredicates
+                    ? 'Update and delete accept predicates but no other read clauses.'
+                    : 'Insert does not accept read clauses.',
+            );
         }
     }
 
