@@ -16,6 +16,32 @@
       "id": "mariadb-insert",
       "sql": "INSERT INTO `users` (`email`, `active`) VALUES (?, ?)",
       "bindings": ["fixture@example.test", 1]
+    },
+    {
+      "id": "mariadb-golden-select",
+      "sql": "SELECT DISTINCT `u`.`id`, LOWER(?) AS normalized FROM `users` AS `u` LEFT JOIN `profiles` AS `p` ON `p`.`user_id` = `u`.`id` OR `p`.`visible` = ? WHERE (`u`.`status` = ? OR `u`.`deleted_at` IS NULL) AND `u`.`age` BETWEEN ? AND ? GROUP BY `u`.`id`, `u`.`email` HAVING `u`.`id` > ? OR COUNT(*) > ? ORDER BY FIELD(u.status, ?, ?) DESC LIMIT 25 OFFSET 5",
+      "bindings": ["FIRST", 1, "active", 18, 65, 10, 2, "active", "pending"]
+    },
+    {
+      "id": "mariadb-insert-raw",
+      "sql": "INSERT INTO `users` (`email`, `active`, `created_at`) VALUES (?, ?, CURRENT_TIMESTAMP)",
+      "bindings": ["a@example.test", 1],
+      "types": ["string", "integer"]
+    },
+    {
+      "id": "mariadb-insert-many",
+      "sql": "INSERT INTO `users` (`email`, `active`) VALUES (?, ?), (?, ?)",
+      "bindings": ["a@example.test", 1, "b@example.test", 0]
+    },
+    {
+      "id": "mariadb-update",
+      "sql": "UPDATE `users` SET `email` = ? WHERE `id` = ?",
+      "bindings": ["updated@example.test", 7]
+    },
+    {
+      "id": "mariadb-delete",
+      "sql": "DELETE FROM `users` WHERE `deleted_at` IS NOT NULL",
+      "bindings": []
     }
   ]
 }
