@@ -27,7 +27,7 @@ final class PdoBehaviorProbeTest extends TestCase
         self::assertSame('sqlite', $data['target'] ?? null);
         self::assertSame('sqlite', $data['engine'] ?? null);
         self::assertSame('sqlite', $runtime['pdo_driver'] ?? null);
-        self::assertCount(11, $observations);
+        self::assertCount(12, $observations);
     }
 
     #[RequiresPhpExtension('pdo_sqlite')]
@@ -51,6 +51,28 @@ final class PdoBehaviorProbeTest extends TestCase
         self::assertSame(0, $fileProbe['foreign_keys_second_connection'] ?? null);
         self::assertTrue($fileProbe['strict_table_rejected_text'] ?? false);
         self::assertTrue($fileProbe['writer_serialization_observed'] ?? false);
+    }
+
+    #[RequiresPhpExtension('pdo_sqlite')]
+    public function testSQLiteContentionProbeSurfacesBusyAndRecovers(): void
+    {
+        $target = ProbeTarget::named('sqlite');
+        $report = (new PdoBehaviorProbe($target, $target->connect()))->run()->jsonSerialize();
+        $observations = $report['observations'] ?? [];
+        self::assertIsArray($observations);
+
+        $contention = null;
+        foreach ($observations as $observation) {
+            if (is_array($observation) && ($observation['name'] ?? null) === 'sqlite_contention_stress') {
+                $contention = $observation['details'] ?? null;
+            }
+        }
+
+        self::assertIsArray($contention);
+        self::assertTrue($contention['busy_surfaced'] ?? false);
+        self::assertTrue($contention['busy_timeout_resilient'] ?? false);
+        self::assertTrue($contention['stress_complete'] ?? false);
+        self::assertSame(400, $contention['stress_rows'] ?? null);
     }
 
     #[RequiresPhpExtension('pdo_sqlite')]

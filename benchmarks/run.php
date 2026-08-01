@@ -79,6 +79,48 @@ foreach ($scenarios as $scenario) {
     $reports[] = $report;
 }
 
+/*
+ * Soak memory gate: retained allocation must not grow across timed samples in
+ * the same process after warm-up. The tolerance is a portable in-process bound
+ * rather than an absolute host threshold.
+ *
+ * @param list<array<string, mixed>> $reports
+ */
+$assertSoakMemoryBounds = static function (array $reports): void {
+    $toleranceBytes = 256 * 1024;
+    foreach ($reports as $report) {
+        $scenario = is_string($report['scenario'] ?? null) ? $report['scenario'] : 'unknown';
+        $measurement = $report['measurement'] ?? null;
+        $operations = is_array($measurement) ? ($measurement['operations'] ?? null) : null;
+        if (!is_array($operations)) {
+            throw new RuntimeException(sprintf('Soak scenario %s has no operation measurements.', $scenario));
+        }
+        foreach ($operations as $operationName => $operation) {
+            $growth = is_array($operation) ? ($operation['retained_growth_bytes'] ?? null) : null;
+            if (!is_int($growth) && !is_float($growth)) {
+                throw new RuntimeException(sprintf(
+                    'Soak scenario %s/%s lacks retained allocation evidence.',
+                    $scenario,
+                    (string) $operationName,
+                ));
+            }
+            if ($growth > $toleranceBytes) {
+                throw new RuntimeException(sprintf(
+                    'Soak memory gate failed for %s/%s: retained growth of %d bytes exceeds %d bytes.',
+                    $scenario,
+                    (string) $operationName,
+                    $growth,
+                    $toleranceBytes,
+                ));
+            }
+        }
+    }
+};
+
+if ($suite === BenchmarkSuite::Soak) {
+    $assertSoakMemoryBounds($reports);
+}
+
 $scaling = [];
 $predicateMedians = [];
 foreach ($reports as $report) {

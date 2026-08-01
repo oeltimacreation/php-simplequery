@@ -68,6 +68,7 @@
         "public-api:check": "php scripts/public-api-manifest.php",
         "public-api:update": "php scripts/public-api-manifest.php --write",
         "probe:sqlite": "php tools/database-probes/run.php sqlite",
+        "probe:sqlite:contention": "php tools/database-probes/contention-run.php",
         "probe:execution": "php tools/database-probes/execution-smoke.php",
         "probe:transaction": "php tools/database-probes/transaction-smoke.php",
         "probe:migration": "php tools/database-probes/migration-smoke.php",

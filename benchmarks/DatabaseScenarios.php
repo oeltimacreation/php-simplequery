@@ -21,6 +21,7 @@ final class DatabaseScenarios implements ScenarioFactory
             ScenarioName::TRANSACTIONS => $this->transactions($request),
             ScenarioName::LIFECYCLE, ScenarioName::LIFECYCLE_SOAK => $this->lifecycle($request),
             ScenarioName::MIGRATION_QUERY => $this->migration(),
+            ScenarioName::TERMINAL_REUSE => $this->terminalReuse($request),
             default => null,
         };
     }
@@ -127,6 +128,36 @@ final class DatabaseScenarios implements ScenarioFactory
             ['simplequery' => $simpleQuery, 'pdo' => $direct],
             null,
             ['loops_per_sample' => $loops],
+        );
+    }
+
+    private function terminalReuse(ScenarioRequest $request): PreparedScenario
+    {
+        $loops = $request->scale(['ci' => 200, 'reference' => 1_000]);
+        $connection = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
+        $pdo = $connection->pdo();
+        $pdo->exec('CREATE TABLE terminal_rows (id INTEGER PRIMARY KEY, label TEXT NOT NULL)');
+        $fixture = [];
+        for ($id = 1; $id <= 100; ++$id) {
+            $fixture[] = ['id' => $id, 'label' => 'row-' . $id];
+        }
+        $connection->table('terminal_rows')->insertMany($fixture);
+        $operation = static function () use ($connection, $loops): array {
+            $lastLabel = null;
+            $lastCount = null;
+            for ($index = 0; $index < $loops; ++$index) {
+                $id = ($index % 100) + 1;
+                $lastLabel = $connection->table('terminal_rows')->where('id', $id)->first()->label ?? null;
+                $lastCount = $connection->table('terminal_rows')->where('id', '<=', $id)->count();
+            }
+
+            return ['loops' => $loops, 'last_label' => $lastLabel, 'last_count' => $lastCount];
+        };
+
+        return new PreparedScenario(
+            ['terminal_reuse' => $operation],
+            $pdo,
+            ['loops' => $loops, 'rows' => 100],
         );
     }
 

@@ -20,6 +20,7 @@ final class CompilerScenarios implements ScenarioFactory
             ScenarioName::COMPILER_PREDICATES_1000 => $this->predicates($request),
             ScenarioName::COMPILER_SHAPES => $this->shapes($request),
             ScenarioName::COMPILER_REPEATED => $this->repeated($request),
+            ScenarioName::COMPILE_ALLOCATION => $this->allocation($request),
             ScenarioName::BATCH_COMPILE => $this->batch($request),
             default => null,
         };
@@ -102,6 +103,34 @@ final class CompilerScenarios implements ScenarioFactory
 
         return new PreparedScenario(
             ['repeated_compile' => $operation],
+            null,
+            ['compiles' => $compiles],
+        );
+    }
+
+    private function allocation(ScenarioRequest $request): PreparedScenario
+    {
+        $compiles = $request->scale(['ci' => 2_000, 'reference' => 20_000]);
+        $connection = CompilerConnection::for(Driver::Sqlite);
+        $operation = static function () use ($connection, $compiles): array {
+            $last = $connection
+                ->table('events')
+                ->where('active', true)
+                ->whereIn('kind', ['a', 'b', 'c'])
+                ->compile();
+            for ($index = 1; $index < $compiles; ++$index) {
+                $last = $connection
+                    ->table('events')
+                    ->where('active', true)
+                    ->whereIn('kind', ['a', 'b', 'c'])
+                    ->compile();
+            }
+
+            return ['compiles' => $compiles, 'sql_hash' => hash('sha256', $last->sql)];
+        };
+
+        return new PreparedScenario(
+            ['fresh_builder_compile' => $operation],
             null,
             ['compiles' => $compiles],
         );
