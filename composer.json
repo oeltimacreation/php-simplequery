@@ -62,6 +62,7 @@
         "cs:check": "phpcs",
         "cs:fix": "phpcbf",
         "docs:check": "php scripts/check-documentation-links.php",
+        "duplication:check": "php scripts/check-duplication.php",
         "lint": "php scripts/lint-php.php",
         "public-api:check": "php scripts/public-api-manifest.php",
         "public-api:update": "php scripts/public-api-manifest.php --write",
@@ -102,6 +103,7 @@
             "@cs:check",
             "@public-api:check",
             "@docs:check",
+            "@duplication:check",
             "@examples:check",
             "@migration:check",
             "@verify"
