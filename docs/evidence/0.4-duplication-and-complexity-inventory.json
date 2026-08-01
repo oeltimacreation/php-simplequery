@@ -200,7 +200,16 @@
         "new_executor_callers": 2,
         "ast_copy_definitions": 4
       },
-      "after": null,
+      "after": {
+        "query_state_deep_copy_callers": 2,
+        "query_state_compile_snapshot_callers": 2,
+        "compiler_factory_for_callers": 2,
+        "new_executor_callers": 1,
+        "ast_copy_definitions": 5,
+        "deep_copy_in_compile_hot_path": false,
+        "compiler_allocations_per_compile": 0,
+        "executor_allocations_per_terminal": 0
+      },
       "target_phase": 4,
       "reproduce": "grep -rn -- '->copy()' src/QueryBuilder.php src/Internal/Compiler/AbstractDialectCompiler.php; grep -rn 'CompilerFactory::for\\|new Executor' src/"
     },

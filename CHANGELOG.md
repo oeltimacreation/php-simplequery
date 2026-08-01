@@ -24,6 +24,24 @@ with ZeroVer releases before `1.0.0`.
 - Add a duplication gate (`composer duplication:check`) that flags repeated
   golden SQL and fixture case ids, duplicate test method names, and re-added
   Phase 1/2 hotspot patterns, wired into `composer check` (SQ-0424).
+- Add a multiprocess SQLite lock-contention probe (`composer
+  probe:sqlite:contention`, also observed as `sqlite_contention_stress` in
+  `composer probe:sqlite`) that spawns real PHP subprocesses against a shared
+  file-backed WAL database and verifies that a zero busy-timeout writer
+  surfaces SQLITE_BUSY, that a busy-timeout writer blocks and completes after
+  the lock holder commits, and that four concurrent writers commit every
+  disjoint id exactly once (SQ-0444).
+- Add memory-stability soak scenarios for streaming cursor drains and
+  batch writes to the `soak` benchmark suite, per-operation allocation capture
+  (`allocated_after_sample_bytes`, `retained_growth_bytes`,
+  `retained_peak_above_first_bytes`) to the benchmark harness, and a soak
+  memory gate that fails any soak scenario whose retained allocation grows
+  across timed samples beyond a portable 256 KiB bound (SQ-0445).
+- Add `compile_allocation` (fresh-builder compile loop) and `terminal_reuse`
+  (repeated `first()`/`count()` terminals over reused compiler/executor)
+  benchmark scenarios to the maintained suites, and wire a labeled `v0.3.0`
+  versus candidate `baseline`-suite comparison into CI beside the existing
+  `v0.2.0` production comparison (SQ-0443).
 
 ### Changed
 
@@ -94,6 +112,28 @@ with ZeroVer releases before `1.0.0`.
   two- versus three-operand null comparison equivalence, `having()` null
   semantics, and the full insert/update/delete read-clause validation matrix;
   the audit recorded zero unresolved findings (SQ-0436).
+- Cut compilation hot-path allocations: add `QueryState::copyForCompilation()`,
+  a shallow snapshot that shares the read-only condition/join state and clones
+  only the lock state, for the `count()`/scalar-aggregate rewrite and
+  `first()`; compile scalar aggregates through one reused `CompilationContext`;
+  and centralize aggregate column normalization. The full deep `copy()` is
+  retained for `__clone()` and the `@internal` `snapshotForCompilation()`
+  testing hook, so clone isolation and the testing toolkit contract are
+  unchanged (SQ-0441).
+- Reuse the stateless dialect compiler and executor per connection: `Connection`
+  lazily caches both behind new `@internal` accessors
+  (`compilerForQueryBuilding()`, `executorForQueryBuilding()`), so repeated
+  `compile()` calls no longer allocate a compiler and terminal calls no longer
+  allocate an executor; `QueryBuilder` and `RawQuery` use the shared instances.
+  The regenerated public API manifest records the two `@internal` methods as
+  `compatibility: internal` (SQ-0442).
+- De-duplicate the maintained benchmark suite: remove the `hydration` scenario
+  (its read modes are covered by `production_report_execute` and attributable
+  per-mode peaks remain in the `hydration-experiment` suite), add the
+  `compile_allocation` and `terminal_reuse` hot-path scenarios, guard the
+  scenario catalog factories with `class_exists()` so comparisons against older
+  source autoloaders keep working, and record the `v0.3.0` paired before/after
+  analysis in `docs/evidence/0.4-performance-and-stability.md` (SQ-0443).
 
 ## [0.3.0] - 2026-07-28
 
