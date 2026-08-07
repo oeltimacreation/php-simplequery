@@ -64,6 +64,11 @@ Files:
   recording local quality/coverage, minimum/current direct and proxy probes,
   path-redacted consumer validation, security review, and the remaining real-
   deployment publication blocker;
+- [`0.3.0` projection ergonomics spike](0.3-projection-ergonomics-spike.md),
+  recording the decision to retain variadic `select()` without a list parser;
+- [`0.4.0` performance and stability evidence](0.4-performance-and-stability.md),
+  recording paired `v0.3.0` measurements, hot-path allocation removal, SQLite
+  contention probes, and memory soak gates;
 - [edge-feature usage verification](feature-usage-verification.md).
 
 Generated reports belong in `tools/database-probes/results/`, are ignored by Git, and

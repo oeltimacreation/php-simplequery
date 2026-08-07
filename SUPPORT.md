@@ -5,7 +5,7 @@ in production and stabilized.
 
 ## Release compatibility
 
-- `0.1.0` was the first public release; `0.2.0` is the current minor release.
+- `0.1.0` was the first public release; `0.3.0` is the current minor release.
 - Patch releases within one `0.y` line should remain backward compatible,
   except for urgent security or data-integrity corrections.
 - A `0.y.0` release may contain documented breaking changes.
@@ -25,8 +25,8 @@ file, the changelog, upgrade guide, and release notes. The support policy is
 reviewed before each minor release and at least annually.
 
 The MariaDB 11.8 LTS floor remains planned through the `1.x` line unless an
-exceptional security or platform issue makes that impossible. Exact MySQL and
-SQLite patch floors will be frozen before `0.1.0` and will not rise in a patch
+exceptional security or platform issue makes that impossible. The MySQL 8.0 and
+SQLite 3.39.2+ floors were established at `0.1.0` and will not rise in a patch
 release merely to simplify maintenance.
 
 ## Database support
