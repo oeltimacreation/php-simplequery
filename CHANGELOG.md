@@ -8,132 +8,28 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-08
+
 ### Added
 
-- Freeze the `v0.3.0` development baseline: public-source blob manifest,
-  reflection-based public API signature manifest, synthetic-query digests,
-  coverage metrics, test results, and benchmark control digests recorded before
-  any `0.4.0` refactor (SQ-0401).
-- Record the `0.4.0` duplication and complexity inventory as a
-  machine-checkable before-metrics record covering per-dialect golden SQL,
-  per-test-layer assertions, `func_num_args()` dispatch, magic strings, AST
-  copy sites, and documentation overlap (SQ-0402).
-- Lock the `0.4.0` contract freeze: zero breaking changes, zero new public API
-  surface, the deferred `0.5.x` feature backlog, and compilation hot-path
-  allocation targets (SQ-0404).
-- Add a duplication gate (`composer duplication:check`) that flags repeated
-  golden SQL and fixture case ids, duplicate test method names, and re-added
-  Phase 1/2 hotspot patterns, wired into `composer check` (SQ-0424).
-- Add a multiprocess SQLite lock-contention probe (`composer
-  probe:sqlite:contention`, also observed as `sqlite_contention_stress` in
-  `composer probe:sqlite`) that spawns real PHP subprocesses against a shared
-  file-backed WAL database and verifies that a zero busy-timeout writer
-  surfaces SQLITE_BUSY, that a busy-timeout writer blocks and completes after
-  the lock holder commits, and that four concurrent writers commit every
-  disjoint id exactly once (SQ-0444).
-- Add memory-stability soak scenarios for streaming cursor drains and
-  batch writes to the `soak` benchmark suite, per-operation allocation capture
-  (`allocated_after_sample_bytes`, `retained_growth_bytes`,
-  `retained_peak_above_first_bytes`) to the benchmark harness, and a soak
-  memory gate that fails any soak scenario whose retained allocation grows
-  across timed samples beyond a portable 256 KiB bound (SQ-0445).
-- Add `compile_allocation` (fresh-builder compile loop) and `terminal_reuse`
-  (repeated `first()`/`count()` terminals over reused compiler/executor)
-  benchmark scenarios to the maintained suites, and wire a labeled `v0.3.0`
-  versus candidate `baseline`-suite comparison into CI beside the existing
-  `v0.2.0` production comparison (SQ-0443).
+- Add code duplication gate (`composer duplication:check`) integrated into `composer check` to detect golden SQL/fixture ID duplicates, duplicate test names, and hotspot regressions.
+- Add multiprocess SQLite write-contention probe (`composer probe:sqlite:contention`) testing concurrent WAL database transactions, `SQLITE_BUSY` surfacing, busy-timeout blocking, and 4-process write safety.
+- Add memory-stability soak scenarios for streaming cursors and batch writes, per-sample allocation metrics, and a 256 KiB retained-allocation memory gate.
+- Add hot-path benchmark scenarios (`compile_allocation` and `terminal_reuse`) and automated paired `v0.3.0` baseline comparisons in CI.
+- Record `v0.3.0` baseline manifest, duplication/complexity inventory, performance/stability evidence, and ADR-015 for PHP 8.2+ attribute floor policy.
 
 ### Changed
 
-- Retire the completed `0.3.0` development plan from the plan index and keep
-  only the active `0.4` plan; the `0.3.0` outcome remains in the changelog,
-  the upgrade guide, ADR-019/020, and the `0.3.*` evidence records (SQ-0403).
-- Consolidate the MySQL/MariaDB compilers behind one closed `@internal`
-  `MySqlFamilyCompiler` base so the two dialect classes differ only in the
-  shared-lock clause (`LOCK IN SHARE MODE` vs `FOR SHARE`); compiled SQL,
-  bindings, and lock-rejection behavior are unchanged (SQ-0411).
-- Unify condition construction into a single private `BuildsConditions`
-  dispatch shared by `where()`/`orWhere()`/`whereNot()`/`orWhereNot()` and
-  `having()`/`orHaving()`; null-predicate negation semantics are preserved
-  exactly and `QueryBuilder::addHaving()` is removed (SQ-0412).
-- Consolidate `insert()`/`insertMany()`/`update()`/`delete()` write
-  compilation in `AbstractDialectCompiler` around shared state-validation and
-  row/column helpers with identical validation order and error messages
-  (SQ-0413).
-- Extract DSN validation, PDO option merging, and supported-profile checks
-  from `Connection` into one cohesive `@internal` `ConnectionProfile` class;
-  construction, exception, and lifecycle behavior is unchanged (SQ-0414).
-- Collapse the single-use internal cursor row-factory wrapper methods into the
-  `Cursor` factories; fetch, cleanup, and quarantine semantics are unchanged
-  (SQ-0415).
-- Make dialect golden tests data-driven: move the per-dialect select and write
-  golden assertions into the versioned `tests/Fixtures/Compiler/*.json`
-  fixtures (including additive binding-type cases) so each behavior is asserted
-  exactly once by `GoldenFixtureTest`; the dialect test files keep only lock
-  syntax and rejection tests (SQ-0421).
-- Consolidate the seven overlapping `PDOStatement` test doubles into one
-  configurable `ConfigurableStatement` double that expresses fetch results,
-  fetch/close failures, and false-close outcomes without losing failure-
-  injection clarity (SQ-0422).
-- Remove layer-duplicated assertions from unit and integration tests that
-  re-proved compiler SQL output already pinned by the compiler-layer golden
-  fixtures, while keeping the count-rewrite SQL-shape checks the integration
-  layer requires (SQ-0423).
-- Replace the `func_num_args()` overload dispatch for `where()`/`orWhere()`/
-  `whereNot()`/`orWhereNot()`/`having()`/`orHaving()`/`join()`/`innerJoin()`/
-  `leftJoin()`/`on()`/`orOn()` with explicit private sentinel defaults
-  (`self::MISSING`, backed by the closed `Internal\MissingArgument` enum) plus
-  explicit variadic catch-alls. The exact `where('column', null)` two-operand
-  distinction and the too-many-arguments rejection are preserved; the public
-  API manifest was regenerated for the reflection-visible default constants and
-  variadic parameters only (SQ-0431).
-- Extract `AbstractDialectCompiler::select()` clause assembly into named
-  per-clause steps (select/join/where/group/having/order/pagination) and move
-  SQLite construction PRAGMAs into `Connection::applySqliteConstruction()`,
-  lowering `select()` cyclomatic complexity from 15 to 3 and `connect()` from 9
-  to 8 with identical SQL output (SQ-0432).
-- Replace the untyped lock/join strings in the internal AST with closed enums:
-  `LockMode` (`update`/`share`), `LockModifier` (`NOWAIT`/`SKIP LOCKED`), and
-  `JoinType` (`INNER`/`LEFT`); `LockState` and `JoinState` now carry typed
-  state, and the MySQL-family lock clause uses the enum values with unchanged
-  compiled SQL (SQ-0433).
-- Formalize the PHP 8.2 runtime floor in the local `composer check` path: add
-  `composer check-platform-reqs` to the check chain and extend
-  `scripts/lint-php.php` to verify the pinned 8.2 platform and the
-  `phpVersion: 80200` PHPStan analysis floor that rejects accidental PHP 8.3+
-  syntax; document the deliberate `#[Override]` (PHP 8.3+) attribute policy for
-  an 8.2-supported library in ADR-015 (SQ-0434).
-- Collapse the single-use `AbstractDialectCompiler::writeRow()` wrapper into the
-  `insert()` path while keeping the shared write column/value helpers; the
-  closed `@internal` boundary is unchanged and no public behavior changed
-  (SQ-0435, ADR-013).
-- Run the correctness pass: replace the `'null'` binding-type magic-string
-  comparison with the `ParameterType::Null` enum and add edge tests pinning the
-  two- versus three-operand null comparison equivalence, `having()` null
-  semantics, and the full insert/update/delete read-clause validation matrix;
-  the audit recorded zero unresolved findings (SQ-0436).
-- Cut compilation hot-path allocations: add `QueryState::copyForCompilation()`,
-  a shallow snapshot that shares the read-only condition/join state and clones
-  only the lock state, for the `count()`/scalar-aggregate rewrite and
-  `first()`; compile scalar aggregates through one reused `CompilationContext`;
-  and centralize aggregate column normalization. The full deep `copy()` is
-  retained for `__clone()` and the `@internal` `snapshotForCompilation()`
-  testing hook, so clone isolation and the testing toolkit contract are
-  unchanged (SQ-0441).
-- Reuse the stateless dialect compiler and executor per connection: `Connection`
-  lazily caches both behind new `@internal` accessors
-  (`compilerForQueryBuilding()`, `executorForQueryBuilding()`), so repeated
-  `compile()` calls no longer allocate a compiler and terminal calls no longer
-  allocate an executor; `QueryBuilder` and `RawQuery` use the shared instances.
-  The regenerated public API manifest records the two `@internal` methods as
-  `compatibility: internal` (SQ-0442).
-- De-duplicate the maintained benchmark suite: remove the `hydration` scenario
-  (its read modes are covered by `production_report_execute` and attributable
-  per-mode peaks remain in the `hydration-experiment` suite), add the
-  `compile_allocation` and `terminal_reuse` hot-path scenarios, guard the
-  scenario catalog factories with `class_exists()` so comparisons against older
-  source autoloaders keep working, and record the `v0.3.0` paired before/after
-  analysis in `docs/evidence/0.4-performance-and-stability.md` (SQ-0443).
+- Consolidate MySQL and MariaDB dialect compilers behind a shared `@internal` `MySqlFamilyCompiler` base.
+- Unify clause condition construction into a single `BuildsConditions` dispatcher for `where()` and `having()`.
+- Centralize `insert()`, `insertMany()`, `update()`, and `delete()` write compilation and state validation in `AbstractDialectCompiler`.
+- Extract connection lifecycle, DSN validation, and PDO options into `@internal` `ConnectionProfile`.
+- Replace `func_num_args()` overload dispatch with explicit sentinel defaults (`MISSING` sentinel enum) and variadic catch-alls across clause methods, exposing reflection defaults while preserving exact `where('col', null)` behavior.
+- Replace magic strings in AST internal state with closed enums (`LockMode`, `LockModifier`, `JoinType`).
+- Reuse stateless dialect compilers and executors per `Connection` instance via `@internal` `compilerForQueryBuilding()` and `executorForQueryBuilding()` accessors, cutting compilation and terminal allocations.
+- Shallow-clone condition and join state during query compilation snapshots (`QueryState::copyForCompilation()`), optimizing hot-path aggregate rewrites.
+- Data-drive dialect golden assertions via JSON fixtures (`tests/Fixtures/Compiler/*.json`) and consolidate `PDOStatement` test doubles into `ConfigurableStatement`.
+- Formalize PHP 8.2 runtime floor checks in `composer check` with `check-platform-reqs`, PHP linting, and PHPStan analysis floors.
 
 ## [0.3.0] - 2026-07-28
 
@@ -299,7 +195,8 @@ with ZeroVer releases before `1.0.0`.
 - A repeatable direct-migration playbook and complete intentional-difference
   checklist without a runtime Pixie dependency or compatibility façade.
 
-[Unreleased]: https://github.com/oeltimacreation/php-simplequery/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/oeltimacreation/php-simplequery/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/oeltimacreation/php-simplequery/releases/tag/v0.1.0

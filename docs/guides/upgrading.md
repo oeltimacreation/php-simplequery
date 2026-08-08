@@ -8,7 +8,7 @@ lines. The first public release is `0.1.0`.
 - `0.y.0` may contain documented breaking changes.
 - `0.y.z` patch releases should remain compatible within that minor line,
   except for urgent security or data-integrity fixes.
-- Consumers should pin a tested minor line such as `~0.3.0`.
+- Consumers should pin a tested minor line such as `~0.4.0`.
 - Changelog entries are not a substitute for migration instructions; every
   breaking change must be documented here.
 
@@ -25,13 +25,13 @@ For each upgrade:
 7. review generated SQL for raw or dialect-specific queries;
 8. deploy through the application's normal staged rollout.
 
-## Installing 0.3.0
+## Installing 0.4.0
 
 ```bash
-composer require oeltimacreation/php-simplequery:^0.3
+composer require oeltimacreation/php-simplequery:^0.4
 ```
 
-`0.3.0` requires PHP 8.2+, `ext-pdo`, and either `pdo_sqlite` or `pdo_mysql`.
+`0.4.0` requires PHP 8.2+, `ext-pdo`, and either `pdo_sqlite` or `pdo_mysql`.
 Select `Driver::MariaDb`, `Driver::MySql`, or `Driver::Sqlite` explicitly. See
 [getting started](getting-started.md) for connection examples and
 [database support](../reference/database-support.md) for engine floors.
@@ -85,3 +85,16 @@ generated-ID timing and transaction ownership, and retest raw boundaries,
 static analysis, SARGable plans, and every claimed live-engine/proxy path. See
 [migrating from Pixie](migrating-from-pixie.md) and the
 [migration review report](../maintainers/migration-review.md).
+
+## Upgrading from 0.3 to 0.4
+
+`0.4.0` is a 100% backward-compatible performance, refactoring, and code quality release. It introduces zero breaking changes to public builder, connection, or cursor signatures.
+
+Key internal and maintenance changes include:
+
+- Public API signatures replace `func_num_args()` dispatch with sentinel defaults and explicit variadic catch-alls. Reflection exposes default constants and variadic parameters while preserving identical runtime validation and `where('column', null)` semantics.
+- Connection compilers and executors are lazily cached per `Connection` instance behind `@internal` accessors (`compilerForQueryBuilding()`, `executorForQueryBuilding()`).
+- Internal AST states now use typed enums (`LockMode`, `LockModifier`, `JoinType`).
+- MySQL and MariaDB dialect compilers are consolidated under `MySqlFamilyCompiler`.
+- Added automated `composer duplication:check` quality gate and multiprocess SQLite write-contention stress probes (`composer probe:sqlite:contention`).
+
