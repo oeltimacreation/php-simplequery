@@ -48,6 +48,26 @@ final class BenchmarkHarnessTest extends TestCase
         );
     }
 
+    public function testMeasurementCapturesPerOperationAllocationEvidence(): void
+    {
+        $result = Harness::measure(MeasurementRequest::from(
+            ['a' => static fn (): array => ['value' => 1]],
+            ['warmups' => 1, 'iterations' => 3],
+        ));
+        $measurement = $result['measurement'] ?? null;
+        self::assertIsArray($measurement);
+        $operations = $measurement['operations'] ?? null;
+        self::assertIsArray($operations);
+        $operation = $operations['a'] ?? null;
+        self::assertIsArray($operation);
+        $allocations = $operation['allocated_after_sample_bytes'] ?? null;
+        self::assertIsArray($allocations);
+        self::assertCount(3, $allocations);
+        self::assertIsInt($operation['retained_growth_bytes']);
+        self::assertIsInt($operation['retained_peak_above_first_bytes']);
+        self::assertGreaterThanOrEqual(0, $operation['retained_growth_bytes']);
+    }
+
     public function testMeasurementRejectsCorrectnessMismatchBeforeTiming(): void
     {
         $this->expectException(RuntimeException::class);
@@ -76,13 +96,14 @@ final class BenchmarkHarnessTest extends TestCase
     {
         $scenarios = ScenarioCatalog::suite(BenchmarkSuite::Ci);
 
-        self::assertCount(22, $scenarios);
+        self::assertCount(23, $scenarios);
         foreach (
             [
             'compiler_shapes',
+            'compile_allocation',
             'batch_compile',
-            'hydration',
             'cursor_exhaustion',
+            'terminal_reuse',
             'observer',
             'batch_execute',
             'transactions',
@@ -96,6 +117,7 @@ final class BenchmarkHarnessTest extends TestCase
         ) {
             self::assertContains($scenario, $scenarios);
         }
+        self::assertNotContains('hydration', $scenarios);
     }
 
     public function testEnvironmentAndMemoryEnvelopeIsSerializable(): void

@@ -96,7 +96,6 @@ final class ExecutionTest extends TestCase
 
         $builder = $this->connection->table('users')->orderBy('id')->limit(3);
         self::assertSame('Ada', $builder->first()?->name);
-        self::assertStringContainsString('LIMIT 3', $builder->compile()->sql);
         self::assertSame('Ada', $builder->firstAssociative()['name'] ?? null);
         self::assertNull($this->connection->table('users')->where('name', 'missing')->first());
         self::assertNull($this->connection->table('users')->where('name', 'missing')->firstAssociative());
@@ -126,6 +125,21 @@ final class ExecutionTest extends TestCase
         self::assertSame($firstSql, $this->observer->executions()[3]->sql);
         self::assertSame('Ada', $this->connection->query($firstSql)->firstAssociative()['name'] ?? null);
         self::assertNull($this->connection->query('SELECT id FROM users WHERE id < 0')->first());
+    }
+
+    public function testTerminalRewritesPreserveBuilderStateAfterExecution(): void
+    {
+        $this->seedUsers();
+        $query = $this->connection->table('users')->where('active', true)->orderBy('id')->limit(2);
+        $baseline = 'SELECT * FROM "users" WHERE "active" = ? ORDER BY "id" ASC LIMIT 2';
+
+        self::assertSame($baseline, $query->compile()->sql);
+        self::assertSame(3, $query->count());
+        self::assertSame($baseline, $query->compile()->sql);
+        self::assertSame(40.5, $query->sum('score'));
+        self::assertSame($baseline, $query->compile()->sql);
+        self::assertSame(1, $query->first()?->id);
+        self::assertSame($baseline, $query->compile()->sql);
     }
 
     public function testAggregatesPreserveLogicalCountAndDriverScalars(): void

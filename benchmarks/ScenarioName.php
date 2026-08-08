@@ -17,7 +17,9 @@ final class ScenarioName
     public const COMPILER_PREDICATES_1000 = 'compiler_predicates_1000';
     public const COMPILER_SHAPES = 'compiler_shapes';
     public const COMPILER_REPEATED = 'compiler_repeated';
+    public const COMPILE_ALLOCATION = 'compile_allocation';
     public const BATCH_COMPILE = 'batch_compile';
+    public const TERMINAL_REUSE = 'terminal_reuse';
     public const HYDRATION = 'hydration';
     public const CURSOR_EXHAUSTION = 'cursor_exhaustion';
     public const CURSOR_EARLY_CLOSE = 'cursor_early_close';
@@ -30,6 +32,8 @@ final class ScenarioName
     public const TRANSACTIONS = 'transactions';
     public const LIFECYCLE = 'lifecycle';
     public const LIFECYCLE_SOAK = 'lifecycle_soak';
+    public const STREAMING_CURSOR_SOAK = 'streaming_cursor_soak';
+    public const BATCH_WRITE_SOAK = 'batch_write_soak';
     public const MIGRATION_QUERY = 'migration_query';
     public const PRODUCTION_REPORT_COMPILE = 'production_report_compile';
     public const PRODUCTION_COUNT_COMPILE = 'production_count_compile';
@@ -51,7 +55,9 @@ final class ScenarioName
         self::COMPILER_PREDICATES_1000,
         self::COMPILER_SHAPES,
         self::COMPILER_REPEATED,
+        self::COMPILE_ALLOCATION,
         self::BATCH_COMPILE,
+        self::TERMINAL_REUSE,
         self::HYDRATION,
         self::CURSOR_EXHAUSTION,
         self::CURSOR_EARLY_CLOSE,
@@ -64,6 +70,8 @@ final class ScenarioName
         self::TRANSACTIONS,
         self::LIFECYCLE,
         self::LIFECYCLE_SOAK,
+        self::STREAMING_CURSOR_SOAK,
+        self::BATCH_WRITE_SOAK,
         self::MIGRATION_QUERY,
         self::PRODUCTION_REPORT_COMPILE,
         self::PRODUCTION_COUNT_COMPILE,

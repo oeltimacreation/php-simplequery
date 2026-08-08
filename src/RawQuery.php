@@ -62,7 +62,7 @@ final readonly class RawQuery
 
     private function executor(): Executor
     {
-        return new Executor($this->connection);
+        return $this->connection->executorForQueryBuilding();
     }
 
     /**

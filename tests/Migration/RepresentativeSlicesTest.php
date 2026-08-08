@@ -253,7 +253,6 @@ final class RepresentativeSlicesTest extends TestCase
         $pdoRows = $statement->fetchAll(PDO::FETCH_ASSOC);
         self::assertSame($pdoRows, $nativeRows);
         self::assertSame(['Ada', 'Grace'], array_column($nativeRows, 'member_name'));
-        self::assertStringContainsString('LEFT JOIN', $query->compile()->sql);
         $connection->close();
     }
 

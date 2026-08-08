@@ -213,7 +213,7 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
                         },
                         {
                             "name": "value",
@@ -222,7 +222,15 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
+                        },
+                        {
+                            "name": "extra",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": true,
+                            "optional": true,
+                            "attributes": []
                         }
                     ]
                 },
@@ -351,7 +359,7 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
                         },
                         {
                             "name": "value",
@@ -360,7 +368,15 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
+                        },
+                        {
+                            "name": "extra",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": true,
+                            "optional": true,
+                            "attributes": []
                         }
                     ]
                 },
@@ -467,7 +483,7 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
                         },
                         {
                             "name": "value",
@@ -476,7 +492,15 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
+                        },
+                        {
+                            "name": "extra",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": true,
+                            "optional": true,
+                            "attributes": []
                         }
                     ]
                 },
@@ -605,7 +629,7 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
                         },
                         {
                             "name": "value",
@@ -614,7 +638,15 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
+                        },
+                        {
+                            "name": "extra",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": true,
+                            "optional": true,
+                            "attributes": []
                         }
                     ]
                 },
@@ -706,6 +738,16 @@
                     "static": false,
                     "final": false,
                     "return_type": "void",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "compilerForQueryBuilding",
+                    "compatibility": "internal",
+                    "static": false,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\Internal\\Compiler\\DialectCompiler",
                     "returns_reference": false,
                     "annotations": [],
                     "parameters": []
@@ -804,6 +846,16 @@
                     "static": false,
                     "final": false,
                     "return_type": "Oeltima\\SimpleQuery\\Driver",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "executorForQueryBuilding",
+                    "compatibility": "internal",
+                    "static": false,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\Internal\\Executor",
                     "returns_reference": false,
                     "annotations": [],
                     "parameters": []
@@ -2191,7 +2243,7 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
                         },
                         {
                             "name": "right",
@@ -2200,7 +2252,15 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
+                        },
+                        {
+                            "name": "extra",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": true,
+                            "optional": true,
+                            "attributes": []
                         }
                     ]
                 },
@@ -2263,7 +2323,7 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
                         },
                         {
                             "name": "right",
@@ -2272,7 +2332,15 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
+                        },
+                        {
+                            "name": "extra",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": true,
+                            "optional": true,
+                            "attributes": []
                         }
                     ]
                 },
@@ -2353,7 +2421,7 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
                         }
                     ]
                 }
@@ -2907,7 +2975,7 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
                         },
                         {
                             "name": "value",
@@ -2916,7 +2984,15 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
+                        },
+                        {
+                            "name": "extra",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": true,
+                            "optional": true,
+                            "attributes": []
                         }
                     ]
                 },
@@ -2954,7 +3030,7 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
                         },
                         {
                             "name": "right",
@@ -2963,7 +3039,15 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
+                        },
+                        {
+                            "name": "extra",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": true,
+                            "optional": true,
+                            "attributes": []
                         }
                     ]
                 },
@@ -3088,7 +3172,7 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
                         },
                         {
                             "name": "right",
@@ -3097,7 +3181,15 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
+                        },
+                        {
+                            "name": "extra",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": true,
+                            "optional": true,
+                            "attributes": []
                         }
                     ]
                 },
@@ -3135,7 +3227,7 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
                         },
                         {
                             "name": "right",
@@ -3144,7 +3236,15 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
+                        },
+                        {
+                            "name": "extra",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": true,
+                            "optional": true,
+                            "attributes": []
                         }
                     ]
                 },
@@ -3260,7 +3360,7 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
                         },
                         {
                             "name": "value",
@@ -3269,7 +3369,15 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
+                        },
+                        {
+                            "name": "extra",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": true,
+                            "optional": true,
+                            "attributes": []
                         }
                     ]
                 },
@@ -3299,7 +3407,7 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
                         },
                         {
                             "name": "value",
@@ -3308,7 +3416,15 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
+                        },
+                        {
+                            "name": "extra",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": true,
+                            "optional": true,
+                            "attributes": []
                         }
                     ]
                 },
@@ -3437,7 +3553,7 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
                         },
                         {
                             "name": "value",
@@ -3446,7 +3562,15 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
+                        },
+                        {
+                            "name": "extra",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": true,
+                            "optional": true,
+                            "attributes": []
                         }
                     ]
                 },
@@ -3650,7 +3774,7 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
                         },
                         {
                             "name": "value",
@@ -3659,7 +3783,15 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
+                        },
+                        {
+                            "name": "extra",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": true,
+                            "optional": true,
+                            "attributes": []
                         }
                     ]
                 },
@@ -3788,7 +3920,7 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
                         },
                         {
                             "name": "value",
@@ -3797,7 +3929,15 @@
                             "variadic": false,
                             "optional": true,
                             "attributes": [],
-                            "default": null
+                            "default_constant": "self::MISSING"
+                        },
+                        {
+                            "name": "extra",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": true,
+                            "optional": true,
+                            "attributes": []
                         }
                     ]
                 },

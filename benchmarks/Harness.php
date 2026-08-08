@@ -75,10 +75,10 @@ final class Harness
         }
     }
 
-    /** @return array<non-empty-string, non-empty-list<float>> */
+    /** @return array<non-empty-string, non-empty-list<array{elapsed_ms: float, allocated_after_bytes: int}>> */
     private static function sample(MeasurementRequest $request, CorrectnessDigest $expectedDigest): array
     {
-        /** @var array<non-empty-string, list<float>> $samples */
+        /** @var array<non-empty-string, non-empty-list<array{elapsed_ms: float, allocated_after_bytes: int}>> $samples */
         $samples = [];
         foreach ($request->operations() as $operation) {
             $samples[$operation->name()] = [];
@@ -92,7 +92,7 @@ final class Harness
             }
         }
 
-        /** @var array<non-empty-string, non-empty-list<float>> $samples */
+        /** @var array<non-empty-string, non-empty-list<array{elapsed_ms: float, allocated_after_bytes: int}>> $samples */
         return $samples;
     }
 
@@ -104,16 +104,18 @@ final class Harness
         self::assertResultDigest($operation->execute(), $operation, $expectedDigest, $phase);
     }
 
+    /** @return array{elapsed_ms: float, allocated_after_bytes: int} */
     private static function timeOperation(
         BenchmarkOperation $operation,
         CorrectnessDigest $expectedDigest,
-    ): float {
+    ): array {
         $started = hrtime(true);
         $result = $operation->execute();
         $elapsed = (hrtime(true) - $started) / 1_000_000;
+        $allocatedAfter = memory_get_usage(true);
         self::assertResultDigest($result, $operation, $expectedDigest, MeasurementPhase::Timed);
 
-        return $elapsed;
+        return ['elapsed_ms' => $elapsed, 'allocated_after_bytes' => $allocatedAfter];
     }
 
     private static function assertResultDigest(
@@ -128,7 +130,7 @@ final class Harness
     }
 
     /**
-     * @param array<non-empty-string, non-empty-list<float>> $samples
+     * @param array<non-empty-string, non-empty-list<array{elapsed_ms: float, allocated_after_bytes: int}>> $samples
      * @param array<non-empty-string, CorrectnessDigest> $digests
      * @return array<non-empty-string, array<string, mixed>>
      */
@@ -143,19 +145,31 @@ final class Harness
     }
 
     /**
-     * @param non-empty-list<float> $rawSamples
+     * @param non-empty-list<array{elapsed_ms: float, allocated_after_bytes: int}> $rawSamples
      * @return array<string, mixed>
      */
     private static function summarizeOperation(array $rawSamples, CorrectnessDigest $digest): array
     {
-        $sorted = $rawSamples;
+        $timings = [];
+        $allocations = [];
+        foreach ($rawSamples as $sample) {
+            $timings[] = $sample['elapsed_ms'];
+            $allocations[] = $sample['allocated_after_bytes'];
+        }
+        $sorted = $timings;
         sort($sorted);
+        $firstAllocation = $allocations[0];
+        $lastAllocation = $allocations[count($allocations) - 1];
+        $peakAllocation = max($allocations);
 
         return [
-            'samples_ms' => array_map(static fn (float $sample): float => round($sample, 6), $rawSamples),
+            'samples_ms' => array_map(static fn (float $sample): float => round($sample, 6), $timings),
             'minimum_ms' => round($sorted[0], 6),
             'median_ms' => round($sorted[intdiv(count($sorted), 2)], 6),
             'maximum_ms' => round($sorted[count($sorted) - 1], 6),
+            'allocated_after_sample_bytes' => $allocations,
+            'retained_growth_bytes' => max(0, $lastAllocation - $firstAllocation),
+            'retained_peak_above_first_bytes' => max(0, $peakAllocation - $firstAllocation),
             'correctness_digest' => $digest->value(),
         ];
     }

@@ -144,17 +144,27 @@ The same expression/value overloads apply to `having()` and `orHaving()`.
 ```php
 where(
     RawExpression|Closure|string|Identifier $subject,
-    mixed $operatorOrValue = null,
-    mixed $value = null,
+    mixed $operatorOrValue = self::MISSING,
+    mixed $value = self::MISSING,
+    mixed ...$extra,
 ): static
 whereColumn(string|Identifier $left, string $operator, string|Identifier $right): static
 
 having(
     RawExpression|Closure|string|Identifier $subject,
-    mixed $operatorOrValue = null,
-    mixed $value = null,
+    mixed $operatorOrValue = self::MISSING,
+    mixed $value = self::MISSING,
+    mixed ...$extra,
 ): self
 ```
+
+`self::MISSING` is a private internal sentinel (backed by the closed
+`Internal\MissingArgument` enum) that distinguishes "argument not supplied"
+from an explicit `null`. This preserves the exact `where('column', null)`
+two-operand shape (`IS NULL`) separately from the three-operand
+`where('column', operator, value)` shape without `func_num_args()` dispatch.
+The variadic `$extra` catches arguments beyond the declared shape and rejects
+them with the same per-subject messages as before.
 
 The corresponding `orWhere()`, `whereNot()`, `orWhereNot()`,
 `orWhereColumn()`, and `orHaving()` methods preserve the same operand shapes.
@@ -169,8 +179,9 @@ values are rejected.
 ```php
 JoinClause::on(
     RawExpression|string|Identifier $left,
-    mixed $operator = null,
-    mixed $right = null,
+    mixed $operator = self::MISSING,
+    mixed $right = self::MISSING,
+    mixed ...$extra,
 ): self
 JoinClause::onValue(
     RawExpression|string|Identifier $expression,

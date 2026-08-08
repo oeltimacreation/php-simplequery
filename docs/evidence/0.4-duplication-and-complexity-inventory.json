@@ -1,0 +1,260 @@
+{
+  "schema_version": 1,
+  "release": "0.4.0",
+  "phase": "0",
+  "baseline": "v0.3.0",
+  "collected_at": "2026-08-01",
+  "items": [
+    {
+      "id": "SQ-0402-01",
+      "hotspot": "MySQL-family compiler duplication",
+      "locations": [
+        "src/Internal/Compiler/MariaDbCompiler.php",
+        "src/Internal/Compiler/MySqlCompiler.php"
+      ],
+      "observation": "Both classes extend AbstractDialectCompiler and differ only in the shared-lock clause (LOCK IN SHARE MODE vs FOR SHARE); every other clause is inherited.",
+      "before": {
+        "mariadb_compiler_lines": 30,
+        "mysql_compiler_lines": 30,
+        "lock_literal_sites": 2,
+        "shared_lock_sql": "LOCK IN SHARE MODE / FOR SHARE"
+      },
+      "after": {
+        "mariadb_compiler_lines": 15,
+        "mysql_compiler_lines": 15,
+        "mysql_family_compiler_lines": 37,
+        "lock_literal_sites": 2,
+        "shared_lock_sql": "LOCK IN SHARE MODE / FOR SHARE"
+      },
+      "target_phase": 1,
+      "reproduce": "grep -n \"'update'\" src/Internal/Compiler/MariaDbCompiler.php src/Internal/Compiler/MySqlCompiler.php"
+    },
+    {
+      "id": "SQ-0402-02",
+      "hotspot": "Dialect golden-write duplication",
+      "locations": [
+        "tests/Compiler/MariaDbCompilerTest.php",
+        "tests/Compiler/MySqlCompilerTest.php",
+        "tests/Compiler/SqliteCompilerTest.php"
+      ],
+      "observation": "Near-identical insert/insertMany/update/delete golden assertions repeated per dialect with only identifier quoting differing.",
+      "before": {
+        "mariadb_test_lines": 106,
+        "mysql_test_lines": 73,
+        "sqlite_test_lines": 79,
+        "mariadb_assertion_count": 7,
+        "mysql_assertion_count": 6,
+        "sqlite_assertion_count": 4,
+        "write_golden_files": 3
+      },
+      "after": {
+        "mariadb_test_lines": 26,
+        "mysql_test_lines": 23,
+        "sqlite_test_lines": 21,
+        "mariadb_assertion_count": 2,
+        "mysql_assertion_count": 2,
+        "sqlite_assertion_count": 0,
+        "write_golden_files": 0,
+        "golden_fixture_cases": 24
+      },
+      "target_phase": 2,
+      "reproduce": "grep -c 'assertMatches\\|assertSame' tests/Compiler/{MariaDb,MySql,Sqlite}CompilerTest.php"
+    },
+    {
+      "id": "SQ-0402-03",
+      "hotspot": "Test-double sprawl",
+      "locations": [
+        "tests/Unit/ControlledAssociativeStatement.php",
+        "tests/Unit/ControlledFetchStatement.php",
+        "tests/Unit/ExhaustingThrowingCloseStatement.php",
+        "tests/Unit/FalseCloseStatement.php",
+        "tests/Unit/ThrowingCloseStatement.php",
+        "tests/Unit/ThrowingFetchAndCloseStatement.php",
+        "tests/Unit/ThrowingFetchStatement.php"
+      ],
+      "observation": "Seven PDOStatement subclasses whose fetch/close behavior could be one configurable double.",
+      "before": {
+        "pdo_statement_doubles": 7,
+        "double_files": 7
+      },
+      "after": {
+        "pdo_statement_doubles": 1,
+        "double_files": 1
+      },
+      "target_phase": 2,
+      "reproduce": "ls tests/Unit/*Statement.php | wc -l"
+    },
+    {
+      "id": "SQ-0402-04",
+      "hotspot": "Condition-construction duplication",
+      "locations": [
+        "src/QueryBuilder.php",
+        "src/Internal/BuildsConditions.php"
+      ],
+      "observation": "QueryBuilder::addHaving() and BuildsConditions::addCondition() are two private implementations of the same ConditionFactory::condition() dispatch; only negation handling differs.",
+      "before": {
+        "addHaving_sites": 2,
+        "addCondition_sites": 4,
+        "condition_dispatch_implementations": 2
+      },
+      "after": {
+        "addHaving_sites": 0,
+        "addCondition_sites": 1,
+        "condition_dispatch_implementations": 1
+      },
+      "target_phase": 1,
+      "reproduce": "grep -n 'private function addHaving\\|private function addCondition' src/QueryBuilder.php src/Internal/BuildsConditions.php"
+    },
+    {
+      "id": "SQ-0402-05",
+      "hotspot": "func_num_args() overload dispatch",
+      "locations": [
+        "src/Internal/BuildsConditions.php",
+        "src/QueryBuilder.php",
+        "src/JoinClause.php"
+      ],
+      "observation": "Magic argument-count dispatch for where()/having()/join()/on() argument shapes; works but is brittle to analyze.",
+      "before": {
+        "builds_conditions_sites": 4,
+        "query_builder_sites": 5,
+        "join_clause_sites": 3,
+        "total_sites": 12,
+        "files_affected": 3
+      },
+      "after": {
+        "builds_conditions_sites": 0,
+        "query_builder_sites": 0,
+        "join_clause_sites": 0,
+        "total_sites": 0,
+        "files_affected": 0,
+        "sentinel_dispatch": "private const MISSING (Internal\\MissingArgument::Value) with explicit variadic catch-all",
+        "select_cyclomatic_complexity_before": 15,
+        "select_cyclomatic_complexity_after": 3
+      },
+      "target_phase": 3,
+      "reproduce": "grep -rc 'func_num_args' src/Internal/BuildsConditions.php src/QueryBuilder.php src/JoinClause.php"
+    },
+    {
+      "id": "SQ-0402-06",
+      "hotspot": "Magic strings in internal state",
+      "locations": [
+        "src/Internal/Ast/LockState.php",
+        "src/Internal/Ast/JoinState.php",
+        "src/QueryBuilder.php",
+        "src/Internal/Compiler/MariaDbCompiler.php",
+        "src/Internal/Compiler/MySqlCompiler.php"
+      ],
+      "observation": "'update'/'share', 'NOWAIT'/'SKIP LOCKED', and 'INNER'/'LEFT' flow as untyped strings through the AST.",
+      "before": {
+        "lock_state_string_fields": 2,
+        "join_state_string_field": 1,
+        "query_builder_literal_sites": 7,
+        "compiler_literal_sites": 2,
+        "total_literal_sites": 9
+      },
+      "after": {
+        "lock_state_string_fields": 0,
+        "join_state_string_field": 0,
+        "query_builder_literal_sites": 0,
+        "compiler_literal_sites": 0,
+        "total_literal_sites": 0,
+        "ast_enums": [
+          "LockMode",
+          "LockModifier",
+          "JoinType"
+        ],
+        "connection_connect_cyclomatic_complexity_before": 9,
+        "connection_connect_cyclomatic_complexity_after": 8
+      },
+      "target_phase": 3,
+      "reproduce": "grep -c \"'update'\\|'share'\\|'NOWAIT'\\|'SKIP LOCKED'\\|'INNER'\\|'LEFT'\" src/QueryBuilder.php"
+    },
+    {
+      "id": "SQ-0402-07",
+      "hotspot": "Connection construction surface",
+      "locations": [
+        "src/Connection.php"
+      ],
+      "observation": "458 lines mixing lifecycle, DSN validation, PDO option merging, and supported-profile checks in one class.",
+      "before": {
+        "connection_lines": 458
+      },
+      "after": {
+        "connection_lines": 270
+      },
+      "target_phase": 1,
+      "reproduce": "wc -l src/Connection.php"
+    },
+    {
+      "id": "SQ-0402-08",
+      "hotspot": "Per-terminal allocation",
+      "locations": [
+        "src/Internal/Ast/QueryState.php",
+        "src/Internal/Compiler/CompilerFactory.php",
+        "src/QueryBuilder.php"
+      ],
+      "observation": "first()/count()/aggregates deep-copy the AST via QueryState::copy(); every compile() allocates a fresh compiler via CompilerFactory::for(); every terminal allocates a fresh executor via new Executor().",
+      "before": {
+        "query_state_copy_callers": 3,
+        "compiler_factory_for_callers": 2,
+        "new_executor_callers": 2,
+        "ast_copy_definitions": 4
+      },
+      "after": {
+        "query_state_deep_copy_callers": 2,
+        "query_state_compile_snapshot_callers": 2,
+        "compiler_factory_for_callers": 2,
+        "new_executor_callers": 1,
+        "ast_copy_definitions": 5,
+        "deep_copy_in_compile_hot_path": false,
+        "compiler_allocations_per_compile": 0,
+        "executor_allocations_per_terminal": 0
+      },
+      "target_phase": 4,
+      "reproduce": "grep -rn -- '->copy()' src/QueryBuilder.php src/Internal/Compiler/AbstractDialectCompiler.php; grep -rn 'CompilerFactory::for\\|new Executor' src/"
+    },
+    {
+      "id": "SQ-0402-09",
+      "hotspot": "Reference/evidence documentation overlap",
+      "locations": [
+        "docs/reference/public-api.md",
+        "tests/Fixtures/Contracts/public-api.json",
+        "docs/maintainers/testing-strategy.md",
+        "docs/maintainers/testing-architecture.md"
+      ],
+      "observation": "A manual reference mirrors a machine fixture; two testing documents overlap; retired plan and evidence content is not yet culled.",
+      "before": {
+        "public_api_reference_lines": 276,
+        "public_api_manifest_lines": 4411,
+        "testing_strategy_lines": 130,
+        "testing_architecture_lines": 118,
+        "evidence_markdown_files": 19,
+        "evidence_json_files": 8
+      },
+      "after": null,
+      "target_phase": 5,
+      "reproduce": "wc -l docs/reference/public-api.md tests/Fixtures/Contracts/public-api.json docs/maintainers/testing-strategy.md docs/maintainers/testing-architecture.md"
+    },
+    {
+      "id": "SQ-0402-10",
+      "hotspot": "Layer-duplicated assertions",
+      "locations": [
+        "tests/Unit/ConnectionTest.php",
+        "tests/Unit/ConnectionLifecycleTest.php",
+        "tests/Migration/RepresentativeSlicesTest.php",
+        "tests/Integration/SQLite/ExecutionTest.php"
+      ],
+      "observation": "Unit and migration/integration tests re-asserted exact or substring compiled-SQL output that the compiler-layer golden fixtures already pin; the connection lifecycle contract only needs compilation to succeed. The aggregate count-rewrite SQL-shape checks in ExecutionTest are retained because the integration layer must verify the executed count query shape.",
+      "before": {
+        "unit_exact_sql_assertions": 2,
+        "cross_layer_sql_substring_assertions": 2
+      },
+      "after": {
+        "unit_exact_sql_assertions": 0,
+        "cross_layer_sql_substring_assertions": 0
+      },
+      "target_phase": 2,
+      "reproduce": "grep -rn 'assertSame(.*compile()->sql' tests/Unit/ tests/Integration/ tests/Migration/"
+    }
+  ]
+}

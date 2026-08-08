@@ -7,6 +7,7 @@
 /tools/database-probes/results/
 /benchmarks/results/
 /internal_docs/
+/.agents/
 
 .env
 .env.local

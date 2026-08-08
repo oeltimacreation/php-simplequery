@@ -35,49 +35,91 @@ abstract class AbstractDialectCompiler implements DialectCompiler
             throw new InvalidQueryException('An offset requires a limit.');
         }
 
-        $context = new CompilationContext();
+        return $this->compileSelect($state, new CompilationContext());
+    }
+
+    private function compileSelect(QueryState $state, CompilationContext $context): CompiledQuery
+    {
+        $sql = $this->selectClause($state, $context)
+            . $this->joinClause($state, $context)
+            . $this->whereClause($state, $context)
+            . $this->groupByClause($state, $context)
+            . $this->havingClause($state, $context)
+            . $this->orderByClause($state, $context)
+            . $this->paginationClause($state)
+            . $this->lock($state);
+
+        return new CompiledQuery($sql, $context->bindings());
+    }
+
+    private function selectClause(QueryState $state, CompilationContext $context): string
+    {
         $projection = $state->projections === [] ? [Identifier::wildcard()] : $state->projections;
         $projectionSql = [];
         foreach ($projection as $expression) {
             $projectionSql[] = $this->expression($expression, $context);
         }
 
-        $sql = 'SELECT ' . ($state->distinct ? 'DISTINCT ' : '') . implode(', ', $projectionSql);
-        $sql .= ' FROM ' . $this->source($state->source, $context);
+        return 'SELECT ' . ($state->distinct ? 'DISTINCT ' : '') . implode(', ', $projectionSql)
+            . ' FROM ' . $this->source($state->source, $context);
+    }
 
+    private function joinClause(QueryState $state, CompilationContext $context): string
+    {
+        $sql = '';
         foreach ($state->joins as $join) {
             $sql .= sprintf(
                 ' %s JOIN %s ON %s',
-                $join->type,
+                $join->type->value,
                 $this->source($join->source, $context),
                 $this->conditions($join->conditions, $context),
             );
         }
 
-        if (!$state->where->isEmpty()) {
-            $sql .= ' WHERE ' . $this->conditions($state->where, $context);
+        return $sql;
+    }
+
+    private function whereClause(QueryState $state, CompilationContext $context): string
+    {
+        return $state->where->isEmpty() ? '' : ' WHERE ' . $this->conditions($state->where, $context);
+    }
+
+    private function groupByClause(QueryState $state, CompilationContext $context): string
+    {
+        if ($state->groups === []) {
+            return '';
         }
 
-        if ($state->groups !== []) {
-            $groups = [];
-            foreach ($state->groups as $group) {
-                $groups[] = $this->expression($group, $context);
-            }
-            $sql .= ' GROUP BY ' . implode(', ', $groups);
+        $groups = [];
+        foreach ($state->groups as $group) {
+            $groups[] = $this->expression($group, $context);
         }
 
-        if (!$state->having->isEmpty()) {
-            $sql .= ' HAVING ' . $this->conditions($state->having, $context);
+        return ' GROUP BY ' . implode(', ', $groups);
+    }
+
+    private function havingClause(QueryState $state, CompilationContext $context): string
+    {
+        return $state->having->isEmpty() ? '' : ' HAVING ' . $this->conditions($state->having, $context);
+    }
+
+    private function orderByClause(QueryState $state, CompilationContext $context): string
+    {
+        if ($state->orders === []) {
+            return '';
         }
 
-        if ($state->orders !== []) {
-            $orders = [];
-            foreach ($state->orders as $order) {
-                $orders[] = $this->expression($order->expression, $context) . ' ' . $order->direction->value;
-            }
-            $sql .= ' ORDER BY ' . implode(', ', $orders);
+        $orders = [];
+        foreach ($state->orders as $order) {
+            $orders[] = $this->expression($order->expression, $context) . ' ' . $order->direction->value;
         }
 
+        return ' ORDER BY ' . implode(', ', $orders);
+    }
+
+    private function paginationClause(QueryState $state): string
+    {
+        $sql = '';
         if ($state->limit !== null) {
             $sql .= ' LIMIT ' . $state->limit;
         }
@@ -85,9 +127,7 @@ abstract class AbstractDialectCompiler implements DialectCompiler
             $sql .= ' OFFSET ' . $state->offset;
         }
 
-        $sql .= $this->lock($state);
-
-        return new CompiledQuery($sql, $context->bindings());
+        return $sql;
     }
 
     #[\Override]
@@ -122,15 +162,12 @@ abstract class AbstractDialectCompiler implements DialectCompiler
         $this->validateAggregateColumn($column);
         $this->validateScalarAggregateShape($state);
 
-        $expressionContext = new CompilationContext();
-        $columnSql = $this->expression($column, $expressionContext);
+        $context = new CompilationContext();
+        $columnSql = $this->expression($column, $context);
         $aggregateState = $this->withoutTopLevelPaginationAndLock($state);
-        $aggregateState->projections = [new RawExpression(
-            sprintf('%s(%s)', $function, $columnSql),
-            $expressionContext->bindings(),
-        )];
+        $aggregateState->projections = [new RawExpression(sprintf('%s(%s)', $function, $columnSql))];
 
-        return $this->select($aggregateState);
+        return $this->compileSelect($aggregateState, $context);
     }
 
     private function validateAggregateFunction(string $function): void
@@ -170,7 +207,8 @@ abstract class AbstractDialectCompiler implements DialectCompiler
         }
 
         $context = new CompilationContext();
-        [$columns, $values] = $this->writeRow($row, $context);
+        $columns = $this->compileWriteColumns(array_keys($row));
+        $values = $this->compileWriteValues($row, $context);
         $sql = sprintf(
             'INSERT INTO %s (%s) VALUES (%s)',
             $this->physicalTable($state->source),
@@ -195,18 +233,14 @@ abstract class AbstractDialectCompiler implements DialectCompiler
         }
 
         $context = new CompilationContext();
-        $compiledColumns = [];
-        foreach ($firstColumns as $column) {
-            $compiledColumns[] = $this->writeColumn($column);
-        }
+        $compiledColumns = $this->compileWriteColumns($firstColumns);
 
         $valueGroups = [];
         foreach ($rows as $row) {
             if (array_keys($row) !== $firstColumns) {
                 throw new InvalidQueryException('Every batch insert row must have identical ordered columns.');
             }
-            [, $values] = $this->writeRow($row, $context);
-            $valueGroups[] = '(' . implode(', ', $values) . ')';
+            $valueGroups[] = '(' . implode(', ', $this->compileWriteValues($row, $context)) . ')';
         }
 
         $sql = sprintf(
@@ -449,19 +483,31 @@ abstract class AbstractDialectCompiler implements DialectCompiler
     }
 
     /**
-     * @param array<string, mixed> $row
-     * @return array{list<string>, list<string>}
+     * @param list<string> $columns
+     * @return list<string>
      */
-    private function writeRow(array $row, CompilationContext $context): array
+    private function compileWriteColumns(array $columns): array
     {
-        $columns = [];
+        $compiled = [];
+        foreach ($columns as $column) {
+            $compiled[] = $this->writeColumn($column);
+        }
+
+        return $compiled;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return list<string>
+     */
+    private function compileWriteValues(array $row, CompilationContext $context): array
+    {
         $values = [];
-        foreach ($row as $column => $value) {
-            $columns[] = $this->writeColumn($column);
+        foreach ($row as $value) {
             $values[] = $this->writeValue($value, $context);
         }
 
-        return [$columns, $values];
+        return $values;
     }
 
     private function writeValue(mixed $value, CompilationContext $context): string
@@ -498,29 +544,21 @@ abstract class AbstractDialectCompiler implements DialectCompiler
 
     private function validateInsertState(QueryState $state): void
     {
-        $this->physicalTable($state->source);
-        if (
-            $state->projections !== []
-            || $state->distinct
-            || !$state->where->isEmpty()
-            || $state->joins !== []
-            || $state->groups !== []
-            || !$state->having->isEmpty()
-            || $state->orders !== []
-            || $state->limit !== null
-            || $state->offset !== null
-            || $state->lock->mode !== null
-        ) {
-            throw new UnsupportedFeatureException('Insert does not accept read clauses.');
-        }
+        $this->validateWriteState($state, allowPredicates: false);
     }
 
     private function validateUpdateDeleteState(QueryState $state): void
+    {
+        $this->validateWriteState($state, allowPredicates: true);
+    }
+
+    private function validateWriteState(QueryState $state, bool $allowPredicates): void
     {
         $this->physicalTable($state->source);
         if (
             $state->projections !== []
             || $state->distinct
+            || (!$allowPredicates && !$state->where->isEmpty())
             || $state->joins !== []
             || $state->groups !== []
             || !$state->having->isEmpty()
@@ -529,13 +567,17 @@ abstract class AbstractDialectCompiler implements DialectCompiler
             || $state->offset !== null
             || $state->lock->mode !== null
         ) {
-            throw new UnsupportedFeatureException('Update and delete accept predicates but no other read clauses.');
+            throw new UnsupportedFeatureException(
+                $allowPredicates
+                    ? 'Update and delete accept predicates but no other read clauses.'
+                    : 'Insert does not accept read clauses.',
+            );
         }
     }
 
     private function withoutTopLevelPaginationAndLock(QueryState $state): QueryState
     {
-        $copy = $state->copy();
+        $copy = $state->copyForCompilation();
         $copy->orders = [];
         $copy->limit = null;
         $copy->offset = null;

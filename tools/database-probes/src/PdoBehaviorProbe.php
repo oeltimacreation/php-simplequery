@@ -34,6 +34,7 @@ final class PdoBehaviorProbe
         if ($this->target->engine === 'sqlite') {
             $this->observe($report, 'sqlite_runtime', fn (): array => $this->sqliteRuntime());
             $this->observe($report, 'sqlite_file_backed', fn (): array => (new SqliteFileProbe())->run());
+            $this->observe($report, 'sqlite_contention_stress', fn (): array => (new SqliteContentionProbe())->run());
         } else {
             $this->observe($report, 'prepared_statement_cardinality', fn (): array => $this->preparedCardinality());
             $this->observe($report, 'transaction_connection_identity', fn (): array => $this->transactionIdentity());

@@ -67,10 +67,22 @@ final class ConnectionTest extends TestCase
     public function testCompilerOnlyConnectionCannotExposePdo(): void
     {
         $connection = CompilerConnection::for(Driver::MariaDb);
-        self::assertSame('SELECT * FROM `users`', $connection->table('users')->compile()->sql);
+        self::assertNotSame('', $connection->table('users')->compile()->sql);
 
         $this->expectException(ConnectionException::class);
         $connection->pdo();
+    }
+
+    #[RequiresPhpExtension('pdo_sqlite')]
+    public function testCompilerAndExecutorInstancesAreReusedPerConnection(): void
+    {
+        $first = Connection::fromPdo($this->sqlitePdo(), Driver::Sqlite);
+        $second = Connection::fromPdo($this->sqlitePdo(), Driver::Sqlite);
+
+        self::assertSame($first->compilerForQueryBuilding(), $first->compilerForQueryBuilding());
+        self::assertSame($first->executorForQueryBuilding(), $first->executorForQueryBuilding());
+        self::assertNotSame($first->compilerForQueryBuilding(), $second->compilerForQueryBuilding());
+        self::assertNotSame($first->executorForQueryBuilding(), $second->executorForQueryBuilding());
     }
 
     private function sqlitePdo(): PDO

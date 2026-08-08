@@ -4,7 +4,7 @@
 
 - Package: `oeltimacreation/php-simplequery`
 - Namespace: `Oeltima\SimpleQuery`
-- Release line: `0.3.x` (ZeroVer)
+- Release line: `0.4.x` (ZeroVer)
 - Runtime: PHP 8.2+ with PDO
 - Supported engines: MariaDB 11.8, MySQL 8.0, SQLite 3.39.2+
 
@@ -29,7 +29,10 @@ docs/maintainers/    Testing, benchmarking, release, and contributor operations
 docs/plans/          Active release planning only
 docs/adr/            Durable architecture decisions
 docs/evidence/       Durable compatibility and release evidence
-tools/                Reproducible database probes and migration analysis
+tools/               Reproducible database probes and migration analysis
+scripts/             Quality gate and coverage scripts (composer check chain)
+benchmarks/          Performance harness, scenarios, and comparison tooling
+.github/             CI workflows, issue templates, and PR template
 ```
 
 ## Essential commands

@@ -2,11 +2,14 @@
 
 ## Supported versions
 
-There is no released version yet. Security support begins with the first
-published release and will be listed here by release line.
+Security support covers the current ZeroVer minor release line.
 
 | Version | Supported |
 | --- | --- |
+| 0.4.x | ✅ Current release line |
+| 0.3.x | ❌ Superseded by 0.4.0 |
+| 0.2.x | ❌ Superseded by 0.3.0 |
+| 0.1.x | ❌ Superseded by 0.2.0 |
 | Unreleased development branch | Best effort; not for production |
 
 ## Reporting a vulnerability

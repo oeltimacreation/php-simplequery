@@ -16,6 +16,31 @@
       "id": "mysql-update",
       "sql": "UPDATE `users` SET `active` = ? WHERE `id` = ?",
       "bindings": [0, 7]
+    },
+    {
+      "id": "mysql-golden-select",
+      "sql": "SELECT `u`.* FROM `app`.`users` AS `u` INNER JOIN `roles` ON `roles`.`user_id` = `u`.`id` AND `roles`.`active` = ? WHERE `u`.`status` IN (?, ?) AND NOT (`u`.`email` LIKE ?) ORDER BY `u`.`id` DESC LIMIT 10",
+      "bindings": [1, "active", "pending", "%@invalid.test"]
+    },
+    {
+      "id": "mysql-insert",
+      "sql": "INSERT INTO `events` (`kind`) VALUES (?)",
+      "bindings": ["login"]
+    },
+    {
+      "id": "mysql-insert-many",
+      "sql": "INSERT INTO `events` (`kind`, `priority`) VALUES (?, ?), (?, ?)",
+      "bindings": ["login", 1, "logout", 2]
+    },
+    {
+      "id": "mysql-update-events",
+      "sql": "UPDATE `events` SET `kind` = ? WHERE `id` = ?",
+      "bindings": ["logout", 4]
+    },
+    {
+      "id": "mysql-delete",
+      "sql": "DELETE FROM `events`",
+      "bindings": []
     }
   ]
 }

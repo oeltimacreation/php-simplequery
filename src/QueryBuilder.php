@@ -10,15 +10,15 @@ use Oeltima\SimpleQuery\Exception\QueryExecutionException;
 use Oeltima\SimpleQuery\Expression\Identifier;
 use Oeltima\SimpleQuery\Expression\RawExpression;
 use Oeltima\SimpleQuery\Internal\Ast\ConditionCollection;
-use Oeltima\SimpleQuery\Internal\Ast\ConditionFactory;
-use Oeltima\SimpleQuery\Internal\Ast\ConditionTerm;
 use Oeltima\SimpleQuery\Internal\Ast\JoinState;
+use Oeltima\SimpleQuery\Internal\Ast\JoinType;
+use Oeltima\SimpleQuery\Internal\Ast\LockMode;
+use Oeltima\SimpleQuery\Internal\Ast\LockModifier;
 use Oeltima\SimpleQuery\Internal\Ast\OrderClause;
 use Oeltima\SimpleQuery\Internal\Ast\QueryState;
 use Oeltima\SimpleQuery\Internal\Ast\Source;
 use Oeltima\SimpleQuery\Internal\AggregateResult;
 use Oeltima\SimpleQuery\Internal\BuildsConditions;
-use Oeltima\SimpleQuery\Internal\Compiler\CompilerFactory;
 use Oeltima\SimpleQuery\Internal\Compiler\DialectCompiler;
 use Oeltima\SimpleQuery\Internal\Executor;
 use Oeltima\SimpleQuery\Internal\InputNormalizer;
@@ -76,30 +76,33 @@ final class QueryBuilder
     public function join(
         string|Identifier $table,
         RawExpression|Closure|string|Identifier $conditionOrLeft,
-        mixed $operator = null,
-        mixed $right = null,
+        mixed $operator = self::MISSING,
+        mixed $right = self::MISSING,
+        mixed ...$extra,
     ): self {
-        return $this->addJoin('INNER', func_num_args(), $table, $conditionOrLeft, $operator, $right);
+        return $this->addJoin(JoinType::Inner, $table, $conditionOrLeft, $operator, $right, $extra);
     }
 
     /** @param (Closure(JoinClause): mixed)|RawExpression|string|Identifier $conditionOrLeft */
     public function innerJoin(
         string|Identifier $table,
         RawExpression|Closure|string|Identifier $conditionOrLeft,
-        mixed $operator = null,
-        mixed $right = null,
+        mixed $operator = self::MISSING,
+        mixed $right = self::MISSING,
+        mixed ...$extra,
     ): self {
-        return $this->addJoin('INNER', func_num_args(), $table, $conditionOrLeft, $operator, $right);
+        return $this->addJoin(JoinType::Inner, $table, $conditionOrLeft, $operator, $right, $extra);
     }
 
     /** @param (Closure(JoinClause): mixed)|RawExpression|string|Identifier $conditionOrLeft */
     public function leftJoin(
         string|Identifier $table,
         RawExpression|Closure|string|Identifier $conditionOrLeft,
-        mixed $operator = null,
-        mixed $right = null,
+        mixed $operator = self::MISSING,
+        mixed $right = self::MISSING,
+        mixed ...$extra,
     ): self {
-        return $this->addJoin('LEFT', func_num_args(), $table, $conditionOrLeft, $operator, $right);
+        return $this->addJoin(JoinType::Left, $table, $conditionOrLeft, $operator, $right, $extra);
     }
 
     public function groupBy(string|Identifier|RawExpression ...$columns): self
@@ -118,19 +121,21 @@ final class QueryBuilder
     /** @param RawExpression|(Closure(ConditionGroup): mixed)|string|Identifier $subject */
     public function having(
         RawExpression|Closure|string|Identifier $subject,
-        mixed $operatorOrValue = null,
-        mixed $value = null,
+        mixed $operatorOrValue = self::MISSING,
+        mixed $value = self::MISSING,
+        mixed ...$extra,
     ): self {
-        return $this->addHaving(false, func_num_args(), $subject, $operatorOrValue, $value);
+        return $this->addCondition(false, false, $subject, $operatorOrValue, $value, $this->state->having, $extra);
     }
 
     /** @param RawExpression|(Closure(ConditionGroup): mixed)|string|Identifier $subject */
     public function orHaving(
         RawExpression|Closure|string|Identifier $subject,
-        mixed $operatorOrValue = null,
-        mixed $value = null,
+        mixed $operatorOrValue = self::MISSING,
+        mixed $value = self::MISSING,
+        mixed ...$extra,
     ): self {
-        return $this->addHaving(true, func_num_args(), $subject, $operatorOrValue, $value);
+        return $this->addCondition(true, false, $subject, $operatorOrValue, $value, $this->state->having, $extra);
     }
 
     public function orderBy(
@@ -168,22 +173,22 @@ final class QueryBuilder
 
     public function forUpdate(): self
     {
-        return $this->setLockMode('update');
+        return $this->setLockMode(LockMode::Update);
     }
 
     public function forShare(): self
     {
-        return $this->setLockMode('share');
+        return $this->setLockMode(LockMode::Share);
     }
 
     public function noWait(): self
     {
-        return $this->setLockModifier('NOWAIT');
+        return $this->setLockModifier(LockModifier::NoWait);
     }
 
     public function skipLocked(): self
     {
-        return $this->setLockModifier('SKIP LOCKED');
+        return $this->setLockModifier(LockModifier::SkipLocked);
     }
 
     public function compile(): CompiledQuery
@@ -321,14 +326,16 @@ final class QueryBuilder
         return $this->state->where;
     }
 
-    /** @param (Closure(JoinClause): mixed)|RawExpression|string|Identifier $conditionOrLeft */
+    /** @param (Closure(JoinClause): mixed)|RawExpression|string|Identifier $conditionOrLeft
+     * @param array<array-key, mixed> $extra
+     */
     private function addJoin(
-        string $type,
-        int $argumentCount,
+        JoinType $type,
         string|Identifier $table,
         RawExpression|Closure|string|Identifier $conditionOrLeft,
         mixed $operator,
         mixed $right,
+        array $extra = [],
     ): self {
         $identifier = InputNormalizer::identifier($table);
         if ($identifier->wildcard) {
@@ -336,44 +343,54 @@ final class QueryBuilder
         }
         $source = Source::table($identifier->withoutAlias(), $identifier->alias);
         $clause = new JoinClause();
-        if ($conditionOrLeft instanceof Closure) {
-            if ($argumentCount !== 2) {
-                throw new InvalidQueryException('A join closure does not accept additional arguments.');
-            }
-            $conditionOrLeft($clause);
-        } else {
-            if ($argumentCount !== 4) {
-                throw new InvalidQueryException('A direct join requires table, left, operator, and right.');
-            }
-            $clause->on($conditionOrLeft, $operator, $right);
-        }
+        $this->applyJoinCondition($clause, $conditionOrLeft, $operator, $right, $extra);
 
         $this->state->joins[] = new JoinState($type, $source, $clause->snapshot());
 
         return $this;
     }
 
-    /** @param RawExpression|(Closure(ConditionGroup): mixed)|string|Identifier $subject */
-    private function addHaving(
-        bool $or,
-        int $argumentCount,
-        RawExpression|Closure|string|Identifier $subject,
-        mixed $operatorOrValue,
-        mixed $value,
-    ): self {
-        $predicate = ConditionFactory::condition(
-            $this->connection,
-            $argumentCount,
-            $subject,
-            $operatorOrValue,
-            $value,
-        );
-        $this->state->having->add(new ConditionTerm($predicate, $or));
+    /** @param (Closure(JoinClause): mixed)|RawExpression|string|Identifier $conditionOrLeft
+     * @param array<array-key, mixed> $extra
+     */
+    private function applyJoinCondition(
+        JoinClause $clause,
+        RawExpression|Closure|string|Identifier $conditionOrLeft,
+        mixed $operator,
+        mixed $right,
+        array $extra,
+    ): void {
+        $supplied = $this->joinArgumentCount($operator, $right, $extra);
+        if ($conditionOrLeft instanceof Closure) {
+            if ($supplied !== 0) {
+                throw new InvalidQueryException('A join closure does not accept additional arguments.');
+            }
+            $conditionOrLeft($clause);
 
-        return $this;
+            return;
+        }
+
+        if ($supplied !== 2) {
+            throw new InvalidQueryException('A direct join requires table, left, operator, and right.');
+        }
+        $clause->on($conditionOrLeft, $operator, $right);
     }
 
-    private function setLockMode(string $mode): self
+    /** @param array<array-key, mixed> $extra */
+    private function joinArgumentCount(mixed $operator, mixed $right, array $extra): int
+    {
+        $count = count($extra);
+        if ($operator !== self::MISSING) {
+            ++$count;
+        }
+        if ($right !== self::MISSING) {
+            ++$count;
+        }
+
+        return $count;
+    }
+
+    private function setLockMode(LockMode $mode): self
     {
         if ($this->state->lock->mode !== null && $this->state->lock->mode !== $mode) {
             throw new InvalidQueryException('Exactly one row-lock mode can be selected.');
@@ -383,7 +400,7 @@ final class QueryBuilder
         return $this;
     }
 
-    private function setLockModifier(string $modifier): self
+    private function setLockModifier(LockModifier $modifier): self
     {
         if ($this->state->lock->mode === null) {
             throw new InvalidQueryException('A lock modifier requires a row-lock mode.');
@@ -398,19 +415,19 @@ final class QueryBuilder
 
     private function compiler(): DialectCompiler
     {
-        return CompilerFactory::for($this->connection->driver());
+        return $this->connection->compilerForQueryBuilding();
     }
 
     private function executor(): Executor
     {
-        return new Executor($this->connection);
+        return $this->connection->executorForQueryBuilding();
     }
 
     private function compiledForExecution(bool $first = false): CompiledQuery
     {
         $state = $this->state;
         if ($first) {
-            $state = $this->state->copy();
+            $state = $this->state->copyForCompilation();
             $state->limit = min($state->limit ?? 1, 1);
         }
 
@@ -426,11 +443,7 @@ final class QueryBuilder
         string $function,
         string|Identifier|RawExpression $column,
     ): mixed {
-        $query = $this->compiler()->aggregate(
-            $this->state,
-            $function,
-            InputNormalizer::structuredExpression($column),
-        );
+        $query = $this->aggregateCompiled($function, $column);
 
         return $this->executor()->scalar($query);
     }
@@ -439,17 +452,22 @@ final class QueryBuilder
         string $function,
         string|Identifier|RawExpression $column,
     ): int|float|string|null {
-        $query = $this->compiler()->aggregate(
-            $this->state,
-            $function,
-            InputNormalizer::structuredExpression($column),
-        );
+        $query = $this->aggregateCompiled($function, $column);
         $value = $this->executor()->scalar($query);
         if ($value !== null && !is_int($value) && !is_float($value) && !is_string($value)) {
             throw $this->invalidAggregate('A numeric aggregate returned an unsupported scalar type.', $query);
         }
 
         return $value;
+    }
+
+    private function aggregateCompiled(string $function, string|Identifier|RawExpression $column): CompiledQuery
+    {
+        return $this->compiler()->aggregate(
+            $this->state,
+            $function,
+            InputNormalizer::structuredExpression($column),
+        );
     }
 
     private function invalidAggregate(string $message, CompiledQuery $query): QueryExecutionException

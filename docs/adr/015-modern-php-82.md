@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-07-17
+- Amended: 2026-08-01 (PHP 8.3+ attribute policy, SQ-0434)
 
 ## Context
 
@@ -16,6 +17,34 @@ callables, `#[SensitiveParameter]`, and PHPDoc generics/shapes where they improv
 the contract.
 
 Features are selected for correctness and clarity, not novelty.
+
+## PHP 8.3+ attribute policy
+
+The minimum supported runtime is PHP 8.2, but the implementation deliberately
+uses the `#[Override]` attribute (a PHP 8.3+ attribute) on methods that override
+a parent or implement an interface or trait contract.
+
+Why this is safe on PHP 8.2:
+
+- Attributes are resolved lazily; an unresolvable attribute class is a no-op
+  unless reflection explicitly instantiates it. The library never reflects on
+  its own `#[Override]` attributes, so it is harmless below PHP 8.3.
+- `#[Override]` is lexically ordinary attribute syntax (available since PHP
+  8.0), so every source file still parses and runs on PHP 8.2.
+
+Why it is still enforced:
+
+- PHPStan runs with `phpVersion: 80200` and `checkMissingOverrideMethodAttribute:
+  true` in both `phpstan.neon` and `phpstan.consumer.neon`, so accidental
+  missing or invalid overrides are reported on every local `composer check`.
+- On PHP 8.3+ runtimes, the PHP engine itself validates the attribute, and
+  PHPStan's version-gated analysis continues to enforce the contract.
+
+The PHP 8.2 floor is formalized as a local gate: `composer check` runs
+`composer check-platform-reqs` (pinned `config.platform.php: 8.2.0`) and
+`scripts/lint-php.php` verifies the `phpVersion: 80200` analysis floor, so
+accidental PHP 8.3+ syntax is rejected on the local path, matching the PHP
+8.2–8.5 CI matrix.
 
 ## Consequences
 

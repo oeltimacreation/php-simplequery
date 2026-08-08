@@ -8,6 +8,29 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-08
+
+### Added
+
+- Add code duplication gate (`composer duplication:check`) integrated into `composer check` to detect golden SQL/fixture ID duplicates, duplicate test names, and hotspot regressions.
+- Add multiprocess SQLite write-contention probe (`composer probe:sqlite:contention`) testing concurrent WAL database transactions, `SQLITE_BUSY` surfacing, busy-timeout blocking, and 4-process write safety.
+- Add memory-stability soak scenarios for streaming cursors and batch writes, per-sample allocation metrics, and a 256 KiB retained-allocation memory gate.
+- Add hot-path benchmark scenarios (`compile_allocation` and `terminal_reuse`) and automated paired `v0.3.0` baseline comparisons in CI.
+- Record `v0.3.0` baseline manifest, duplication/complexity inventory, performance/stability evidence, and ADR-015 for PHP 8.2+ attribute floor policy.
+
+### Changed
+
+- Consolidate MySQL and MariaDB dialect compilers behind a shared `@internal` `MySqlFamilyCompiler` base.
+- Unify clause condition construction into a single `BuildsConditions` dispatcher for `where()` and `having()`.
+- Centralize `insert()`, `insertMany()`, `update()`, and `delete()` write compilation and state validation in `AbstractDialectCompiler`.
+- Extract connection lifecycle, DSN validation, and PDO options into `@internal` `ConnectionProfile`.
+- Replace `func_num_args()` overload dispatch with explicit sentinel defaults (`MISSING` sentinel enum) and variadic catch-alls across clause methods, exposing reflection defaults while preserving exact `where('col', null)` behavior.
+- Replace magic strings in AST internal state with closed enums (`LockMode`, `LockModifier`, `JoinType`).
+- Reuse stateless dialect compilers and executors per `Connection` instance via `@internal` `compilerForQueryBuilding()` and `executorForQueryBuilding()` accessors, cutting compilation and terminal allocations.
+- Shallow-clone condition and join state during query compilation snapshots (`QueryState::copyForCompilation()`), optimizing hot-path aggregate rewrites.
+- Data-drive dialect golden assertions via JSON fixtures (`tests/Fixtures/Compiler/*.json`) and consolidate `PDOStatement` test doubles into `ConfigurableStatement`.
+- Formalize PHP 8.2 runtime floor checks in `composer check` with `check-platform-reqs`, PHP linting, and PHPStan analysis floors.
+
 ## [0.3.0] - 2026-07-28
 
 ### Added
@@ -172,7 +195,8 @@ with ZeroVer releases before `1.0.0`.
 - A repeatable direct-migration playbook and complete intentional-difference
   checklist without a runtime Pixie dependency or compatibility façade.
 
-[Unreleased]: https://github.com/oeltimacreation/php-simplequery/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/oeltimacreation/php-simplequery/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/oeltimacreation/php-simplequery/releases/tag/v0.1.0

@@ -41,6 +41,14 @@ Files:
   external types, branch/path coverage, behavior gaps, and engine versions;
 - [`v0.2.0` development baseline](v0.2.0-development-baseline.md) and its
   [machine-readable source, query, coverage, and benchmark record](v0.2.0-development-baseline.json);
+- [`v0.3.0` development baseline](v0.3.0-development-baseline.md) and its
+  [machine-readable source, public-contract, query, coverage, test, and
+  benchmark record](v0.3.0-development-baseline.json);
+- [`0.4.0` duplication and complexity inventory](0.4-duplication-and-complexity-inventory.md)
+  and its [machine-readable before-metrics record](0.4-duplication-and-complexity-inventory.json);
+- [`0.4.0` contract freeze](0.4-contract-freeze.md), recording the zero-change
+  pledge, the deferred feature backlog, and the compilation hot-path allocation
+  targets;
 - [`0.3.0` production-adoption baseline](0.3-production-adoption-baseline.md),
   containing only anonymized aggregate evidence and release-scope decisions;
 - [`0.3.0` transaction and exception ergonomics](0.3-transaction-and-exception-ergonomics.md),
@@ -56,6 +64,11 @@ Files:
   recording local quality/coverage, minimum/current direct and proxy probes,
   path-redacted consumer validation, security review, and the remaining real-
   deployment publication blocker;
+- [`0.3.0` projection ergonomics spike](0.3-projection-ergonomics-spike.md),
+  recording the decision to retain variadic `select()` without a list parser;
+- [`0.4.0` performance and stability evidence](0.4-performance-and-stability.md),
+  recording paired `v0.3.0` measurements, hot-path allocation removal, SQLite
+  contention probes, and memory soak gates;
 - [edge-feature usage verification](feature-usage-verification.md).
 
 Generated reports belong in `tools/database-probes/results/`, are ignored by Git, and

@@ -9,6 +9,8 @@ use Oeltima\SimpleQuery\Driver;
 use Oeltima\SimpleQuery\Exception\InvalidQueryException;
 use Oeltima\SimpleQuery\Exception\UnsupportedFeatureException;
 use Oeltima\SimpleQuery\Expression\Identifier;
+use Oeltima\SimpleQuery\Internal\Ast\ConditionTerm;
+use Oeltima\SimpleQuery\Internal\Ast\NullPredicate;
 use Oeltima\SimpleQuery\Internal\Compiler\CompilerFactory;
 use Oeltima\SimpleQuery\JoinClause;
 use Oeltima\SimpleQuery\Testing\CompiledQueryAssertions;
@@ -72,6 +74,20 @@ final class QueryBuilderBehaviorTest extends TestCase
             $clone->compile()->sql,
         );
         self::assertSame('SELECT * FROM "users"', $fresh->compile()->sql);
+    }
+
+    public function testSnapshotForCompilationIsDeeplyIsolatedFromBuilderMutations(): void
+    {
+        $db = CompilerConnection::for(Driver::Sqlite);
+        $query = $db->table('users')->where('active', true);
+        $snapshot = $query->snapshotForCompilation();
+
+        $snapshot->where->add(new ConditionTerm(
+            new NullPredicate(Identifier::of('deleted'), false),
+            false,
+        ));
+
+        self::assertSame('SELECT * FROM "users" WHERE "active" = ?', $query->compile()->sql);
     }
 
     public function testSubqueryIsSnapshottedAndBindingsFollowSqlOccurrenceOrder(): void
@@ -370,5 +386,178 @@ final class QueryBuilderBehaviorTest extends TestCase
 
         $this->expectException(UnsupportedFeatureException::class);
         CompiledWriteQuery::insert($db->table('users')->where('id', 1), ['name' => 'changed']);
+    }
+
+    public function testTwoAndThreeOperandNullComparisonsAreEquivalent(): void
+    {
+        $db = CompilerConnection::for(Driver::Sqlite);
+        $twoOperand = $db
+            ->table('items')
+            ->where('deleted_at', null)
+            ->where('published_at', '<>', null);
+        $threeOperand = $db
+            ->table('items')
+            ->where('deleted_at', '=', null)
+            ->where('published_at', '!=', null);
+
+        CompiledQueryAssertions::assertMatches(
+            $twoOperand->compile(),
+            'SELECT * FROM "items" WHERE "deleted_at" IS NULL AND "published_at" IS NOT NULL',
+            [],
+        );
+        self::assertEquals($twoOperand->compile(), $threeOperand->compile());
+    }
+
+    public function testHavingNullComparisonsUseTheSameNullSemantics(): void
+    {
+        $db = CompilerConnection::for(Driver::Sqlite);
+        $query = $db
+            ->table('accounts')
+            ->groupBy('owner_id')
+            ->having('closed_at', null)
+            ->orHaving('reviewed_at', '!=', null);
+
+        CompiledQueryAssertions::assertMatches(
+            $query->compile(),
+            'SELECT * FROM "accounts" GROUP BY "owner_id" '
+                . 'HAVING "closed_at" IS NULL OR "reviewed_at" IS NOT NULL',
+            [],
+        );
+        self::addToAssertionCount(1);
+    }
+
+    /** @return iterable<string, array{callable(): mixed}> */
+    public static function invalidInsertReadClauseFactories(): iterable
+    {
+        $db = CompilerConnection::for(Driver::Sqlite);
+        $mysql = CompilerConnection::for(Driver::MySql);
+
+        yield 'insert projection' => [static fn () => CompiledWriteQuery::insert(
+            $db->table('users')->select('name'),
+            ['name' => 'A'],
+        )];
+        yield 'insert distinct' => [static fn () => CompiledWriteQuery::insert(
+            $db->table('users')->distinct(),
+            ['name' => 'A'],
+        )];
+        yield 'insert join' => [static fn () => CompiledWriteQuery::insert(
+            $db->table('users')->join('roles', 'roles.user_id', '=', 'users.id'),
+            ['name' => 'A'],
+        )];
+        yield 'insert group' => [static fn () => CompiledWriteQuery::insert(
+            $db->table('users')->groupBy('name'),
+            ['name' => 'A'],
+        )];
+        yield 'insert having' => [static fn () => CompiledWriteQuery::insert(
+            $db->table('users')->having('count', '>', 0),
+            ['name' => 'A'],
+        )];
+        yield 'insert order' => [static fn () => CompiledWriteQuery::insert(
+            $db->table('users')->orderBy('id'),
+            ['name' => 'A'],
+        )];
+        yield 'insert limit' => [static fn () => CompiledWriteQuery::insert(
+            $db->table('users')->limit(1),
+            ['name' => 'A'],
+        )];
+        yield 'insert offset' => [static fn () => CompiledWriteQuery::insert(
+            $db->table('users')->offset(1)->limit(1),
+            ['name' => 'A'],
+        )];
+        yield 'insert lock' => [static fn () => CompiledWriteQuery::insert(
+            $mysql->table('users')->forUpdate(),
+            ['name' => 'A'],
+        )];
+    }
+
+    /** @return iterable<string, array{callable(): mixed}> */
+    public static function invalidUpdateDeleteReadClauseFactories(): iterable
+    {
+        $db = CompilerConnection::for(Driver::Sqlite);
+        $mysql = CompilerConnection::for(Driver::MySql);
+
+        yield 'update projection' => [static fn () => CompiledWriteQuery::update(
+            $db->table('users')->select('name'),
+            ['name' => 'A'],
+        )];
+        yield 'update join' => [static fn () => CompiledWriteQuery::update(
+            $db->table('users')->join('roles', 'roles.user_id', '=', 'users.id'),
+            ['name' => 'A'],
+        )];
+        yield 'update group' => [static fn () => CompiledWriteQuery::update(
+            $db->table('users')->groupBy('name'),
+            ['name' => 'A'],
+        )];
+        yield 'update having' => [static fn () => CompiledWriteQuery::update(
+            $db->table('users')->having('count', '>', 0),
+            ['name' => 'A'],
+        )];
+        yield 'update limit' => [static fn () => CompiledWriteQuery::update(
+            $db->table('users')->limit(1),
+            ['name' => 'A'],
+        )];
+        yield 'update lock' => [static fn () => CompiledWriteQuery::update(
+            $mysql->table('users')->forUpdate(),
+            ['name' => 'A'],
+        )];
+        yield 'delete projection' => [static fn () => CompiledWriteQuery::delete(
+            $db->table('users')->select('name'),
+        )];
+        yield 'delete distinct' => [static fn () => CompiledWriteQuery::delete(
+            $db->table('users')->distinct(),
+        )];
+        yield 'delete join' => [static fn () => CompiledWriteQuery::delete(
+            $db->table('users')->join('roles', 'roles.user_id', '=', 'users.id'),
+        )];
+        yield 'delete group' => [static fn () => CompiledWriteQuery::delete(
+            $db->table('users')->groupBy('name'),
+        )];
+        yield 'delete having' => [static fn () => CompiledWriteQuery::delete(
+            $db->table('users')->having('count', '>', 0),
+        )];
+        yield 'delete order' => [static fn () => CompiledWriteQuery::delete(
+            $db->table('users')->orderBy('id'),
+        )];
+        yield 'delete limit' => [static fn () => CompiledWriteQuery::delete(
+            $db->table('users')->limit(1),
+        )];
+        yield 'delete offset' => [static fn () => CompiledWriteQuery::delete(
+            $db->table('users')->offset(1)->limit(1),
+        )];
+        yield 'delete lock' => [static fn () => CompiledWriteQuery::delete(
+            $mysql->table('users')->forUpdate(),
+        )];
+    }
+
+    #[DataProvider('invalidInsertReadClauseFactories')]
+    public function testInsertValidationRejectsEveryReadClause(callable $write): void
+    {
+        $this->expectException(UnsupportedFeatureException::class);
+        $write();
+    }
+
+    #[DataProvider('invalidUpdateDeleteReadClauseFactories')]
+    public function testUpdateDeleteValidationRejectsEveryNonPredicateReadClause(callable $write): void
+    {
+        $this->expectException(UnsupportedFeatureException::class);
+        $write();
+    }
+
+    public function testUpdateAndDeleteAcceptPredicatesButNotOtherReadClauses(): void
+    {
+        $db = CompilerConnection::for(Driver::Sqlite);
+        $predicated = $db->table('users')->where('tenant_id', 1);
+
+        CompiledQueryAssertions::assertMatches(
+            CompiledWriteQuery::update($predicated, ['name' => 'changed']),
+            'UPDATE "users" SET "name" = ? WHERE "tenant_id" = ?',
+            ['changed', 1],
+        );
+        CompiledQueryAssertions::assertMatches(
+            CompiledWriteQuery::delete($predicated),
+            'DELETE FROM "users" WHERE "tenant_id" = ?',
+            [1],
+        );
+        self::addToAssertionCount(1);
     }
 }

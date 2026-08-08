@@ -20,6 +20,12 @@ use PHPUnit\Framework\TestCase;
 #[RequiresPhpExtension('pdo_sqlite')]
 final class CursorFailureTest extends TestCase
 {
+    #[\Override]
+    protected function setUp(): void
+    {
+        ConfigurableStatement::reset();
+    }
+
     public function testClosedCursorCannotBeginIteration(): void
     {
         [$connection, $statement] = $this->statement();
@@ -49,7 +55,8 @@ final class CursorFailureTest extends TestCase
 
     public function testCloseExceptionIsTranslatedAndQuarantinesConnection(): void
     {
-        [$connection, $statement] = $this->statement(ThrowingCloseStatement::class);
+        ConfigurableStatement::closeThrows();
+        [$connection, $statement] = $this->statement();
         $cursor = Cursor::objects($statement, $connection, new CompiledQuery('SELECT 1 AS value'));
 
         try {
@@ -67,7 +74,8 @@ final class CursorFailureTest extends TestCase
 
     public function testFalseCloseReturnQuarantinesConnection(): void
     {
-        [$connection, $statement] = $this->statement(FalseCloseStatement::class);
+        ConfigurableStatement::closeReturnsFalse();
+        [$connection, $statement] = $this->statement();
         $cursor = Cursor::objects($statement, $connection, new CompiledQuery('SELECT 1 AS value'));
 
         try {
@@ -85,7 +93,8 @@ final class CursorFailureTest extends TestCase
 
     public function testFetchFailureIsTranslatedAndClosesCursor(): void
     {
-        [$connection, $statement] = $this->statement(ThrowingFetchStatement::class);
+        ConfigurableStatement::fetchThrows();
+        [$connection, $statement] = $this->statement();
         $cursor = Cursor::objects($statement, $connection, new CompiledQuery('SELECT 1 AS value'));
 
         try {
@@ -102,7 +111,9 @@ final class CursorFailureTest extends TestCase
 
     public function testFetchFailureRemainsPrimaryWhenCleanupAlsoFails(): void
     {
-        [$connection, $statement] = $this->statement(ThrowingFetchAndCloseStatement::class);
+        ConfigurableStatement::fetchThrows();
+        ConfigurableStatement::closeThrows();
+        [$connection, $statement] = $this->statement();
         $cursor = Cursor::objects($statement, $connection, new CompiledQuery('SELECT 1 AS value'));
 
         try {
@@ -111,7 +122,7 @@ final class CursorFailureTest extends TestCase
             self::fail('The controlled dual cursor failure unexpectedly succeeded.');
         } catch (QueryExecutionException $exception) {
             self::assertInstanceOf(PDOException::class, $exception->getPrevious());
-            self::assertSame('Controlled cursor-fetch failure.', $exception->getPrevious()->getMessage());
+            self::assertSame(ConfigurableStatement::DEFAULT_FETCH_FAILURE, $exception->getPrevious()->getMessage());
         }
 
         self::assertTrue($cursor->isClosed());
@@ -121,7 +132,8 @@ final class CursorFailureTest extends TestCase
 
     public function testExhaustionCloseFailureIsReportedAndQuarantinesConnection(): void
     {
-        [$connection, $statement] = $this->statement(ExhaustingThrowingCloseStatement::class);
+        ConfigurableStatement::closeThrows();
+        [$connection, $statement] = $this->statement();
         $cursor = Cursor::objects($statement, $connection, new CompiledQuery('SELECT 1 AS value'));
 
         try {
@@ -130,7 +142,7 @@ final class CursorFailureTest extends TestCase
             self::fail('The controlled exhaustion cleanup failure unexpectedly succeeded.');
         } catch (QueryExecutionException $exception) {
             self::assertInstanceOf(PDOException::class, $exception->getPrevious());
-            self::assertSame('Controlled cursor-close failure.', $exception->getPrevious()->getMessage());
+            self::assertSame(ConfigurableStatement::DEFAULT_CLOSE_FAILURE, $exception->getPrevious()->getMessage());
         }
 
         self::assertTrue($cursor->isClosed());
@@ -140,7 +152,8 @@ final class CursorFailureTest extends TestCase
 
     public function testDestructorSuppressesCleanupFailureButStillQuarantinesConnection(): void
     {
-        [$connection, $statement] = $this->statement(ThrowingCloseStatement::class);
+        ConfigurableStatement::closeThrows();
+        [$connection, $statement] = $this->statement();
         $cursor = Cursor::objects($statement, $connection, new CompiledQuery('SELECT 1 AS value'));
 
         unset($cursor);
@@ -153,8 +166,8 @@ final class CursorFailureTest extends TestCase
     #[DataProvider('invalidRows')]
     public function testInvalidDriverRowsAreRejected(mixed $row, bool $associative): void
     {
-        ControlledFetchStatement::$row = $row;
-        [$connection, $statement] = $this->statement(ControlledFetchStatement::class);
+        ConfigurableStatement::returns($row);
+        [$connection, $statement] = $this->statement();
         $query = new CompiledQuery('SELECT 1 AS value');
         $cursor = $associative
             ? Cursor::associative($statement, $connection, $query)
@@ -180,17 +193,13 @@ final class CursorFailureTest extends TestCase
         yield 'object non-object' => [['value' => 1], false];
     }
 
-    /**
-     * @param class-string<\PDOStatement>|null $statementClass
-     * @return array{Connection, \PDOStatement}
-     */
-    private function statement(?string $statementClass = null): array
+    /** @return array{Connection, \PDOStatement} */
+    private function statement(): array
     {
-        $options = [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION];
-        if ($statementClass !== null) {
-            $options[PDO::ATTR_STATEMENT_CLASS] = [$statementClass];
-        }
-        $pdo = new PDO('sqlite::memory:', null, null, $options);
+        $pdo = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_STATEMENT_CLASS => [ConfigurableStatement::class],
+        ]);
         $pdo->exec('PRAGMA foreign_keys = ON');
         $pdo->exec('PRAGMA busy_timeout = 5000');
         $connection = Connection::fromPdo($pdo, Driver::Sqlite);
