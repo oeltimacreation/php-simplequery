@@ -2887,6 +2887,33 @@
                     "parameters": []
                 },
                 {
+                    "name": "forPage",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "page",
+                            "type": "int",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "perPage",
+                            "type": "int",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
                     "name": "forShare",
                     "compatibility": "public",
                     "static": false,
@@ -3728,6 +3755,33 @@
                     ]
                 },
                 {
+                    "name": "unless",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "value",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "callback",
+                            "type": "Closure",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
                     "name": "update",
                     "compatibility": "public",
                     "static": false,
@@ -3741,6 +3795,33 @@
                         {
                             "name": "changes",
                             "type": "array",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "when",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "value",
+                            "type": "mixed",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "callback",
+                            "type": "Closure",
                             "by_reference": false,
                             "variadic": false,
                             "optional": false,

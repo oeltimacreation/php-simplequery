@@ -13,6 +13,7 @@ use Oeltima\SimpleQuery\Internal\Ast\ConditionTerm;
 use Oeltima\SimpleQuery\Internal\Ast\NullPredicate;
 use Oeltima\SimpleQuery\Internal\Compiler\CompilerFactory;
 use Oeltima\SimpleQuery\JoinClause;
+use Oeltima\SimpleQuery\QueryBuilder;
 use Oeltima\SimpleQuery\Testing\CompiledQueryAssertions;
 use Oeltima\SimpleQuery\Testing\CompiledWriteQuery;
 use Oeltima\SimpleQuery\Testing\CompilerConnection;
@@ -32,6 +33,113 @@ final class QueryBuilderBehaviorTest extends TestCase
         self::assertNotSame($first, $second);
         self::assertEquals($first, $second);
         self::assertSame('SELECT * FROM "users" WHERE "active" = ? ORDER BY "id" ASC LIMIT 5', $first->sql);
+    }
+
+    public function testConditionalBranchesInvokeOnlyTheSelectedCallbackAndRemainFluent(): void
+    {
+        $db = CompilerConnection::for(Driver::Sqlite);
+        $query = $db->table('users');
+        $calls = 0;
+
+        $result = $query
+            ->when('active', static function (QueryBuilder $builder) use (&$calls): string {
+                ++$calls;
+                $builder->where('active', true);
+
+                return 'ignored';
+            })
+            ->when(0, static function (): void {
+                self::fail('The false when() branch was invoked.');
+            })
+            ->unless([], static function (QueryBuilder $builder) use (&$calls): void {
+                ++$calls;
+                $builder->where('deleted_at', null);
+            })
+            ->unless(true, static function (): void {
+                self::fail('The true unless() branch was invoked.');
+            });
+
+        self::assertSame($query, $result);
+        self::assertSame(2, $calls);
+        CompiledQueryAssertions::assertMatches(
+            $query->compile(),
+            'SELECT * FROM "users" WHERE "active" = ? AND "deleted_at" IS NULL',
+            [1],
+        );
+    }
+
+    public function testConditionalCallbackExceptionsPropagateWithoutBeingWrapped(): void
+    {
+        $db = CompilerConnection::for(Driver::Sqlite);
+        $failure = new \RuntimeException('conditional failure');
+
+        try {
+            $db->table('users')->when(true, static function () use ($failure): void {
+                throw $failure;
+            });
+            self::fail('The conditional callback unexpectedly completed.');
+        } catch (\RuntimeException $exception) {
+            self::assertSame($failure, $exception);
+        }
+    }
+
+    public function testConditionalBranchesUsePhpTruthinessForNullEmptyStringAndEmptyArray(): void
+    {
+        $db = CompilerConnection::for(Driver::Sqlite);
+        $query = $db->table('users');
+        $whenCalls = 0;
+        $unlessCalls = 0;
+
+        foreach ([null, '', []] as $value) {
+            $query->when($value, static function () use (&$whenCalls): void {
+                ++$whenCalls;
+            });
+            $query->unless($value, static function () use (&$unlessCalls): void {
+                ++$unlessCalls;
+            });
+        }
+
+        self::assertSame(0, $whenCalls);
+        self::assertSame(3, $unlessCalls);
+    }
+
+    public function testForPageReplacesExistingPaginationForEveryDialect(): void
+    {
+        $expected = [
+            Driver::MariaDb->value => 'SELECT * FROM `users` LIMIT 25 OFFSET 50',
+            Driver::MySql->value => 'SELECT * FROM `users` LIMIT 25 OFFSET 50',
+            Driver::Sqlite->value => 'SELECT * FROM "users" LIMIT 25 OFFSET 50',
+        ];
+
+        foreach ([Driver::MariaDb, Driver::MySql, Driver::Sqlite] as $driver) {
+            $query = CompilerConnection::for($driver)
+                ->table('users')
+                ->limit(1)
+                ->offset(1)
+                ->forPage(3, 25);
+
+            self::assertSame($expected[$driver->value], $query->compile()->sql);
+            self::assertSame($expected[$driver->value], $query->compile()->sql);
+            self::assertSame(
+                str_replace(' OFFSET 50', ' OFFSET 0', $expected[$driver->value]),
+                CompilerConnection::for($driver)->table('users')->forPage(1, 25)->compile()->sql,
+            );
+        }
+    }
+
+    public function testInvalidForPageArgumentsDoNotMutateTheBuilder(): void
+    {
+        $db = CompilerConnection::for(Driver::Sqlite);
+        $query = $db->table('users')->limit(10);
+
+        try {
+            $query->forPage(0, 10);
+            self::fail('An invalid page unexpectedly completed.');
+        } catch (InvalidQueryException) {
+            self::addToAssertionCount(1);
+        }
+
+        self::assertSame('SELECT * FROM "users" LIMIT 10', $query->compile()->sql);
     }
 
     public function testAmbiguousNonCountScalarAggregateShapesAreRejectedWithoutMutatingBuilder(): void
@@ -304,6 +412,18 @@ final class QueryBuilderBehaviorTest extends TestCase
         ];
         yield 'negative offset' => [
             static fn () => $sqlite->table('users')->offset(-1),
+            InvalidQueryException::class,
+        ];
+        yield 'zero page' => [
+            static fn () => $sqlite->table('users')->forPage(0, 10),
+            InvalidQueryException::class,
+        ];
+        yield 'zero page size' => [
+            static fn () => $sqlite->table('users')->forPage(1, 0),
+            InvalidQueryException::class,
+        ];
+        yield 'page offset overflow' => [
+            static fn () => $sqlite->table('users')->forPage(intdiv(PHP_INT_MAX, 2) + 2, 2),
             InvalidQueryException::class,
         ];
         yield 'modifier without lock' => [

@@ -96,6 +96,16 @@ return static function (Connection $database): void {
 
     assertType('Oeltima\\SimpleQuery\\QueryBuilder', $builder);
 
+    $conditional = $builder
+        ->when(false, static function (QueryBuilder $query): void {
+            $query->whereNotNull('users.email');
+        })
+        ->unless(false, static function (QueryBuilder $query): void {
+            $query->where('users.active', true);
+        })
+        ->forPage(2, 25);
+    assertType(QueryBuilder::class, $conditional);
+
     assertType(Cursor::class . '<' . stdClass::class . '>', $builder->iterate());
     assertType('Traversable<int, stdClass>', $builder->iterate()->getIterator());
     assertType(Cursor::class . '<array<string, mixed>>', $builder->iterateAssociative());
