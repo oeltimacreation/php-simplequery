@@ -171,6 +171,41 @@ final class QueryBuilder
         return $this;
     }
 
+    public function when(mixed $value, Closure $callback): self
+    {
+        if ((bool) $value) {
+            $callback($this);
+        }
+
+        return $this;
+    }
+
+    public function unless(mixed $value, Closure $callback): self
+    {
+        if (!(bool) $value) {
+            $callback($this);
+        }
+
+        return $this;
+    }
+
+    public function forPage(int $page, int $perPage): self
+    {
+        if ($page < 1) {
+            throw new InvalidQueryException('Page must be at least 1.');
+        }
+        if ($perPage < 1) {
+            throw new InvalidQueryException('Page size must be at least 1.');
+        }
+
+        $pageOffset = $page - 1;
+        if ($pageOffset > intdiv(PHP_INT_MAX, $perPage)) {
+            throw new InvalidQueryException('Page offset exceeds the supported integer range.');
+        }
+
+        return $this->limit($perPage)->offset($pageOffset * $perPage);
+    }
+
     public function forUpdate(): self
     {
         return $this->setLockMode(LockMode::Update);

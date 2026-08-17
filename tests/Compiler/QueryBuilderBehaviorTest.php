@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Oeltima\SimpleQuery\Tests\Compiler;
 
 use Oeltima\SimpleQuery\ConditionGroup;
+use Oeltima\SimpleQuery\Connection;
 use Oeltima\SimpleQuery\Driver;
 use Oeltima\SimpleQuery\Exception\InvalidQueryException;
 use Oeltima\SimpleQuery\Exception\UnsupportedFeatureException;
@@ -13,6 +14,7 @@ use Oeltima\SimpleQuery\Internal\Ast\ConditionTerm;
 use Oeltima\SimpleQuery\Internal\Ast\NullPredicate;
 use Oeltima\SimpleQuery\Internal\Compiler\CompilerFactory;
 use Oeltima\SimpleQuery\JoinClause;
+use Oeltima\SimpleQuery\QueryBuilder;
 use Oeltima\SimpleQuery\Testing\CompiledQueryAssertions;
 use Oeltima\SimpleQuery\Testing\CompiledWriteQuery;
 use Oeltima\SimpleQuery\Testing\CompilerConnection;
@@ -32,6 +34,113 @@ final class QueryBuilderBehaviorTest extends TestCase
         self::assertNotSame($first, $second);
         self::assertEquals($first, $second);
         self::assertSame('SELECT * FROM "users" WHERE "active" = ? ORDER BY "id" ASC LIMIT 5', $first->sql);
+    }
+
+    public function testConditionalBranchesInvokeOnlyTheSelectedCallbackAndRemainFluent(): void
+    {
+        $db = CompilerConnection::for(Driver::Sqlite);
+        $query = $db->table('users');
+        $calls = 0;
+
+        $result = $query
+            ->when('active', static function (QueryBuilder $builder) use (&$calls): string {
+                ++$calls;
+                $builder->where('active', true);
+
+                return 'ignored';
+            })
+            ->when(0, static function (): void {
+                self::fail('The false when() branch was invoked.');
+            })
+            ->unless([], static function (QueryBuilder $builder) use (&$calls): void {
+                ++$calls;
+                $builder->where('deleted_at', null);
+            })
+            ->unless(true, static function (): void {
+                self::fail('The true unless() branch was invoked.');
+            });
+
+        self::assertSame($query, $result);
+        self::assertSame(2, $calls);
+        CompiledQueryAssertions::assertMatches(
+            $query->compile(),
+            'SELECT * FROM "users" WHERE "active" = ? AND "deleted_at" IS NULL',
+            [1],
+        );
+    }
+
+    public function testConditionalCallbackExceptionsPropagateWithoutBeingWrapped(): void
+    {
+        $db = CompilerConnection::for(Driver::Sqlite);
+        $failure = new \RuntimeException('conditional failure');
+
+        try {
+            $db->table('users')->when(true, static function () use ($failure): void {
+                throw $failure;
+            });
+            self::fail('The conditional callback unexpectedly completed.');
+        } catch (\RuntimeException $exception) {
+            self::assertSame($failure, $exception);
+        }
+    }
+
+    public function testConditionalBranchesUsePhpTruthinessForNullEmptyStringAndEmptyArray(): void
+    {
+        $db = CompilerConnection::for(Driver::Sqlite);
+        $query = $db->table('users');
+        $whenCalls = 0;
+        $unlessCalls = 0;
+
+        foreach ([null, '', []] as $value) {
+            $query->when($value, static function () use (&$whenCalls): void {
+                ++$whenCalls;
+            });
+            $query->unless($value, static function () use (&$unlessCalls): void {
+                ++$unlessCalls;
+            });
+        }
+
+        self::assertSame(0, $whenCalls);
+        self::assertSame(3, $unlessCalls);
+    }
+
+    public function testForPageReplacesExistingPaginationForEveryDialect(): void
+    {
+        $expected = [
+            Driver::MariaDb->value => 'SELECT * FROM `users` LIMIT 25 OFFSET 50',
+            Driver::MySql->value => 'SELECT * FROM `users` LIMIT 25 OFFSET 50',
+            Driver::Sqlite->value => 'SELECT * FROM "users" LIMIT 25 OFFSET 50',
+        ];
+
+        foreach ([Driver::MariaDb, Driver::MySql, Driver::Sqlite] as $driver) {
+            $query = CompilerConnection::for($driver)
+                ->table('users')
+                ->limit(1)
+                ->offset(1)
+                ->forPage(3, 25);
+
+            self::assertSame($expected[$driver->value], $query->compile()->sql);
+            self::assertSame($expected[$driver->value], $query->compile()->sql);
+            self::assertSame(
+                str_replace(' OFFSET 50', ' OFFSET 0', $expected[$driver->value]),
+                CompilerConnection::for($driver)->table('users')->forPage(1, 25)->compile()->sql,
+            );
+        }
+    }
+
+    public function testInvalidForPageArgumentsDoNotMutateTheBuilder(): void
+    {
+        $db = CompilerConnection::for(Driver::Sqlite);
+        $query = $db->table('users')->limit(10);
+
+        try {
+            $query->forPage(0, 10);
+            self::fail('An invalid page unexpectedly completed.');
+        } catch (InvalidQueryException) {
+            self::addToAssertionCount(1);
+        }
+
+        self::assertSame('SELECT * FROM "users" LIMIT 10', $query->compile()->sql);
     }
 
     public function testAmbiguousNonCountScalarAggregateShapesAreRejectedWithoutMutatingBuilder(): void
@@ -249,6 +358,15 @@ final class QueryBuilderBehaviorTest extends TestCase
         $other = CompilerConnection::for(Driver::Sqlite);
         $mysql = CompilerConnection::for(Driver::MySql);
 
+        yield from self::invalidQuerySourceFactories($sqlite, $other);
+        yield from self::invalidQueryClauseFactories($sqlite);
+        yield from self::invalidQueryLockFactories($mysql);
+        yield from self::invalidQueryJoinFactories($sqlite);
+    }
+
+    /** @return iterable<string, array{callable(): mixed, class-string<\Throwable>}> */
+    private static function invalidQuerySourceFactories(Connection $sqlite, Connection $other): iterable
+    {
         yield 'cross connection in predicate' => [
             static fn () => $sqlite->table('users')->whereIn('id', $other->table('roles'))->compile(),
             InvalidQueryException::class,
@@ -269,6 +387,15 @@ final class QueryBuilderBehaviorTest extends TestCase
             static fn () => $sqlite->table('users', 'u')->as('other'),
             InvalidQueryException::class,
         ];
+        yield 'wildcard table source' => [
+            static fn () => $sqlite->table(Identifier::wildcard()),
+            InvalidQueryException::class,
+        ];
+    }
+
+    /** @return iterable<string, array{callable(): mixed, class-string<\Throwable>}> */
+    private static function invalidQueryClauseFactories(Connection $sqlite): iterable
+    {
         yield 'empty projection' => [
             static fn () => $sqlite->table('users')->select(),
             InvalidQueryException::class,
@@ -306,6 +433,23 @@ final class QueryBuilderBehaviorTest extends TestCase
             static fn () => $sqlite->table('users')->offset(-1),
             InvalidQueryException::class,
         ];
+        yield 'zero page' => [
+            static fn () => $sqlite->table('users')->forPage(0, 10),
+            InvalidQueryException::class,
+        ];
+        yield 'zero page size' => [
+            static fn () => $sqlite->table('users')->forPage(1, 0),
+            InvalidQueryException::class,
+        ];
+        yield 'page offset overflow' => [
+            static fn () => $sqlite->table('users')->forPage(intdiv(PHP_INT_MAX, 2) + 2, 2),
+            InvalidQueryException::class,
+        ];
+    }
+
+    /** @return iterable<string, array{callable(): mixed, class-string<\Throwable>}> */
+    private static function invalidQueryLockFactories(Connection $mysql): iterable
+    {
         yield 'modifier without lock' => [
             static fn () => $mysql->table('users')->noWait(),
             InvalidQueryException::class,
@@ -326,13 +470,14 @@ final class QueryBuilderBehaviorTest extends TestCase
             static fn () => $mysql->table('users')->select($mysql->raw('COUNT(*)'))->forUpdate()->compile(),
             UnsupportedFeatureException::class,
         ];
+    }
+
+    /** @return iterable<string, array{callable(): mixed, class-string<\Throwable>}> */
+    private static function invalidQueryJoinFactories(Connection $sqlite): iterable
+    {
         yield 'empty join closure' => [
             static fn () => $sqlite->table('users')->join('roles', static function (JoinClause $join): void {
             }),
-            InvalidQueryException::class,
-        ];
-        yield 'wildcard table source' => [
-            static fn () => $sqlite->table(Identifier::wildcard()),
             InvalidQueryException::class,
         ];
     }

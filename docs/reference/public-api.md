@@ -126,6 +126,9 @@ orHaving(...): self
 orderBy(string|Identifier|RawExpression $column, SortDirection|string $direction = 'ASC'): self
 limit(int $limit): self
 offset(int $offset): self
+when(mixed $value, Closure $callback): self
+unless(mixed $value, Closure $callback): self
+forPage(int $page, int $perPage): self
 
 forUpdate(): self
 forShare(): self

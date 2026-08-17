@@ -90,13 +90,12 @@ Tests and failure output must use synthetic data. Never commit production DSNs,
 credentials, hostnames, customer identifiers, private query samples, or copied
 production rows.
 
-## Recreated migration slices
+## Migration characterization
 
-The library's migration suite contains anonymized synthetic recreations rather
-than application source. Their shapes are grounded in a read-only scan and
-manual review of Pecee Pixie consumers, but all names, SQL, rows, and project
-identifiers remain synthetic. Use them as patterns for CRUD, injected models,
-raw reports, diagnostics, and complex lists, then build application-owned
-characterization tests around real behavior. See
-[migration validation](../maintainers/migration-validation.md) and run
-`composer migration:check` before changing the corpus.
+Historical evidence contains anonymized synthetic recreations rather than
+application source. Their shapes are grounded in a read-only review of Pecee
+Pixie consumers, but all names, SQL, rows, and project identifiers remain
+synthetic. Use them as patterns for CRUD, injected models, raw reports,
+diagnostics, and complex lists, then build application-owned characterization
+tests around real behavior. No migration analyzer or corpus-check command is
+maintained; review the [migration checklist](migrating-from-pixie.md) instead.

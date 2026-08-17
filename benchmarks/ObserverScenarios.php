@@ -10,21 +10,20 @@ use Oeltima\SimpleQuery\Observability\QueryExecution;
 use Oeltima\SimpleQuery\Observability\QueryObserver;
 use Oeltima\SimpleQuery\Testing\RecordingQueryObserver;
 
-final class ObserverScenarios implements ScenarioFactory
+/** @phpstan-import-type Scenario from ScenarioCatalog */
+final class ObserverScenarios
 {
-    #[\Override]
-    public function prepare(ScenarioRequest $request): ?PreparedScenario
+    /** @return Scenario|null */
+    public function prepare(ScenarioRequest $request): ?array
     {
         return match ($request->name->value()) {
             ScenarioName::OBSERVER => $this->observer($request),
-            ScenarioName::OBSERVER_BINDINGS_1,
-            ScenarioName::OBSERVER_BINDINGS_10,
-            ScenarioName::OBSERVER_BINDINGS_50 => $this->bindings($request),
             default => null,
         };
     }
 
-    private function observer(ScenarioRequest $request): PreparedScenario
+    /** @return Scenario */
+    private function observer(ScenarioRequest $request): array
     {
         $calls = $request->scale(['ci' => 100, 'reference' => 1_000]);
         $off = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
@@ -40,42 +39,15 @@ final class ObserverScenarios implements ScenarioFactory
             return ['calls' => $calls, 'last' => $value];
         };
 
-        return new PreparedScenario(
-            [
+        return [
+            'operations' => [
                 'observer_off' => static fn (): array => $operation($off),
                 'observer_noop' => static fn (): array => $operation($noop),
                 'observer_bounded_recording' => static fn (): array => $operation($recorded),
             ],
-            $off->pdo(),
-            ['calls_per_sample' => $calls],
-        );
-    }
-
-    private function bindings(ScenarioRequest $request): PreparedScenario
-    {
-        $bindings = $request->name->dimension() ?? throw new \LogicException('Missing binding dimension.');
-        $calls = $request->scale(['ci' => 100, 'reference' => 1_000]);
-        $off = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
-        $noop = Connection::connect(Driver::Sqlite, 'sqlite::memory:', observer: $this->noopObserver());
-        $sql = 'SELECT ' . implode(' + ', array_fill(0, $bindings, '?')) . ' AS value';
-        $values = array_fill(0, $bindings, 1);
-        $operation = static function (Connection $connection) use ($calls, $sql, $values): array {
-            $value = null;
-            for ($call = 0; $call < $calls; ++$call) {
-                $value = $connection->query($sql, $values)->firstAssociative()['value'] ?? null;
-            }
-
-            return ['calls' => $calls, 'value' => $value];
-        };
-
-        return new PreparedScenario(
-            [
-                'observer_off' => static fn (): array => $operation($off),
-                'observer_noop' => static fn (): array => $operation($noop),
-            ],
-            $off->pdo(),
-            ['bindings' => $bindings, 'calls_per_sample' => $calls],
-        );
+            'pdo' => $off->pdo(),
+            'dimensions' => ['calls_per_sample' => $calls],
+        ];
     }
 
     private function noopObserver(): QueryObserver

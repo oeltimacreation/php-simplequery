@@ -1,76 +1,35 @@
-# Migration review report
+# Migration review checklist
 
-Use this report for every application moving to SimpleQuery. Keep confidential
-paths, repository names, business identifiers, schema, SQL, and deployment
-details in an ignored internal record. Commit only synthetic cases and
-anonymized aggregates.
+Use this checklist for an application moving from Pixie to SimpleQuery. Keep
+confidential paths, repository names, business identifiers, schema, SQL, and
+deployment details in a private application record. Commit only synthetic
+cases and anonymized aggregate evidence.
 
-## Generate the candidate report
+## Required review
 
-Run from this repository against a read-only checkout or workspace:
+- [ ] Record the application, SimpleQuery, PHP, PDO, database, and proxy
+      versions privately.
+- [ ] Characterize imports, connection construction, builder ownership, and
+      all direct-PDO boundaries.
+- [ ] Classify every insert as generated-ID, affected-row, ignored, truthiness,
+      pass-through, or batch behavior.
+- [ ] Review raw projections, predicates, joins, grouping, ordering, and full
+      queries for binding order and identifier allowlisting.
+- [ ] Review transaction ownership, savepoints, cursors, lock behavior, and
+      rollback failure paths.
+- [ ] Compare object, associative, scalar, cursor, aggregate, pagination, and
+      duplicate-column result shapes.
+- [ ] Run static analysis, compile assertions, SQLite tests, and each required
+      direct/proxy engine path.
+- [ ] Record accepted unsupported features, risks, owners, rollout criteria,
+      rollback steps, and post-deployment observations.
 
-```bash
-php tools/audit-consumers.php /path/to/workspace \
-  --mode=simplequery \
-  --deterministic > adoption-audit.json
-```
+## Explicit native contracts
 
-The default report replaces file paths with stable source tokens. For a private
-working report only, add `--include-paths`; never commit that output. The audit
-does not edit the consumer. It is a lexical candidate scan, so it cannot prove
-allowlisting, transaction nesting, runtime reachability, query safety, or
-behavioral parity.
+`insert()` and `insertMany()` return affected rows; `insertGetId()` returns an
+immediately captured string ID. Values are positional bindings, identifiers
+are structured or allowlisted, raw SQL is trusted application code, and
+transactions are never implicitly adopted or replayed.
 
-## Required report header
-
-```text
-Consumer profile: <synthetic identifier>
-Migration revision: <internal reference only>
-SimpleQuery version: <version>
-Engines and exact versions: <non-secret public evidence or internal reference>
-Audit schema: <schema_version>
-Reviewers and date: <names may remain internal>
-Decision: ready | ready with accepted escape paths | blocked
-```
-
-## Resolution checklist
-
-Every non-zero candidate must have an owner and one of: rewritten, covered by a
-synthetic parity test, accepted as an application-owned escape path, or blocked.
-
-- [ ] Raw boundaries: classify projections, expression-to-value predicates,
-  complete vendor predicates, join expressions, order/group/HAVING expressions,
-  and raw queries. Confirm all values remain bindings.
-- [ ] Generated IDs: classify `insertGetId()`, affected-row `insert()`, split
-  `lastInsertId()` reads, delayed reads, and intervening statements. Rewrite any
-  generated-ID dependency to an immediate unambiguous operation.
-- [ ] Transaction ownership: classify managed callbacks, direct PDO begin/
-  commit/rollback, direct SQL control, queries inside externally owned
-  transactions, nested managed calls, cursor lifetime, and lock behavior.
-- [ ] Dynamic identifiers: record the application allowlist or replace dynamic
-  strings with explicit `Identifier` construction after allowlisting.
-- [ ] Result shapes: confirm object versus associative hydration, nullable
-  `first()` behavior, aggregate scalar types, duplicate columns, and writable
-  object expectations.
-- [ ] Batching: review repeated query loops, write batches, and `insertMany()`
-  opportunities using production-shaped synthetic volumes.
-- [ ] Streaming: decide whether full hydration or a one-shot cursor owns the
-  result lifetime; confirm early close and transaction/connection boundaries.
-- [ ] Live engines: list direct and proxy profiles actually exercised. Do not
-  infer MariaDB, MySQL, SQLite, or proxy compatibility from another engine.
-- [ ] Performance: preserve index-friendly ranges and joins; compare only
-  identical result digests and environments.
-- [ ] Static analysis: run the consumer's strictest supported configuration
-  after construction, callback, result, and exception types are migrated.
-- [ ] Exceptions and diagnostics: retain redaction, inspect structured driver
-  evidence only where needed, and avoid application dependence on SQL text.
-
-## Finding table
-
-| Source token | Category | Intended behavior | Resolution | Synthetic evidence | Owner |
-|---|---|---|---|---|---|
-| `source-…` | generated-ID timing | immediate generated ID | rewrite | fixture/test reference | reviewer |
-
-Finish with explicit accepted risks, blockers, unsupported features, live
-probe references, and confirmation that no private material was copied into the
-library repository.
+SimpleQuery does not certify an external application migration. The application
+owner is responsible for semantic review and production rollout evidence.

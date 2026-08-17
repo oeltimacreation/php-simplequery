@@ -17,6 +17,7 @@ $options = getopt('', [
     'iterations:',
     'warmups:',
     'source-order:',
+    'allow-review',
 ]);
 $baseline = $options['baseline-autoload'] ?? null;
 $candidate = $options['candidate-autoload'] ?? dirname(__DIR__) . '/vendor/autoload.php';
@@ -27,6 +28,7 @@ $profile = $options['profile'] ?? 'ci';
 $iterations = $options['iterations'] ?? '5';
 $warmups = $options['warmups'] ?? '1';
 $sourceOrder = $options['source-order'] ?? 'baseline-first';
+$allowReview = array_key_exists('allow-review', $options);
 if (!is_string($baseline) || !is_file($baseline) || !is_string($candidate) || !is_file($candidate)) {
     throw new RuntimeException('Both baseline and candidate autoloaders are required.');
 }
@@ -102,6 +104,21 @@ $candidateDigests = $digests($candidateRun);
 if ($baselineDigests !== $candidateDigests) {
     throw new RuntimeException('Baseline and candidate correctness digests differ.');
 }
+$performanceReview = ComparisonAnalysis::between($baselineRun, $candidateRun);
+$blocking = [];
+foreach ($performanceReview['measurements'] as $scenario => $operations) {
+    if (!str_contains($scenario, 'compile') && !str_contains($scenario, 'terminal')) {
+        continue;
+    }
+    foreach ($operations as $operation => $measurement) {
+        if (($measurement['review_required'] ?? false) === true) {
+            $blocking[] = sprintf('%s/%s', $scenario, $operation);
+        }
+    }
+}
+if ($blocking !== [] && !$allowReview) {
+    throw new RuntimeException('Unexplained compiler/terminal regressions: ' . implode(', ', $blocking));
+}
 
 fwrite(STDOUT, json_encode([
     'schema_version' => 2,
@@ -115,7 +132,7 @@ fwrite(STDOUT, json_encode([
     'fresh_process_per_scenario' => true,
     'correctness_parity' => true,
     'correctness_digests' => $baselineDigests,
-    'performance_review' => ComparisonAnalysis::between($baselineRun, $candidateRun),
+    'performance_review' => $performanceReview,
     'baseline' => $baselineRun,
     'candidate' => $candidateRun,
 ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . PHP_EOL);

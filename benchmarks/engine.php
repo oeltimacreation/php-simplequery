@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Oeltima\SimpleQuery\Benchmark\EnvironmentRequest;
 use Oeltima\SimpleQuery\Benchmark\Harness;
 use Oeltima\SimpleQuery\Benchmark\MeasurementRequest;
 use Oeltima\SimpleQuery\Connection;
@@ -61,11 +60,11 @@ $simpleQuery = static function () use ($connection, $table): array {
 };
 
 try {
-    $environment = Harness::environment(EnvironmentRequest::from([
+    $environment = Harness::environment([
         'package_root' => dirname(__DIR__),
         'pdo' => $pdo,
         'target' => $targetName,
-    ]));
+    ]);
     Harness::assertTimingInstrumentationDisabled($environment);
     $measurement = Harness::measure(MeasurementRequest::from(
         ['simplequery' => $simpleQuery, 'pdo' => $direct],

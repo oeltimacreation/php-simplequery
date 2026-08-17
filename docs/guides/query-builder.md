@@ -14,6 +14,26 @@ Cloning a builder creates independent mutable state. A structured child query
 is snapshotted when attached, and it must belong to the same `Connection` as
 its parent.
 
+## Conditional construction
+
+`when()` and `unless()` run one mutation callback when a value is truthy or
+falsey respectively. The callback receives the current builder, and both
+methods return that same builder. A callback return value is ignored.
+
+```php
+$query
+    ->when($status !== null, static function (QueryBuilder $query) use ($status): void {
+        $query->where('status', $status);
+    })
+    ->unless($includeDeleted, static function (QueryBuilder $query): void {
+        $query->whereNull('deleted_at');
+    });
+```
+
+The value uses PHP boolean coercion. `null`, `false`, `0`, an empty string,
+and an empty array are falsey; objects are truthy. The callback is not invoked
+for the other branch, and callback exceptions propagate unchanged.
+
 ## Sources and projection
 
 ```php
@@ -219,6 +239,18 @@ $query
 Repeated group, having, and order clauses append. Repeated limit or offset
 calls replace the prior value. Negative pagination values are rejected, and an
 offset without a limit throws during compilation.
+
+`forPage()` provides strict 1-based pagination by setting both values:
+
+```php
+$page = $db->table('users')->orderBy('id')->forPage(3, 25);
+```
+
+The example emits `LIMIT 25 OFFSET 50`. Page and page-size values must both be
+positive, and an offset outside the supported integer range is rejected before
+the builder changes. `forPage()` does not add ordering or execute a count
+query; callers are responsible for deterministic ordering when page boundaries
+matter. Later `limit()` or `offset()` calls continue to replace its values.
 
 ## Subquery snapshots
 

@@ -8,7 +8,7 @@ lines. The first public release is `0.1.0`.
 - `0.y.0` may contain documented breaking changes.
 - `0.y.z` patch releases should remain compatible within that minor line,
   except for urgent security or data-integrity fixes.
-- Consumers should pin a tested minor line such as `~0.4.0`.
+- Consumers should pin a tested minor line such as `~0.5.0`.
 - Changelog entries are not a substitute for migration instructions; every
   breaking change must be documented here.
 
@@ -25,13 +25,13 @@ For each upgrade:
 7. review generated SQL for raw or dialect-specific queries;
 8. deploy through the application's normal staged rollout.
 
-## Installing 0.4.0
+## Installing 0.5.0
 
 ```bash
-composer require oeltimacreation/php-simplequery:^0.4
+composer require oeltimacreation/php-simplequery:^0.5
 ```
 
-`0.4.0` requires PHP 8.2+, `ext-pdo`, and either `pdo_sqlite` or `pdo_mysql`.
+`0.5.0` requires PHP 8.2+, `ext-pdo`, and either `pdo_sqlite` or `pdo_mysql`.
 Select `Driver::MariaDb`, `Driver::MySql`, or `Driver::Sqlite` explicitly. See
 [getting started](getting-started.md) for connection examples and
 [database support](../reference/database-support.md) for engine floors.
@@ -80,11 +80,10 @@ activity fails before application work runs; reuse is allowed only after
 physical inactivity is verified.
 
 Applications migrating from Pixie or reviewing an existing SimpleQuery
-adoption should run the deterministic `--mode=simplequery` analyzer, resolve
-generated-ID timing and transaction ownership, and retest raw boundaries,
-static analysis, SARGable plans, and every claimed live-engine/proxy path. See
-[migrating from Pixie](migrating-from-pixie.md) and the
-[migration review report](../maintainers/migration-review.md).
+adoption should characterize generated-ID timing and transaction ownership
+manually, then retest raw boundaries, static analysis, SARGable plans, and
+every claimed live-engine/proxy path. See [migrating from Pixie](migrating-from-pixie.md)
+for the maintained checklist.
 
 ## Upgrading from 0.3 to 0.4
 
@@ -96,5 +95,17 @@ Key internal and maintenance changes include:
 - Connection compilers and executors are lazily cached per `Connection` instance behind `@internal` accessors (`compilerForQueryBuilding()`, `executorForQueryBuilding()`).
 - Internal AST states now use typed enums (`LockMode`, `LockModifier`, `JoinType`).
 - MySQL and MariaDB dialect compilers are consolidated under `MySqlFamilyCompiler`.
-- Added automated `composer duplication:check` quality gate and multiprocess SQLite write-contention stress probes (`composer probe:sqlite:contention`).
+- Added a development-only duplication gate and multiprocess SQLite
+  write-contention stress probes (`composer probe:sqlite:contention`).
 
+## Upgrading from 0.4 to 0.5
+
+`0.5.0` adds `when()`, `unless()`, and strict 1-based `forPage()` builder
+helpers. Existing clause, terminal, binding, transaction, and engine behavior
+is unchanged. `forPage()` requires positive page and page-size values and does
+not add an implicit ordering.
+
+The development-only Pixie migration analyzer and the 0.4-specific
+duplication gate are no longer shipped in the source repository. Use the
+manual migration checklist and the ordinary compiler, integration, static
+analysis, and live-engine checks instead.

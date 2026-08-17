@@ -16,7 +16,7 @@ final class ComparisonAnalysis
      *     measurements: array<string, array<string, array<string, float|bool|null>>>
      * }
      */
-    public static function between(array $baseline, array $candidate, float $thresholdPercent = 10.0): array
+    public static function between(array $baseline, array $candidate, float $thresholdPercent = 5.0): array
     {
         $baselineMedians = self::medians($baseline);
         $candidateMedians = self::medians($candidate);

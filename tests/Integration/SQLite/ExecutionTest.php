@@ -107,6 +107,37 @@ final class ExecutionTest extends TestCase
         self::assertSame(3, $this->connection->table('users')->count());
     }
 
+    public function testForPageReturnsTheRequestedSliceAndDoesNotChangeTerminalState(): void
+    {
+        $this->connection->table('users')->insertMany([
+            ['name' => 'Page One', 'score' => 1, 'active' => true, 'category' => 'page'],
+            ['name' => 'Page Two', 'score' => 2, 'active' => true, 'category' => 'page'],
+            ['name' => 'Page Three', 'score' => 3, 'active' => true, 'category' => 'page'],
+            ['name' => 'Page Four', 'score' => 4, 'active' => true, 'category' => 'page'],
+            ['name' => 'Page Five', 'score' => 5, 'active' => true, 'category' => 'page'],
+        ]);
+
+        $query = $this->connection->table('users')->orderBy('id')->forPage(2, 2);
+
+        self::assertSame(
+            'SELECT * FROM "users" ORDER BY "id" ASC LIMIT 2 OFFSET 2',
+            $query->compile()->sql,
+        );
+        self::assertSame(
+            ['Page Three', 'Page Four'],
+            array_column($query->getAssociative(), 'name'),
+        );
+        self::assertSame(
+            ['Page Three', 'Page Four'],
+            array_column($query->getAssociative(), 'name'),
+        );
+        self::assertSame(5, $query->count());
+        self::assertSame(
+            'SELECT * FROM "users" ORDER BY "id" ASC LIMIT 2 OFFSET 2',
+            $query->compile()->sql,
+        );
+    }
+
     public function testRawQueryTerminalsAreDeferredAndDoNotRewriteFirstSql(): void
     {
         $rawInsert = $this->connection->query(

@@ -34,7 +34,6 @@ jobs:
       - run: composer probe:sqlite > sqlite-probe.json
       - run: composer probe:execution -- sqlite > sqlite-execution-probe.json
       - run: composer probe:transaction -- sqlite > sqlite-transaction-probe.json
-      - run: composer probe:migration -- sqlite > sqlite-migration-probe.json
       - name: Report linked SQLite runtime
         run: php -r 'echo (new PDO("sqlite::memory:"))->query("SELECT sqlite_version()")->fetchColumn(), PHP_EOL;'
 
@@ -125,10 +124,6 @@ jobs:
             --output=tools/database-probes/results/mariadb-transaction-native-buffered.json
           php tools/database-probes/transaction-smoke.php mysql \
             --output=tools/database-probes/results/mysql-transaction-native-buffered.json
-          php tools/database-probes/migration-smoke.php mariadb \
-            --output=tools/database-probes/results/mariadb-migration-native-buffered.json
-          php tools/database-probes/migration-smoke.php mysql \
-            --output=tools/database-probes/results/mysql-migration-native-buffered.json
           php tools/database-probes/summarize.php tools/database-probes/results
       - name: Stop direct-engine fixtures
         if: always()
@@ -186,38 +181,45 @@ jobs:
       - run: composer install --no-interaction --prefer-dist --no-progress
       - run: mkdir -p benchmarks/results
       - run: composer benchmark > benchmarks/results/sqlite-suite.json
-      - name: Compare v0.2.0 and candidate production workloads
+      - name: Compare v0.4.0 and candidate core workloads
         shell: bash
         run: |
-          baseline_dir="${RUNNER_TEMP}/php-simplequery-v0.2.0"
-          git worktree add --detach "${baseline_dir}" v0.2.0
+          baseline_dir="${RUNNER_TEMP}/php-simplequery-v0.4.0"
+          git worktree add --detach "${baseline_dir}" v0.4.0
           trap 'git worktree remove --force "${baseline_dir}"' EXIT
           composer install --working-dir="${baseline_dir}" --no-interaction --prefer-dist --no-progress
+          baseline_order_status=0
+          candidate_order_status=0
           php benchmarks/compare.php \
-            --suite=production \
-            --baseline-autoload="${baseline_dir}/vendor/autoload.php" \
-            --candidate-autoload="${GITHUB_WORKSPACE}/vendor/autoload.php" \
-            --baseline-label=v0.2.0 \
-            --candidate-label=0.3-candidate \
-            > benchmarks/results/v0.2.0-comparison.json
-      - name: Compare v0.3.0 and candidate hot-path workloads
-        shell: bash
-        run: |
-          baseline_dir="${RUNNER_TEMP}/php-simplequery-v0.3.0"
-          git worktree add --detach "${baseline_dir}" v0.3.0
-          trap 'git worktree remove --force "${baseline_dir}"' EXIT
-          composer install --working-dir="${baseline_dir}" --no-interaction --prefer-dist --no-progress
-          php benchmarks/compare.php \
-            --suite=baseline \
+            --suite=ci \
             --profile=ci \
-            --iterations=7 \
-            --warmups=2 \
+            --iterations=9 \
+            --warmups=3 \
+            --source-order=baseline-first \
+            --allow-review \
             --baseline-autoload="${baseline_dir}/vendor/autoload.php" \
             --candidate-autoload="${GITHUB_WORKSPACE}/vendor/autoload.php" \
-            --baseline-label=v0.3.0 \
-            --candidate-label=0.4-candidate \
-            > benchmarks/results/v0.3.0-comparison.json
-      - run: composer benchmark:plans > benchmarks/results/sqlite-query-plans.json
+            --baseline-label=v0.4.0 \
+            --candidate-label=0.5-candidate \
+            > benchmarks/results/v0.4.0-comparison-baseline-first.json \
+            || baseline_order_status=$?
+          php benchmarks/compare.php \
+            --suite=ci \
+            --profile=ci \
+            --iterations=9 \
+            --warmups=3 \
+            --source-order=candidate-first \
+            --allow-review \
+            --baseline-autoload="${baseline_dir}/vendor/autoload.php" \
+            --candidate-autoload="${GITHUB_WORKSPACE}/vendor/autoload.php" \
+            --baseline-label=v0.4.0 \
+            --candidate-label=0.5-candidate \
+            > benchmarks/results/v0.4.0-comparison-candidate-first.json \
+            || candidate_order_status=$?
+          if [ "${baseline_order_status}" -ne 0 ] || [ "${candidate_order_status}" -ne 0 ]; then
+            exit 1
+          fi
+          php -r '$blocking = static function (string $path): array { $data = json_decode(file_get_contents($path), true, 512, JSON_THROW_ON_ERROR); $result = []; foreach (($data["performance_review"]["measurements"] ?? []) as $scenario => $operations) { if (!str_contains($scenario, "compile") && !str_contains($scenario, "terminal")) { continue; } foreach ($operations as $operation => $measurement) { if (($measurement["review_required"] ?? false) === true) { $result[] = $scenario . "/" . $operation; } } } return $result; }; $baseline = $blocking("benchmarks/results/v0.4.0-comparison-baseline-first.json"); $candidate = $blocking("benchmarks/results/v0.4.0-comparison-candidate-first.json"); $repeatable = array_values(array_intersect($baseline, $candidate)); if ($repeatable !== []) { fwrite(STDERR, "Repeatable compiler/terminal regressions: " . implode(", ", $repeatable) . PHP_EOL); exit(1); } if ($baseline !== [] || $candidate !== []) { fwrite(STDOUT, "Non-repeatable source-order benchmark signals retained in the comparison artifacts." . PHP_EOL); }'
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: reproducible-benchmark-reports

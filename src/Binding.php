@@ -22,7 +22,25 @@ final readonly class Binding
             return $this;
         }
 
-        $value = $this->value instanceof BackedEnum ? $this->value->value : $this->value;
+        return self::fromAutomaticValue($this->value);
+    }
+
+    public static function fromValue(mixed $value): self
+    {
+        if ($value instanceof self) {
+            return $value->concrete();
+        }
+
+        if (!self::isAutomaticValue($value)) {
+            throw new InvalidQueryException('Value is invalid for parameter type auto.');
+        }
+
+        return self::fromAutomaticValue($value);
+    }
+
+    private static function fromAutomaticValue(mixed $value): self
+    {
+        $value = $value instanceof BackedEnum ? $value->value : $value;
 
         return match (true) {
             $value === null => new self(null, ParameterType::Null),
@@ -34,20 +52,20 @@ final readonly class Binding
         };
     }
 
-    public static function fromValue(mixed $value): self
+    private static function isAutomaticValue(mixed $value): bool
     {
-        return $value instanceof self ? $value->concrete() : (new self($value))->concrete();
+        return $value === null
+            || is_bool($value)
+            || is_int($value)
+            || is_float($value)
+            || is_string($value)
+            || $value instanceof BackedEnum;
     }
 
     private function validate(): void
     {
         $valid = match ($this->type) {
-            ParameterType::Auto => $this->value === null
-                || is_bool($this->value)
-                || is_int($this->value)
-                || is_float($this->value)
-                || is_string($this->value)
-                || $this->value instanceof BackedEnum,
+            ParameterType::Auto => self::isAutomaticValue($this->value),
             ParameterType::Null => $this->value === null,
             ParameterType::Integer => is_int($this->value),
             ParameterType::String, ParameterType::Binary => is_string($this->value),

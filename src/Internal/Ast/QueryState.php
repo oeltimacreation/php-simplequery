@@ -40,7 +40,7 @@ final class QueryState
 
     public function copy(): self
     {
-        $copy = new self($this->source);
+        $copy = clone $this;
         $copy->projections = $this->projections;
         $copy->distinct = $this->distinct;
         $copy->where = $this->where->copy();
@@ -63,16 +63,7 @@ final class QueryState
      */
     public function copyForCompilation(): self
     {
-        $copy = new self($this->source);
-        $copy->projections = $this->projections;
-        $copy->distinct = $this->distinct;
-        $copy->where = $this->where;
-        $copy->joins = $this->joins;
-        $copy->groups = $this->groups;
-        $copy->having = $this->having;
-        $copy->orders = $this->orders;
-        $copy->limit = $this->limit;
-        $copy->offset = $this->offset;
+        $copy = clone $this;
         $copy->lock = $this->lock->copy();
 
         return $copy;

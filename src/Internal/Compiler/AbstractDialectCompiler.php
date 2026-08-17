@@ -54,13 +54,17 @@ abstract class AbstractDialectCompiler implements DialectCompiler
 
     private function selectClause(QueryState $state, CompilationContext $context): string
     {
-        $projection = $state->projections === [] ? [Identifier::wildcard()] : $state->projections;
-        $projectionSql = [];
-        foreach ($projection as $expression) {
-            $projectionSql[] = $this->expression($expression, $context);
+        if ($state->projections === []) {
+            $projectionSql = '*';
+        } else {
+            $projections = [];
+            foreach ($state->projections as $expression) {
+                $projections[] = $this->expression($expression, $context);
+            }
+            $projectionSql = implode(', ', $projections);
         }
 
-        return 'SELECT ' . ($state->distinct ? 'DISTINCT ' : '') . implode(', ', $projectionSql)
+        return 'SELECT ' . ($state->distinct ? 'DISTINCT ' : '') . $projectionSql
             . ' FROM ' . $this->source($state->source, $context);
     }
 
