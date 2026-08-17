@@ -14,7 +14,7 @@ final class CompilationContext
 
     public function bind(Binding $binding): void
     {
-        $this->bindings[] = $binding->concrete();
+        $this->bindings[] = $binding;
     }
 
     /** @param list<Binding> $bindings */

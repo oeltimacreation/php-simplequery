@@ -32,14 +32,15 @@ final readonly class Executor
             false,
             false,
             function (PDOStatement $statement) use ($query): array {
-                $rows = [];
-                foreach ($statement->fetchAll(PDO::FETCH_OBJ) as $row) {
+                /** @var list<mixed> $rows */
+                $rows = $statement->fetchAll(PDO::FETCH_OBJ);
+                foreach ($rows as $row) {
                     if (!$row instanceof stdClass) {
                         throw $this->invalidResult('PDO returned an invalid object result set.', $query);
                     }
-                    $rows[] = $row;
                 }
 
+                /** @var list<stdClass> $rows */
                 return $rows;
             },
         );
