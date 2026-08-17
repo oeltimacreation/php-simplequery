@@ -4,24 +4,11 @@ SimpleQuery is not a drop-in replacement for `pecee/pixie`. There is no Pixie
 namespace compatibility package, runtime facade, or deprecation shim.
 
 Migration is an application change supported by characterization tests. The
-library-owned [migration validation](../maintainers/migration-validation.md) recreates five
-representative shapes grounded in a read-only nine-consumer audit without
-changing any application repository.
-
-Before editing a migrated or partially migrated checkout, generate a
-deterministic, path-redacted adoption report:
-
-```bash
-php tools/audit-consumers.php /read-only/consumer-workspace \
-  --mode=simplequery \
-  --deterministic > adoption-audit.json
-```
-
-The lexical analyzer reports review candidates; it does not prove runtime
-reachability or semantic safety. Keep a private path-bearing report only when a
-reviewer needs it, and never commit private paths, identifiers, or SQL to this
-repository. Resolve the output with the canonical
-[migration review report](../maintainers/migration-review.md).
+historical [migration validation evidence](../evidence/migration-validation.json)
+records representative shapes grounded in a read-only consumer review without
+changing any application repository. SimpleQuery does not ship an application
+source analyzer or codemod; review the checklist below against the consumer's
+own source and keep private paths, identifiers, and SQL out of shared records.
 
 ## Familiar behavior retained
 
@@ -148,10 +135,10 @@ Every migration must explicitly resolve these differences:
    tests for results, writes, side effects, and failure behavior before edits.
 2. Select one bounded feature slice with an owner, rollback plan, engine path,
    representative data, and observable success criteria.
-3. Run the SimpleQuery adoption analyzer and inventory imports/construction,
-   every insert return, split or delayed `lastInsertId()` use, write truthiness,
-   raw SQL, dynamic identifiers, direct PDO, transactions, diagnostics, vendor
-   functions, cursors, batches, and unsupported methods.
+3. Inventory imports/construction, every insert return, split or delayed
+   `lastInsertId()` use, write truthiness, raw SQL, dynamic identifiers, direct
+   PDO, transactions, diagnostics, vendor functions, cursors, batches, and
+   unsupported methods.
 4. Classify insert calls as generated ID, ignored affected rows, truthiness,
    pass-through, or batch assumption. Never globally rename `insert()`.
 5. Rewrite construction and types to native `Connection`, then migrate fluent
@@ -169,13 +156,10 @@ Every migration must explicitly resolve these differences:
    SQLite/application tests and the real MariaDB/MySQL and proxy paths needed
    by that slice. Compare rows, types, affected rows, IDs, side effects,
    SQLSTATE behavior, timings, memory, and important query plans.
-10. Review any mechanical output. The provided analyzer permits only an
-   isolated same-name connection import and refuses handler construction plus
-   every ambiguous semantic change.
-11. Deploy the bounded slice through the application's staged rollout, observe
-    errors/latency/connection state, reconcile writes, and retain a rapid
-    rollback path before expanding scope.
+10. Deploy the bounded slice through the application's staged rollout, observe
+   errors/latency/connection state, reconcile writes, and retain a rapid
+   rollback path before expanding scope.
 
-Use `composer migration:check` for the library-owned reference corpus. A real
-migration records its own measurements and must not edit the library's fixture
-numbers to imply application completion.
+The library does not provide an automated migration command. A real migration
+records its own measurements and must not edit the repository's historical
+evidence to imply application completion.

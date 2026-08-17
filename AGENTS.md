@@ -83,9 +83,9 @@ narrower supported solution.
   and PDO behavior tests. Direct MariaDB/MySQL and proxy matrices are
   probe-driven under `tools/database-probes/`; do not infer their behavior from
   SQLite or from a single successful query.
-- `tests/Compatibility/`, `tests/Consumer/`, and `tests/Migration/` — runtime
-  and public-contract compatibility, external/no-dev consumer analysis, and
-  synthetic migration characterization.
+- `tests/Compatibility/` and `tests/Consumer/` — runtime and public-contract
+  compatibility plus external/no-dev consumer analysis. Migration fixtures
+  and evidence are historical records, reviewed manually.
 - `examples/` — runnable user-facing compiler and SQLite examples; useful
   examples are executed by `composer examples:check`.
 - `docs/guides/` — user tasks and recipes; `docs/reference/` — current API,
@@ -94,10 +94,9 @@ narrower supported solution.
 - `docs/adr/` — accepted durable architecture decisions; `docs/evidence/` —
   reproducible compatibility and release records; `docs/plans/` — temporary
   active release planning only.
-- `tools/database-probes/` — synthetic SQLite, direct-engine, and proxy probes
-  plus disposable Docker fixtures. `tools/migration/` — deterministic,
-  development-only migration analysis. `benchmarks/` — correctness-gated
-  performance harnesses.
+- `tools/database-probes/` — synthetic SQLite, direct-engine, proxy, and
+  contention probes plus disposable Docker fixtures. `benchmarks/` — compact,
+  correctness-gated performance harnesses.
 - `scripts/` — quality, coverage, documentation-link, public-API, and
   repository-verification scripts.
 - `tools/database-probes/results/`, `benchmarks/results/`, `coverage/`, and
@@ -159,9 +158,8 @@ composer check
 
 `composer check` is the normal container-free quality gate. It includes PHP
 linting, the PHP 8.2 platform check, PHPUnit, PHPStan level 9, coding
-standards, public-API drift, documentation links, duplication checks,
-executable examples, migration checks, and repository verification. It does
-not replace live database/proxy coverage.
+standards, public-API drift, documentation links, executable examples, and
+repository verification. It does not replace live database/proxy coverage.
 
 Run coverage when source behavior changes or the task requires it:
 
@@ -176,13 +174,12 @@ The regular report enforces 90% overall and 95% compiler line coverage. The
 separate Xdebug path/branch report enforces 80% overall and 90% compiler branch
 coverage. Coverage output is generated under `coverage/`.
 
-Run SQLite probes for PDO, execution, transaction, or migration behavior:
+Run SQLite probes for PDO, execution, or transaction behavior:
 
 ```bash
 composer probe:sqlite
 composer probe:execution -- sqlite
 composer probe:transaction -- sqlite
-composer probe:migration -- sqlite
 ```
 
 Run the full direct/proxy matrix only when the change needs it:

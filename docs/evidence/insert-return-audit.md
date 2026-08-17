@@ -3,11 +3,8 @@
 Status: core return decision closed; nine-checkout migration candidates
 classified.
 
-The executable lexical audit command is:
-
-```bash
-php tools/audit-consumers.php /path/to/workspace
-```
+This record preserves the output of the retired development-only lexical audit.
+It is historical evidence, not an active repository command.
 
 On 2026-07-17, the read-only scan of nine Pecee Pixie 4.15.8/4.16.3 consumer
 checkouts produced 648 `insert()` call candidates:

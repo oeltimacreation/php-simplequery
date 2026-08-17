@@ -24,9 +24,6 @@
         <testsuite name="consumer">
             <directory>tests/Consumer</directory>
         </testsuite>
-        <testsuite name="migration">
-            <directory>tests/Migration</directory>
-        </testsuite>
     </testsuites>
     <source>
         <include>

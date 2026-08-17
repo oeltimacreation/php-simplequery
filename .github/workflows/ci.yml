@@ -34,7 +34,6 @@ jobs:
       - run: composer probe:sqlite > sqlite-probe.json
       - run: composer probe:execution -- sqlite > sqlite-execution-probe.json
       - run: composer probe:transaction -- sqlite > sqlite-transaction-probe.json
-      - run: composer probe:migration -- sqlite > sqlite-migration-probe.json
       - name: Report linked SQLite runtime
         run: php -r 'echo (new PDO("sqlite::memory:"))->query("SELECT sqlite_version()")->fetchColumn(), PHP_EOL;'
 
@@ -125,10 +124,6 @@ jobs:
             --output=tools/database-probes/results/mariadb-transaction-native-buffered.json
           php tools/database-probes/transaction-smoke.php mysql \
             --output=tools/database-probes/results/mysql-transaction-native-buffered.json
-          php tools/database-probes/migration-smoke.php mariadb \
-            --output=tools/database-probes/results/mariadb-migration-native-buffered.json
-          php tools/database-probes/migration-smoke.php mysql \
-            --output=tools/database-probes/results/mysql-migration-native-buffered.json
           php tools/database-probes/summarize.php tools/database-probes/results
       - name: Stop direct-engine fixtures
         if: always()
@@ -186,38 +181,23 @@ jobs:
       - run: composer install --no-interaction --prefer-dist --no-progress
       - run: mkdir -p benchmarks/results
       - run: composer benchmark > benchmarks/results/sqlite-suite.json
-      - name: Compare v0.2.0 and candidate production workloads
+      - name: Compare v0.4.0 and candidate core workloads
         shell: bash
         run: |
-          baseline_dir="${RUNNER_TEMP}/php-simplequery-v0.2.0"
-          git worktree add --detach "${baseline_dir}" v0.2.0
+          baseline_dir="${RUNNER_TEMP}/php-simplequery-v0.4.0"
+          git worktree add --detach "${baseline_dir}" v0.4.0
           trap 'git worktree remove --force "${baseline_dir}"' EXIT
           composer install --working-dir="${baseline_dir}" --no-interaction --prefer-dist --no-progress
           php benchmarks/compare.php \
-            --suite=production \
-            --baseline-autoload="${baseline_dir}/vendor/autoload.php" \
-            --candidate-autoload="${GITHUB_WORKSPACE}/vendor/autoload.php" \
-            --baseline-label=v0.2.0 \
-            --candidate-label=0.3-candidate \
-            > benchmarks/results/v0.2.0-comparison.json
-      - name: Compare v0.3.0 and candidate hot-path workloads
-        shell: bash
-        run: |
-          baseline_dir="${RUNNER_TEMP}/php-simplequery-v0.3.0"
-          git worktree add --detach "${baseline_dir}" v0.3.0
-          trap 'git worktree remove --force "${baseline_dir}"' EXIT
-          composer install --working-dir="${baseline_dir}" --no-interaction --prefer-dist --no-progress
-          php benchmarks/compare.php \
-            --suite=baseline \
+            --suite=ci \
             --profile=ci \
             --iterations=7 \
             --warmups=2 \
             --baseline-autoload="${baseline_dir}/vendor/autoload.php" \
             --candidate-autoload="${GITHUB_WORKSPACE}/vendor/autoload.php" \
-            --baseline-label=v0.3.0 \
-            --candidate-label=0.4-candidate \
-            > benchmarks/results/v0.3.0-comparison.json
-      - run: composer benchmark:plans > benchmarks/results/sqlite-query-plans.json
+            --baseline-label=v0.4.0 \
+            --candidate-label=0.5-candidate \
+            > benchmarks/results/v0.4.0-comparison.json
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: reproducible-benchmark-reports
