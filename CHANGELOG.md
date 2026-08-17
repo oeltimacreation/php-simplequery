@@ -8,6 +8,8 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-08-18
+
 ### Added
 
 - Add `QueryBuilder::when()`, `unless()`, and strict 1-based `forPage()` helpers
@@ -211,7 +213,8 @@ with ZeroVer releases before `1.0.0`.
 - A repeatable direct-migration playbook and complete intentional-difference
   checklist without a runtime Pixie dependency or compatibility façade.
 
-[Unreleased]: https://github.com/oeltimacreation/php-simplequery/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/oeltimacreation/php-simplequery/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.1.0...v0.2.0
