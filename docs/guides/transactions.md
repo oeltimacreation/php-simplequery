@@ -179,8 +179,8 @@ itself as a lock conflict: it also covers transport and general failures.
 A typical application-owned lock-conflict check uses MySQL-family codes `1205`
 and `1213`, or SQLite SQLSTATE `HY000` with codes `5` and `6`. Those values are
 diagnostic inputs, not proof that a callback is safe to replay. See the
-[Phase 3 evidence](../evidence/0.3-transaction-and-exception-ergonomics.md) for
-the complete recipe and limits.
+[transaction and exception evidence](../evidence/0.3-transaction-and-exception-ergonomics.md)
+for the complete recipe and limits.
 
 Before any retry, the application must separately prove bounded attempts,
 idempotent or compensatable effects, safe generated-ID behavior, and a policy

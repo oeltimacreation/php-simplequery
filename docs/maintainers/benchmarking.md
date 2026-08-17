@@ -37,9 +37,9 @@ The CI suite keeps the smallest set that covers the required behavior:
 
 Hydration, observer, production-shaped read/write behavior, and historical
 workload shapes are represented by these core/reference modes rather than
-separate profile classes or command wrappers. Historical migration and query
-plan results remain in `docs/evidence/`; the tools that produced them are not
-active 0.5 commands.
+separate profile classes or command wrappers. Historical migration validation
+remains in `docs/evidence/`; retired query-plan scenarios and their generators
+are not active 0.5 commands.
 
 ## Comparison policy
 

@@ -4,7 +4,8 @@ The repository retains anonymized migration evidence for historical context,
 not an active analyzer or compatibility workflow. The durable records are the
 [synthetic validation summary](../evidence/migration-validation.json), the
 [consumer requirements review](../evidence/consumer-requirements-audit.md),
-and the [insert return audit](../evidence/insert-return-audit.md).
+including its insert-return classification, and the
+[migration performance control](../evidence/migration-benchmark.json).
 
 They contain no application source, private paths, credentials, customer
 identifiers, or runtime Pixie dependency. The original executable corpus and

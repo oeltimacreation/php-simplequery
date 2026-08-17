@@ -33,6 +33,22 @@ bindings into SQL; transaction callbacks permit explicit halt-style
 completion; and the first connection is stored statically. None of those
 implementation contracts is reproduced as a compatibility layer.
 
+### Insert return classification
+
+The same audit found 648 `insert()` call candidates. Their syntax is useful for
+planning a migration, but each candidate still needs application-owner review:
+
+| Syntactic use | Calls | Migration classification |
+| --- | ---: | --- |
+| Assigned locally | 162 | Confirm whether the consumer needs `insertGetId()` or affected rows. |
+| Returned directly | 77 | Choose an explicit ID or affected-row contract at the caller boundary. |
+| Truthiness condition | 9 | Rewrite around explicit ID or affected-row semantics. |
+| Return ignored or terminal chained | 400 | Use `insert()` unless review finds a wrapper contract. |
+
+The package contract is closed: `insert()` and `insertMany()` return affected
+rows as `int`, while `insertGetId()` returns an immediately captured generated
+ID as `string`. Batch inserts never infer generated IDs.
+
 ## Reviewed consumer styles
 
 | Style | Migration-sensitive needs | Accepted native contract | Owner |
@@ -71,7 +87,7 @@ No runtime Pixie adapter is accepted.
 | Insert's polymorphic return | Classify per call; use `insertGetId()` only for ID consumers | Application migration owner |
 | Direct PDO transaction completion inside managed callback | Rewrite ownership boundary | Application migration owner |
 | Joined/ordered/limited writes | Trusted engine-specific raw SQL or application redesign | Application migration owner |
-| Generic `updateOrInsert()` | Deferred; deliberate transaction/upsert design outside `0.1.0` | Package maintainer |
+| Generic `updateOrInsert()` | Deferred; deliberate transaction/upsert design remains outside the current contract | Package maintainer |
 
 No observed requirement justifies unions, right joins, fetch-mode mutation,
 table prefixes, static/default connection lookup, public statement-array

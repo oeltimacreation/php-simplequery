@@ -101,10 +101,10 @@ commonly prevents use of that ordinary index unless the engine and schema have
 a matching functional/expression index. Confirm important cases with the
 engine's query-plan tooling and production-like data.
 
-The maintained [Phase 5 evidence](../evidence/0.3-production-performance.md)
-shows this comparison on a synthetic indexed SQLite fixture. It explains those
-exact shapes; it is not a portability claim or an assertion that the builder
-controls application indexes.
+The current [maintainability and performance evidence](../evidence/0.5-maintainability-and-performance.md)
+records correctness-gated performance and memory results. Query-plan behavior
+remains engine- and schema-specific; the builder does not control application
+indexes.
 
 Trusted raw expression comparisons are available for genuinely required
 vendor functions, but their convenience does not make the resulting query

@@ -15,17 +15,17 @@ connections allowed the active-cursor second-statement probe, and unbuffered
 connections rejected it. The redacted values are retained in
 [`fixture-baseline.json`](fixture-baseline.json).
 
-The 2026-07-26 Phase 3 run repeated the complete direct profile, execution,
+The 2026-07-26 complete direct run repeated the profile, execution,
 transaction, and migration matrix on all four minimum/current versions. Each
 version produced 48 observed profile cases, 17 passed execution cases, 15
 passed transaction cases, and 8 passed migration cases.
 
-Phase 2 adds separate native-buffered public executor smokes for SQLite,
-MariaDB, and MySQL. They cover DSN construction, explicit bindings, object and
-associative hydration, logical counts, decimal aggregates, generated IDs,
-changed affected rows, genuine batch inserts, raw terminals, early cursor
-close, transaction-required row locks, exception conversion, and observer
-metadata. All three direct reports passed in the 2026-07-17 run.
+Separate native-buffered public executor smokes for SQLite, MariaDB, and MySQL
+cover DSN construction, explicit bindings, object and associative hydration,
+logical counts, decimal aggregates, generated IDs, changed affected rows,
+genuine batch inserts, raw terminals, early cursor close, transaction-required
+row locks, exception conversion, and observer metadata. All three direct
+reports passed in the 2026-07-17 run.
 
 The managed transaction smoke independently exercises outer commit/rollback,
 returned values, `Throwable` identity, nested savepoint success/failure,
