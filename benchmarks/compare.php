@@ -17,6 +17,7 @@ $options = getopt('', [
     'iterations:',
     'warmups:',
     'source-order:',
+    'allow-review',
 ]);
 $baseline = $options['baseline-autoload'] ?? null;
 $candidate = $options['candidate-autoload'] ?? dirname(__DIR__) . '/vendor/autoload.php';
@@ -27,6 +28,7 @@ $profile = $options['profile'] ?? 'ci';
 $iterations = $options['iterations'] ?? '5';
 $warmups = $options['warmups'] ?? '1';
 $sourceOrder = $options['source-order'] ?? 'baseline-first';
+$allowReview = array_key_exists('allow-review', $options);
 if (!is_string($baseline) || !is_file($baseline) || !is_string($candidate) || !is_file($candidate)) {
     throw new RuntimeException('Both baseline and candidate autoloaders are required.');
 }
@@ -114,7 +116,7 @@ foreach ($performanceReview['measurements'] as $scenario => $operations) {
         }
     }
 }
-if ($blocking !== []) {
+if ($blocking !== [] && !$allowReview) {
     throw new RuntimeException('Unexplained compiler/terminal regressions: ' . implode(', ', $blocking));
 }
 

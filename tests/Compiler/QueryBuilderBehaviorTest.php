@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Oeltima\SimpleQuery\Tests\Compiler;
 
 use Oeltima\SimpleQuery\ConditionGroup;
+use Oeltima\SimpleQuery\Connection;
 use Oeltima\SimpleQuery\Driver;
 use Oeltima\SimpleQuery\Exception\InvalidQueryException;
 use Oeltima\SimpleQuery\Exception\UnsupportedFeatureException;
@@ -357,6 +358,15 @@ final class QueryBuilderBehaviorTest extends TestCase
         $other = CompilerConnection::for(Driver::Sqlite);
         $mysql = CompilerConnection::for(Driver::MySql);
 
+        yield from self::invalidQuerySourceFactories($sqlite, $other);
+        yield from self::invalidQueryClauseFactories($sqlite);
+        yield from self::invalidQueryLockFactories($mysql);
+        yield from self::invalidQueryJoinFactories($sqlite);
+    }
+
+    /** @return iterable<string, array{callable(): mixed, class-string<\Throwable>}> */
+    private static function invalidQuerySourceFactories(Connection $sqlite, Connection $other): iterable
+    {
         yield 'cross connection in predicate' => [
             static fn () => $sqlite->table('users')->whereIn('id', $other->table('roles'))->compile(),
             InvalidQueryException::class,
@@ -377,6 +387,15 @@ final class QueryBuilderBehaviorTest extends TestCase
             static fn () => $sqlite->table('users', 'u')->as('other'),
             InvalidQueryException::class,
         ];
+        yield 'wildcard table source' => [
+            static fn () => $sqlite->table(Identifier::wildcard()),
+            InvalidQueryException::class,
+        ];
+    }
+
+    /** @return iterable<string, array{callable(): mixed, class-string<\Throwable>}> */
+    private static function invalidQueryClauseFactories(Connection $sqlite): iterable
+    {
         yield 'empty projection' => [
             static fn () => $sqlite->table('users')->select(),
             InvalidQueryException::class,
@@ -426,6 +445,11 @@ final class QueryBuilderBehaviorTest extends TestCase
             static fn () => $sqlite->table('users')->forPage(intdiv(PHP_INT_MAX, 2) + 2, 2),
             InvalidQueryException::class,
         ];
+    }
+
+    /** @return iterable<string, array{callable(): mixed, class-string<\Throwable>}> */
+    private static function invalidQueryLockFactories(Connection $mysql): iterable
+    {
         yield 'modifier without lock' => [
             static fn () => $mysql->table('users')->noWait(),
             InvalidQueryException::class,
@@ -446,13 +470,14 @@ final class QueryBuilderBehaviorTest extends TestCase
             static fn () => $mysql->table('users')->select($mysql->raw('COUNT(*)'))->forUpdate()->compile(),
             UnsupportedFeatureException::class,
         ];
+    }
+
+    /** @return iterable<string, array{callable(): mixed, class-string<\Throwable>}> */
+    private static function invalidQueryJoinFactories(Connection $sqlite): iterable
+    {
         yield 'empty join closure' => [
             static fn () => $sqlite->table('users')->join('roles', static function (JoinClause $join): void {
             }),
-            InvalidQueryException::class,
-        ];
-        yield 'wildcard table source' => [
-            static fn () => $sqlite->table(Identifier::wildcard()),
             InvalidQueryException::class,
         ];
     }

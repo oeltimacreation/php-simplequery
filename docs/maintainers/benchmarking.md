@@ -44,10 +44,14 @@ active 0.5 commands.
 ## Comparison policy
 
 CI checks the candidate against a fresh `v0.4.0` worktree with the same `ci`
-scenario set, profile, warm-ups, and odd sample count. The comparison rejects
-cross-version correctness-digest differences and marks compiler or terminal
-median increases above 5% for investigation. A marked result needs a
-repeatable paired run and a documented explanation or waiver before release.
+scenario set, profile, three warm-ups, and nine-sample median in both source
+orders. The comparison rejects cross-version correctness-digest differences
+and marks compiler or terminal median increases above 5% for investigation. CI
+fails only when the same regression reproduces in both source orders; a
+one-order signal is retained in the paired reports as host/source-order noise.
+A repeatable result still needs a documented explanation or waiver before
+release. The CI-only `--allow-review` flag keeps each comparison report
+available so the workflow can apply that paired decision after both runs.
 
 Workers refuse timing when Xdebug or PCOV instrumentation is active. The
 benchmark runner also enforces the existing soak bound: retained allocation

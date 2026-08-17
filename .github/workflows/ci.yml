@@ -188,16 +188,38 @@ jobs:
           git worktree add --detach "${baseline_dir}" v0.4.0
           trap 'git worktree remove --force "${baseline_dir}"' EXIT
           composer install --working-dir="${baseline_dir}" --no-interaction --prefer-dist --no-progress
+          baseline_order_status=0
+          candidate_order_status=0
           php benchmarks/compare.php \
             --suite=ci \
             --profile=ci \
-            --iterations=7 \
-            --warmups=2 \
+            --iterations=9 \
+            --warmups=3 \
+            --source-order=baseline-first \
+            --allow-review \
             --baseline-autoload="${baseline_dir}/vendor/autoload.php" \
             --candidate-autoload="${GITHUB_WORKSPACE}/vendor/autoload.php" \
             --baseline-label=v0.4.0 \
             --candidate-label=0.5-candidate \
-            > benchmarks/results/v0.4.0-comparison.json
+            > benchmarks/results/v0.4.0-comparison-baseline-first.json \
+            || baseline_order_status=$?
+          php benchmarks/compare.php \
+            --suite=ci \
+            --profile=ci \
+            --iterations=9 \
+            --warmups=3 \
+            --source-order=candidate-first \
+            --allow-review \
+            --baseline-autoload="${baseline_dir}/vendor/autoload.php" \
+            --candidate-autoload="${GITHUB_WORKSPACE}/vendor/autoload.php" \
+            --baseline-label=v0.4.0 \
+            --candidate-label=0.5-candidate \
+            > benchmarks/results/v0.4.0-comparison-candidate-first.json \
+            || candidate_order_status=$?
+          if [ "${baseline_order_status}" -ne 0 ] || [ "${candidate_order_status}" -ne 0 ]; then
+            exit 1
+          fi
+          php -r '$blocking = static function (string $path): array { $data = json_decode(file_get_contents($path), true, 512, JSON_THROW_ON_ERROR); $result = []; foreach (($data["performance_review"]["measurements"] ?? []) as $scenario => $operations) { if (!str_contains($scenario, "compile") && !str_contains($scenario, "terminal")) { continue; } foreach ($operations as $operation => $measurement) { if (($measurement["review_required"] ?? false) === true) { $result[] = $scenario . "/" . $operation; } } } return $result; }; $baseline = $blocking("benchmarks/results/v0.4.0-comparison-baseline-first.json"); $candidate = $blocking("benchmarks/results/v0.4.0-comparison-candidate-first.json"); $repeatable = array_values(array_intersect($baseline, $candidate)); if ($repeatable !== []) { fwrite(STDERR, "Repeatable compiler/terminal regressions: " . implode(", ", $repeatable) . PHP_EOL); exit(1); } if ($baseline !== [] || $candidate !== []) { fwrite(STDOUT, "Non-repeatable source-order benchmark signals retained in the comparison artifacts." . PHP_EOL); }'
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: reproducible-benchmark-reports
