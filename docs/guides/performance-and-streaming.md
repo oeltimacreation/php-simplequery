@@ -119,6 +119,10 @@ validate and yield the fetched row without rebuilding it. The
 the paired `v0.1.0` evidence and acceptance decision; public return contracts
 and validation behavior are unchanged.
 
+Object hydration validates PDO's fetched list in place instead of rebuilding a
+second list of the same objects. Use a cursor when the complete result should
+not be retained in PHP memory.
+
 ## Benchmark suite
 
 The executable fresh-process harness is documented in

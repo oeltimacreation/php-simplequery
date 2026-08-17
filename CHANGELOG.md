@@ -13,6 +13,12 @@ with ZeroVer releases before `1.0.0`.
 - Add `QueryBuilder::when()`, `unless()`, and strict 1-based `forPage()` helpers
   for conditional clauses and deterministic limit/offset pagination.
 
+### Changed
+
+- Reduce hot-path allocations in default projection compilation, automatic
+  binding normalization, compilation snapshots, and object hydration without
+  changing SQL, binding order, or result contracts.
+
 ### Removed
 
 - Remove development-only Pixie migration automation and the 0.4-specific
