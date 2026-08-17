@@ -8,13 +8,13 @@ final readonly class ScenarioRequest
 {
     public function __construct(
         public ScenarioName $name,
-        public BenchmarkProfile $profile,
+        public string $profile,
     ) {
     }
 
     /** @param array{ci: int, reference: int} $sizes */
     public function scale(array $sizes): int
     {
-        return $this->profile->select($sizes);
+        return $sizes[$this->profile];
     }
 }

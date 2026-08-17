@@ -9,10 +9,11 @@ use Oeltima\SimpleQuery\Driver;
 use Oeltima\SimpleQuery\Testing\CompilerConnection;
 use Oeltima\SimpleQuery\Testing\CompiledWriteQuery;
 
-final class CompilerScenarios implements ScenarioFactory
+/** @phpstan-import-type Scenario from ScenarioCatalog */
+final class CompilerScenarios
 {
-    #[\Override]
-    public function prepare(ScenarioRequest $request): ?PreparedScenario
+    /** @return Scenario|null */
+    public function prepare(ScenarioRequest $request): ?array
     {
         return match ($request->name->value()) {
             ScenarioName::COMPILER_PREDICATES_10,
@@ -26,7 +27,8 @@ final class CompilerScenarios implements ScenarioFactory
         };
     }
 
-    private function predicates(ScenarioRequest $request): PreparedScenario
+    /** @return Scenario */
+    private function predicates(ScenarioRequest $request): array
     {
         $predicates = $request->name->dimension() ?? throw new \LogicException('Missing predicate dimension.');
         $connection = CompilerConnection::for(Driver::Sqlite);
@@ -45,14 +47,15 @@ final class CompilerScenarios implements ScenarioFactory
             ];
         };
 
-        return new PreparedScenario(
-            ['simplequery' => $operation],
-            null,
-            ['predicates' => $predicates],
-        );
+        return [
+            'operations' => ['simplequery' => $operation],
+            'pdo' => null,
+            'dimensions' => ['predicates' => $predicates],
+        ];
     }
 
-    private function shapes(ScenarioRequest $request): PreparedScenario
+    /** @return Scenario */
+    private function shapes(ScenarioRequest $request): array
     {
         $width = $request->scale(['ci' => 50, 'reference' => 250]);
         $connection = CompilerConnection::for(Driver::Sqlite);
@@ -80,14 +83,15 @@ final class CompilerScenarios implements ScenarioFactory
             ];
         };
 
-        return new PreparedScenario(
-            ['build_and_compile' => $operation],
-            null,
-            ['shape_width' => $width],
-        );
+        return [
+            'operations' => ['build_and_compile' => $operation],
+            'pdo' => null,
+            'dimensions' => ['shape_width' => $width],
+        ];
     }
 
-    private function repeated(ScenarioRequest $request): PreparedScenario
+    /** @return Scenario */
+    private function repeated(ScenarioRequest $request): array
     {
         $compiles = $request->scale(['ci' => 2_000, 'reference' => 20_000]);
         $connection = CompilerConnection::for(Driver::Sqlite);
@@ -101,14 +105,15 @@ final class CompilerScenarios implements ScenarioFactory
             return ['compiles' => $compiles, 'sql_hash' => hash('sha256', $last->sql)];
         };
 
-        return new PreparedScenario(
-            ['repeated_compile' => $operation],
-            null,
-            ['compiles' => $compiles],
-        );
+        return [
+            'operations' => ['repeated_compile' => $operation],
+            'pdo' => null,
+            'dimensions' => ['compiles' => $compiles],
+        ];
     }
 
-    private function allocation(ScenarioRequest $request): PreparedScenario
+    /** @return Scenario */
+    private function allocation(ScenarioRequest $request): array
     {
         $compiles = $request->scale(['ci' => 2_000, 'reference' => 20_000]);
         $connection = CompilerConnection::for(Driver::Sqlite);
@@ -129,14 +134,15 @@ final class CompilerScenarios implements ScenarioFactory
             return ['compiles' => $compiles, 'sql_hash' => hash('sha256', $last->sql)];
         };
 
-        return new PreparedScenario(
-            ['fresh_builder_compile' => $operation],
-            null,
-            ['compiles' => $compiles],
-        );
+        return [
+            'operations' => ['fresh_builder_compile' => $operation],
+            'pdo' => null,
+            'dimensions' => ['compiles' => $compiles],
+        ];
     }
 
-    private function batch(ScenarioRequest $request): PreparedScenario
+    /** @return Scenario */
+    private function batch(ScenarioRequest $request): array
     {
         $rows = $request->scale(['ci' => 200, 'reference' => 1_000]);
         $connection = CompilerConnection::for(Driver::Sqlite);
@@ -154,10 +160,10 @@ final class CompilerScenarios implements ScenarioFactory
             ];
         };
 
-        return new PreparedScenario(
-            ['insert_many_compile' => $operation],
-            null,
-            ['rows' => $rows, 'columns' => 3],
-        );
+        return [
+            'operations' => ['insert_many_compile' => $operation],
+            'pdo' => null,
+            'dimensions' => ['rows' => $rows, 'columns' => 3],
+        ];
     }
 }

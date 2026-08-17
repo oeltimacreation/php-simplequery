@@ -12,10 +12,11 @@ use Oeltima\SimpleQuery\Driver;
  * workloads. Timing medians are recorded but never interpreted as portable
  * thresholds; the allocation fields drive the soak memory gate in run.php.
  */
-final class SoakScenarios implements ScenarioFactory
+/** @phpstan-import-type Scenario from ScenarioCatalog */
+final class SoakScenarios
 {
-    #[\Override]
-    public function prepare(ScenarioRequest $request): ?PreparedScenario
+    /** @return Scenario|null */
+    public function prepare(ScenarioRequest $request): ?array
     {
         return match ($request->name->value()) {
             ScenarioName::STREAMING_CURSOR_SOAK => $this->streamingCursor($request),
@@ -24,7 +25,8 @@ final class SoakScenarios implements ScenarioFactory
         };
     }
 
-    private function streamingCursor(ScenarioRequest $request): PreparedScenario
+    /** @return Scenario */
+    private function streamingCursor(ScenarioRequest $request): array
     {
         $rows = $request->scale(['ci' => 5_000, 'reference' => 50_000]);
         $connection = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
@@ -45,14 +47,15 @@ final class SoakScenarios implements ScenarioFactory
             return ['count' => $count];
         };
 
-        return new PreparedScenario(
-            ['cursor_drain' => $operation],
-            $pdo,
-            ['rows' => $rows, 'payload_bytes' => 64],
-        );
+        return [
+            'operations' => ['cursor_drain' => $operation],
+            'pdo' => $pdo,
+            'dimensions' => ['rows' => $rows, 'payload_bytes' => 64],
+        ];
     }
 
-    private function batchWrite(ScenarioRequest $request): PreparedScenario
+    /** @return Scenario */
+    private function batchWrite(ScenarioRequest $request): array
     {
         $rows = $request->scale(['ci' => 500, 'reference' => 2_000]);
         $connection = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
@@ -71,10 +74,10 @@ final class SoakScenarios implements ScenarioFactory
             });
         };
 
-        return new PreparedScenario(
-            ['batch_write' => $operation],
-            $pdo,
-            ['rows' => $rows, 'columns' => 3],
-        );
+        return [
+            'operations' => ['batch_write' => $operation],
+            'pdo' => $pdo,
+            'dimensions' => ['rows' => $rows, 'columns' => 3],
+        ];
     }
 }

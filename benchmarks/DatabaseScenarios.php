@@ -6,27 +6,27 @@ namespace Oeltima\SimpleQuery\Benchmark;
 
 use Oeltima\SimpleQuery\Connection;
 use Oeltima\SimpleQuery\Driver;
-use Oeltima\SimpleQuery\Expression\Identifier;
 use PDO;
 use PDOStatement;
 use RuntimeException;
 
-final class DatabaseScenarios implements ScenarioFactory
+/** @phpstan-import-type Scenario from ScenarioCatalog */
+final class DatabaseScenarios
 {
-    #[\Override]
-    public function prepare(ScenarioRequest $request): ?PreparedScenario
+    /** @return Scenario|null */
+    public function prepare(ScenarioRequest $request): ?array
     {
         return match ($request->name->value()) {
             ScenarioName::BATCH_EXECUTE => $this->batch($request),
             ScenarioName::TRANSACTIONS => $this->transactions($request),
             ScenarioName::LIFECYCLE, ScenarioName::LIFECYCLE_SOAK => $this->lifecycle($request),
-            ScenarioName::MIGRATION_QUERY => $this->migration(),
             ScenarioName::TERMINAL_REUSE => $this->terminalReuse($request),
             default => null,
         };
     }
 
-    private function batch(ScenarioRequest $request): PreparedScenario
+    /** @return Scenario */
+    private function batch(ScenarioRequest $request): array
     {
         $rows = $request->scale(['ci' => 100, 'reference' => 1_000]);
         $connection = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
@@ -58,14 +58,15 @@ final class DatabaseScenarios implements ScenarioFactory
             return ['affected' => count($fixture), 'count' => $count];
         };
 
-        return new PreparedScenario(
-            ['simplequery_insert_many' => $simpleQuery, 'pdo_prepared_loop' => $direct],
-            $pdo,
-            ['rows' => $rows],
-        );
+        return [
+            'operations' => ['simplequery_insert_many' => $simpleQuery, 'pdo_prepared_loop' => $direct],
+            'pdo' => $pdo,
+            'dimensions' => ['rows' => $rows],
+        ];
     }
 
-    private function transactions(ScenarioRequest $request): PreparedScenario
+    /** @return Scenario */
+    private function transactions(ScenarioRequest $request): array
     {
         $transactions = $request->scale(['ci' => 20, 'reference' => 100]);
         $connection = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
@@ -91,14 +92,15 @@ final class DatabaseScenarios implements ScenarioFactory
             return ['transactions' => $transactions, 'nested_depth' => 2];
         };
 
-        return new PreparedScenario(
-            ['simplequery_managed' => $simpleQuery, 'pdo_control' => $direct],
-            $pdo,
-            ['transactions_per_sample' => $transactions],
-        );
+        return [
+            'operations' => ['simplequery_managed' => $simpleQuery, 'pdo_control' => $direct],
+            'pdo' => $pdo,
+            'dimensions' => ['transactions_per_sample' => $transactions],
+        ];
     }
 
-    private function lifecycle(ScenarioRequest $request): PreparedScenario
+    /** @return Scenario */
+    private function lifecycle(ScenarioRequest $request): array
     {
         $loops = $request->name->value() === ScenarioName::LIFECYCLE_SOAK
             ? $request->scale(['ci' => 500, 'reference' => 5_000])
@@ -124,14 +126,15 @@ final class DatabaseScenarios implements ScenarioFactory
             return ['loops' => $loops, 'last' => $last];
         };
 
-        return new PreparedScenario(
-            ['simplequery' => $simpleQuery, 'pdo' => $direct],
-            null,
-            ['loops_per_sample' => $loops],
-        );
+        return [
+            'operations' => ['simplequery' => $simpleQuery, 'pdo' => $direct],
+            'pdo' => null,
+            'dimensions' => ['loops_per_sample' => $loops],
+        ];
     }
 
-    private function terminalReuse(ScenarioRequest $request): PreparedScenario
+    /** @return Scenario */
+    private function terminalReuse(ScenarioRequest $request): array
     {
         $loops = $request->scale(['ci' => 200, 'reference' => 1_000]);
         $connection = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
@@ -154,72 +157,11 @@ final class DatabaseScenarios implements ScenarioFactory
             return ['loops' => $loops, 'last_label' => $lastLabel, 'last_count' => $lastCount];
         };
 
-        return new PreparedScenario(
-            ['terminal_reuse' => $operation],
-            $pdo,
-            ['loops' => $loops, 'rows' => 100],
-        );
-    }
-
-    private function migration(): PreparedScenario
-    {
-        $connection = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
-        $pdo = $connection->pdo();
-        $pdo->exec('CREATE TABLE benchmark_teams (id INTEGER PRIMARY KEY, name TEXT NOT NULL)');
-        $pdo->exec(
-            'CREATE TABLE benchmark_members ('
-            . 'id INTEGER PRIMARY KEY, team_id INTEGER NOT NULL, name TEXT NOT NULL, '
-            . 'active INTEGER NOT NULL, score INTEGER)',
-        );
-        $connection->table('benchmark_teams')->insertMany([
-            ['id' => 1, 'name' => 'Alpha'],
-            ['id' => 2, 'name' => 'Beta'],
-            ['id' => 3, 'name' => 'Gamma'],
-        ]);
-        $members = [];
-        for ($id = 1; $id <= 500; ++$id) {
-            $members[] = [
-                'id' => $id,
-                'team_id' => (($id - 1) % 3) + 1,
-                'name' => 'Member ' . $id,
-                'active' => $id % 4 !== 0,
-                'score' => $id % 100,
-            ];
-        }
-        $connection->table('benchmark_members')->insertMany($members);
-
-        $simpleQuery = static function () use ($connection): array {
-            return $connection
-                ->table('benchmark_members', 'm')
-                ->select(
-                    'm.id',
-                    Identifier::of('m.name')->as('member_name'),
-                    Identifier::of('t.name')->as('team_name'),
-                    'm.score',
-                )
-                ->join(Identifier::of('benchmark_teams')->as('t'), 't.id', '=', 'm.team_id')
-                ->where('m.active', true)
-                ->where('m.score', '>=', 50)
-                ->orderBy('m.id')
-                ->limit(100)
-                ->getAssociative();
-        };
-        $direct = static function () use ($pdo): array {
-            $statement = $pdo->prepare(
-                'SELECT m.id, m.name AS member_name, t.name AS team_name, m.score FROM benchmark_members m '
-                . 'INNER JOIN benchmark_teams t ON t.id = m.team_id '
-                . 'WHERE m.active = ? AND m.score >= ? ORDER BY m.id LIMIT 100',
-            );
-            $statement->execute([1, 50]);
-
-            return $statement->fetchAll(PDO::FETCH_ASSOC);
-        };
-
-        return new PreparedScenario(
-            ['simplequery' => $simpleQuery, 'pdo' => $direct],
-            $pdo,
-            ['fixture_rows' => 500, 'result_rows' => 100],
-        );
+        return [
+            'operations' => ['terminal_reuse' => $operation],
+            'pdo' => $pdo,
+            'dimensions' => ['loops' => $loops, 'rows' => 100],
+        ];
     }
 
     private function pdo(): PDO

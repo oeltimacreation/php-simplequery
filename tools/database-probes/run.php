@@ -4,12 +4,19 @@ declare(strict_types=1);
 
 use Oeltima\SimpleQuery\Tools\DatabaseProbe\PdoBehaviorProbe;
 use Oeltima\SimpleQuery\Tools\DatabaseProbe\ProbeTarget;
+use Oeltima\SimpleQuery\Tools\DatabaseProbe\SqliteContentionProbe;
 
 require dirname(__DIR__, 2) . '/vendor/autoload.php';
 
 /** @var list<string> $arguments */
 $arguments = $_SERVER['argv'] ?? [];
 $targetName = $arguments[1] ?? 'sqlite';
+if ($targetName === 'sqlite-contention') {
+    $report = (new SqliteContentionProbe())->run();
+    $json = json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . PHP_EOL;
+    fwrite(STDOUT, $json);
+    exit(0);
+}
 $target = ProbeTarget::named($targetName);
 
 try {

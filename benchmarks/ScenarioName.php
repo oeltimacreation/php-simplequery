@@ -25,25 +25,12 @@ final class ScenarioName
     public const CURSOR_EARLY_CLOSE = 'cursor_early_close';
     public const READ_TERMINALS = 'read_terminals';
     public const OBSERVER = 'observer';
-    public const OBSERVER_BINDINGS_1 = 'observer_bindings_1';
-    public const OBSERVER_BINDINGS_10 = 'observer_bindings_10';
-    public const OBSERVER_BINDINGS_50 = 'observer_bindings_50';
     public const BATCH_EXECUTE = 'batch_execute';
     public const TRANSACTIONS = 'transactions';
     public const LIFECYCLE = 'lifecycle';
     public const LIFECYCLE_SOAK = 'lifecycle_soak';
     public const STREAMING_CURSOR_SOAK = 'streaming_cursor_soak';
     public const BATCH_WRITE_SOAK = 'batch_write_soak';
-    public const MIGRATION_QUERY = 'migration_query';
-    public const PRODUCTION_REPORT_COMPILE = 'production_report_compile';
-    public const PRODUCTION_COUNT_COMPILE = 'production_count_compile';
-    public const PRODUCTION_REPORT_EXECUTE = 'production_report_execute';
-    public const PRODUCTION_BATCH_EXECUTE = 'production_batch_execute';
-    public const HYDRATION_PDO_ASSOCIATIVE = 'hydration_pdo_associative';
-    public const HYDRATION_SIMPLEQUERY_ASSOCIATIVE = 'hydration_simplequery_associative';
-    public const HYDRATION_SIMPLEQUERY_OBJECT = 'hydration_simplequery_object';
-    public const CURSOR_SIMPLEQUERY_ASSOCIATIVE = 'cursor_simplequery_associative';
-    public const CURSOR_SIMPLEQUERY_OBJECT = 'cursor_simplequery_object';
 
     private const VALUES = [
         self::PDO_CONTROL_10,
@@ -63,25 +50,12 @@ final class ScenarioName
         self::CURSOR_EARLY_CLOSE,
         self::READ_TERMINALS,
         self::OBSERVER,
-        self::OBSERVER_BINDINGS_1,
-        self::OBSERVER_BINDINGS_10,
-        self::OBSERVER_BINDINGS_50,
         self::BATCH_EXECUTE,
         self::TRANSACTIONS,
         self::LIFECYCLE,
         self::LIFECYCLE_SOAK,
         self::STREAMING_CURSOR_SOAK,
         self::BATCH_WRITE_SOAK,
-        self::MIGRATION_QUERY,
-        self::PRODUCTION_REPORT_COMPILE,
-        self::PRODUCTION_COUNT_COMPILE,
-        self::PRODUCTION_REPORT_EXECUTE,
-        self::PRODUCTION_BATCH_EXECUTE,
-        self::HYDRATION_PDO_ASSOCIATIVE,
-        self::HYDRATION_SIMPLEQUERY_ASSOCIATIVE,
-        self::HYDRATION_SIMPLEQUERY_OBJECT,
-        self::CURSOR_SIMPLEQUERY_ASSOCIATIVE,
-        self::CURSOR_SIMPLEQUERY_OBJECT,
     ];
 
     private string $value;
@@ -107,12 +81,10 @@ final class ScenarioName
     public function dimension(): ?int
     {
         return match ($this->value) {
-            self::PDO_CONTROL_10, self::COMPILER_PREDICATES_10, self::OBSERVER_BINDINGS_10 => 10,
+            self::PDO_CONTROL_10, self::COMPILER_PREDICATES_10 => 10,
             self::PDO_CONTROL_100, self::COMPILER_PREDICATES_100 => 100,
             self::PDO_CONTROL_1000, self::COMPILER_PREDICATES_1000 => 1_000,
             self::PDO_CONTROL_5000 => 5_000,
-            self::OBSERVER_BINDINGS_1 => 1,
-            self::OBSERVER_BINDINGS_50 => 50,
             default => null,
         };
     }

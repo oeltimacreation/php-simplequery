@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use Oeltima\SimpleQuery\Benchmark\Harness;
 use Oeltima\SimpleQuery\Benchmark\BenchmarkSuite;
-use Oeltima\SimpleQuery\Benchmark\EnvironmentRequest;
 use Oeltima\SimpleQuery\Benchmark\ScenarioCatalog;
 
 require __DIR__ . '/bootstrap.php';
@@ -139,20 +138,6 @@ foreach ($reports as $report) {
     }
 }
 
-if ($suite === BenchmarkSuite::HydrationExperiment) {
-    $hydrationDigests = [];
-    foreach ($reports as $report) {
-        $correctness = $report['correctness'] ?? null;
-        $digest = is_array($correctness) ? ($correctness['common_digest'] ?? null) : null;
-        if (!is_string($digest)) {
-            throw new RuntimeException('Hydration experiment scenario has no correctness digest.');
-        }
-        $hydrationDigests[] = $digest;
-    }
-    if (count(array_unique($hydrationDigests)) !== 1) {
-        throw new RuntimeException('Hydration experiment modes produced different result digests.');
-    }
-}
 ksort($predicateMedians);
 $previousSize = null;
 $previousMedian = null;
@@ -171,7 +156,7 @@ foreach ($predicateMedians as $size => $median) {
 }
 
 $runnerRoot = dirname(__DIR__);
-$runnerEnvironment = Harness::environment(EnvironmentRequest::from(['package_root' => $runnerRoot]));
+$runnerEnvironment = Harness::environment(['package_root' => $runnerRoot]);
 $envelope = [
     'schema_version' => 2,
     'benchmark' => 'php-simplequery-reproducible-suite',

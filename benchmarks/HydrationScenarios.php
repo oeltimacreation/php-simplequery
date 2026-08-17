@@ -10,26 +10,23 @@ use PDO;
 use PDOStatement;
 use RuntimeException;
 
-final class HydrationScenarios implements ScenarioFactory
+/** @phpstan-import-type Scenario from ScenarioCatalog */
+final class HydrationScenarios
 {
-    #[\Override]
-    public function prepare(ScenarioRequest $request): ?PreparedScenario
+    /** @return Scenario|null */
+    public function prepare(ScenarioRequest $request): ?array
     {
         return match ($request->name->value()) {
             ScenarioName::HYDRATION => $this->hydration($request),
             ScenarioName::CURSOR_EXHAUSTION => $this->cursorExhaustion($request),
             ScenarioName::CURSOR_EARLY_CLOSE => $this->cursorEarlyClose($request),
             ScenarioName::READ_TERMINALS => $this->readTerminals($request),
-            ScenarioName::HYDRATION_PDO_ASSOCIATIVE,
-            ScenarioName::HYDRATION_SIMPLEQUERY_ASSOCIATIVE,
-            ScenarioName::HYDRATION_SIMPLEQUERY_OBJECT,
-            ScenarioName::CURSOR_SIMPLEQUERY_ASSOCIATIVE,
-            ScenarioName::CURSOR_SIMPLEQUERY_OBJECT => $this->standalone($request),
             default => null,
         };
     }
 
-    private function hydration(ScenarioRequest $request): PreparedScenario
+    /** @return Scenario */
+    private function hydration(ScenarioRequest $request): array
     {
         [$connection, $pdo, $rows] = $this->rowFixture($request);
         $direct = fn (): array => $this->selectRows($pdo)->fetchAll(PDO::FETCH_ASSOC);
@@ -41,18 +38,19 @@ final class HydrationScenarios implements ScenarioFactory
             $connection->table('benchmark_rows')->orderBy('id')->get(),
         );
 
-        return new PreparedScenario(
-            [
+        return [
+            'operations' => [
                 'pdo_associative' => $direct,
                 'simplequery_associative' => $associative,
                 'simplequery_object' => $objects,
             ],
-            $pdo,
-            ['rows' => $rows, 'payload_bytes' => 96],
-        );
+            'pdo' => $pdo,
+            'dimensions' => ['rows' => $rows, 'payload_bytes' => 96],
+        ];
     }
 
-    private function cursorExhaustion(ScenarioRequest $request): PreparedScenario
+    /** @return Scenario */
+    private function cursorExhaustion(ScenarioRequest $request): array
     {
         [$connection, $pdo, $rows] = $this->rowFixture($request);
         $associative = static function () use ($connection): array {
@@ -72,14 +70,15 @@ final class HydrationScenarios implements ScenarioFactory
             return $result;
         };
 
-        return new PreparedScenario(
-            ['associative_cursor' => $associative, 'object_cursor' => $objects],
-            $pdo,
-            ['rows' => $rows, 'payload_bytes' => 96],
-        );
+        return [
+            'operations' => ['associative_cursor' => $associative, 'object_cursor' => $objects],
+            'pdo' => $pdo,
+            'dimensions' => ['rows' => $rows, 'payload_bytes' => 96],
+        ];
     }
 
-    private function cursorEarlyClose(ScenarioRequest $request): PreparedScenario
+    /** @return Scenario */
+    private function cursorEarlyClose(ScenarioRequest $request): array
     {
         [$connection, $pdo, $rows] = $this->rowFixture($request);
         $operation = static function () use ($connection): array {
@@ -94,14 +93,15 @@ final class HydrationScenarios implements ScenarioFactory
             return ['first' => $first, 'closed' => $cursor->isClosed()];
         };
 
-        return new PreparedScenario(
-            ['early_close' => $operation],
-            $pdo,
-            ['fixture_rows' => $rows, 'consumed_rows' => 1],
-        );
+        return [
+            'operations' => ['early_close' => $operation],
+            'pdo' => $pdo,
+            'dimensions' => ['fixture_rows' => $rows, 'consumed_rows' => 1],
+        ];
     }
 
-    private function readTerminals(ScenarioRequest $request): PreparedScenario
+    /** @return Scenario */
+    private function readTerminals(ScenarioRequest $request): array
     {
         [$connection, $pdo, $rows] = $this->rowFixture(
             $request,
@@ -122,51 +122,11 @@ final class HydrationScenarios implements ScenarioFactory
             ];
         };
 
-        return new PreparedScenario(
-            ['simplequery' => $simpleQuery, 'pdo' => $direct],
-            $pdo,
-            ['rows' => $rows],
-        );
-    }
-
-    private function standalone(ScenarioRequest $request): PreparedScenario
-    {
-        [$connection, $pdo, $rows] = $this->rowFixture($request);
-        $operation = match ($request->name->value()) {
-            ScenarioName::HYDRATION_PDO_ASSOCIATIVE => fn (): array => $this->selectRows($pdo)
-                ->fetchAll(PDO::FETCH_ASSOC),
-            ScenarioName::HYDRATION_SIMPLEQUERY_ASSOCIATIVE => static fn (): array => $connection
-                ->table('benchmark_rows')
-                ->orderBy('id')
-                ->getAssociative(),
-            ScenarioName::HYDRATION_SIMPLEQUERY_OBJECT => static fn (): array => array_map(
-                static fn (object $row): array => get_object_vars($row),
-                $connection->table('benchmark_rows')->orderBy('id')->get(),
-            ),
-            ScenarioName::CURSOR_SIMPLEQUERY_ASSOCIATIVE => static function () use ($connection): array {
-                $result = [];
-                foreach ($connection->table('benchmark_rows')->orderBy('id')->iterateAssociative() as $row) {
-                    $result[] = $row;
-                }
-
-                return $result;
-            },
-            ScenarioName::CURSOR_SIMPLEQUERY_OBJECT => static function () use ($connection): array {
-                $result = [];
-                foreach ($connection->table('benchmark_rows')->orderBy('id')->iterate() as $row) {
-                    $result[] = get_object_vars($row);
-                }
-
-                return $result;
-            },
-            default => throw new \LogicException('Unsupported standalone hydration mode.'),
-        };
-
-        return new PreparedScenario(
-            [$request->name->value() => $operation],
-            $pdo,
-            ['rows' => $rows, 'payload_bytes' => 96],
-        );
+        return [
+            'operations' => ['simplequery' => $simpleQuery, 'pdo' => $direct],
+            'pdo' => $pdo,
+            'dimensions' => ['rows' => $rows],
+        ];
     }
 
     /**

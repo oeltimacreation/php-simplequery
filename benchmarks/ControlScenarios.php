@@ -6,10 +6,11 @@ namespace Oeltima\SimpleQuery\Benchmark;
 
 use PDO;
 
-final class ControlScenarios implements ScenarioFactory
+/** @phpstan-import-type Scenario from ScenarioCatalog */
+final class ControlScenarios
 {
-    #[\Override]
-    public function prepare(ScenarioRequest $request): ?PreparedScenario
+    /** @return Scenario|null */
+    public function prepare(ScenarioRequest $request): ?array
     {
         return match ($request->name->value()) {
             ScenarioName::PDO_CONTROL_10,
@@ -20,7 +21,8 @@ final class ControlScenarios implements ScenarioFactory
         };
     }
 
-    private function pdoControl(ScenarioRequest $request): PreparedScenario
+    /** @return Scenario */
+    private function pdoControl(ScenarioRequest $request): array
     {
         $rows = $request->name->dimension() ?? throw new \LogicException('Missing row dimension.');
         $pdo = $this->pdo();
@@ -49,7 +51,7 @@ final class ControlScenarios implements ScenarioFactory
             ];
         };
 
-        return new PreparedScenario(['pdo' => $operation], $pdo, ['rows' => $rows]);
+        return ['operations' => ['pdo' => $operation], 'pdo' => $pdo, 'dimensions' => ['rows' => $rows]];
     }
 
     private function pdo(): PDO

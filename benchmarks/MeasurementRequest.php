@@ -8,7 +8,7 @@ use RuntimeException;
 
 final class MeasurementRequest
 {
-    /** @var non-empty-list<BenchmarkOperation> */
+    /** @var non-empty-array<non-empty-string, \Closure(): mixed> */
     private array $operations;
 
     private int $warmups;
@@ -27,18 +27,14 @@ final class MeasurementRequest
     {
         self::validate($operations, $sampling);
         $request = new self();
-        $benchmarkOperations = [];
-        foreach ($operations as $name => $operation) {
-            $benchmarkOperations[] = BenchmarkOperation::from(['name' => $name, 'operation' => $operation]);
-        }
-        $request->operations = $benchmarkOperations;
+        $request->operations = $operations;
         $request->warmups = $sampling['warmups'];
         $request->iterations = $sampling['iterations'];
 
         return $request;
     }
 
-    /** @return non-empty-list<BenchmarkOperation> */
+    /** @return non-empty-array<non-empty-string, \Closure(): mixed> */
     public function operations(): array
     {
         return $this->operations;

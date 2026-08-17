@@ -14,32 +14,23 @@ composer coverage:check:branch # 80 overall and 90 compiler branch gates
 composer phpstan:consumer      # independent public-contract inference
 composer public-api:check      # reviewed reflection-signature manifest
 composer docs:check            # relative Markdown link targets
-composer duplication:check     # repeated golden SQL/ids, duplicate test names, re-added hotspots
 composer examples:check        # executable compiler and SQLite examples
 composer probe:sqlite          # JSON PDO/SQLite evidence
 composer probe:execution -- sqlite    # public executor smoke
 composer probe:transaction -- sqlite  # managed transaction state matrix
-composer probe:migration -- sqlite    # synthetic migration slice smoke
-composer migration:check       # deterministic change/ambiguity report
-composer benchmark:migration   # direct-PDO result/timing comparison
 bash tools/database-probes/run-services.sh  # complete direct/proxy behavior and execution matrix
 php tools/database-probes/ambiguous-write.php proxysql  # operator-controlled failure window
 composer benchmark             # complete deterministic SQLite benchmark suite
-composer benchmark:reference   # reference-size fresh-process suite
 composer benchmark:soak        # repeated compile/lifecycle stress
 ```
 
-`composer check` is the clean-checkout contract. It includes the duplication
-gate (`composer duplication:check`), which flags repeated golden SQL and
-fixture case ids, duplicate test method names, and re-added Phase 1/2 hotspot
-patterns (extra `PDOStatement` doubles, inline per-dialect write golden
-assertions, `QueryBuilder::addHaving()`, and growth of `func_num_args()` /
-magic-string sites beyond the inventory baselines). The service-backed command
-starts only the exact synthetic Docker fixtures in
+`composer check` is the clean-checkout contract. Data-driven compiler
+fixtures, ordinary PHPUnit, PHPCS, PHPStan, public-contract, documentation,
+example, and repository checks provide the maintained quality baseline. The
+service-backed command starts only the exact synthetic Docker fixtures in
 [`compose.yaml`](../../tools/database-probes/compose.yaml), records native/emulated and
 buffered/unbuffered reports plus public execution and transaction smokes under
-the ignored `tools/database-probes/results/` directory. It also runs the
-library-owned migration slices through every target, prints a summary, and
+the ignored `tools/database-probes/results/` directory, prints a summary, and
 removes containers, networks, and volumes. Direct CI supplies exact version
 variables for MariaDB 11.8.2/11.8.8 and MySQL 8.0.11/8.0.46 and archives each
 fixture pair separately; scheduled proxy runs use the current pair.
@@ -59,14 +50,13 @@ treated as local targets.
 - `tests/Integration/{MariaDb,MySql,SQLite,Proxy}` owns live behavior;
 - `tests/Compatibility` owns runtime/minimum-version behavior;
 - `tests/Consumer` owns no-dev and external-project fixtures;
-- `tests/Migration` owns synthetic native-API slices and automation refusal
-  checks;
+- migration fixtures and evidence are historical characterization records;
 - `tests/Fixtures/Contracts` is versioned executable contract data;
 - `tests/Fixtures/Migration` is synthetic migration characterization data;
 - `tools/database-probes` owns probe commands, fixtures, and their private
   support classes.
-- `tools/migration` owns deterministic analysis/reporting helpers that are
-  development-only and never mutate application files.
+- `tools/database-probes` owns the maintained engine, proxy, SQLite, execution,
+  transaction, and contention probes.
 
 The suite uses synthetic tables prefixed `sq_probe_`. Every fixture creates its
 own random table name and removes it in `finally`. File-backed SQLite fixtures
@@ -108,9 +98,8 @@ transaction state/failure edge remains mandatory regardless of percentages.
 Pull-request CI runs PHP 8.2–8.5 SQLite tests, strict quality checks, a
 lowest-dependency job, minimum/current MariaDB/MySQL direct probes, a no-dev
 installation, an independent external-consumer PHPStan run, enforced Xdebug
-branch/path coverage, the
-22-scenario SQLite benchmark suite, SQLite query-plan evidence, and a
-fresh-process labeled `v0.2.0` production-workload comparison.
+branch/path coverage, the compact SQLite benchmark suite, and fresh-process
+labeled historical comparisons.
 The scheduled/manual proxy workflow runs the exact direct/proxy fixtures plus
 live comparisons and four concurrent soak workers, then uploads redacted JSON
 artifacts. Release
