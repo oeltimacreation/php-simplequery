@@ -8,6 +8,16 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+### Added
+
+- Add `QueryBuilder::when()`, `unless()`, and strict 1-based `forPage()` helpers
+  for conditional clauses and deterministic limit/offset pagination.
+
+### Removed
+
+- Remove development-only Pixie migration automation and the 0.4-specific
+  duplication gate; historical migration and quality evidence remains archived.
+
 ## [0.4.0] - 2026-08-08
 
 ### Added

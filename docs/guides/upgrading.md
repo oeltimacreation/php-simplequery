@@ -80,11 +80,10 @@ activity fails before application work runs; reuse is allowed only after
 physical inactivity is verified.
 
 Applications migrating from Pixie or reviewing an existing SimpleQuery
-adoption should run the deterministic `--mode=simplequery` analyzer, resolve
-generated-ID timing and transaction ownership, and retest raw boundaries,
-static analysis, SARGable plans, and every claimed live-engine/proxy path. See
-[migrating from Pixie](migrating-from-pixie.md) and the
-[migration review report](../maintainers/migration-review.md).
+adoption should characterize generated-ID timing and transaction ownership
+manually, then retest raw boundaries, static analysis, SARGable plans, and
+every claimed live-engine/proxy path. See [migrating from Pixie](migrating-from-pixie.md)
+for the maintained checklist.
 
 ## Upgrading from 0.3 to 0.4
 
@@ -96,5 +95,21 @@ Key internal and maintenance changes include:
 - Connection compilers and executors are lazily cached per `Connection` instance behind `@internal` accessors (`compilerForQueryBuilding()`, `executorForQueryBuilding()`).
 - Internal AST states now use typed enums (`LockMode`, `LockModifier`, `JoinType`).
 - MySQL and MariaDB dialect compilers are consolidated under `MySqlFamilyCompiler`.
-- Added automated `composer duplication:check` quality gate and multiprocess SQLite write-contention stress probes (`composer probe:sqlite:contention`).
+- Added a development-only duplication gate and multiprocess SQLite
+  write-contention stress probes (`composer probe:sqlite:contention`).
 
+## Upgrading to 0.5.0
+
+```bash
+composer require oeltimacreation/php-simplequery:^0.5
+```
+
+`0.5.0` adds `when()`, `unless()`, and strict 1-based `forPage()` builder
+helpers. Existing clause, terminal, binding, transaction, and engine behavior
+is unchanged. `forPage()` requires positive page and page-size values and does
+not add an implicit ordering.
+
+The development-only Pixie migration analyzer and the 0.4-specific
+duplication gate are no longer shipped in the source repository. Use the
+manual migration checklist and the ordinary compiler, integration, static
+analysis, and live-engine checks instead.
