@@ -82,7 +82,9 @@ $requiredFiles = [
     'benchmarks/worker.php',
     'tests/Fixtures/Consumer/static-analysis.php',
     'scripts/check-documentation-links.php',
+    'scripts/check-release-consistency.php',
     'scripts/public-api-manifest.php',
+    'tools/quality/ReleaseConsistencyChecker.php',
 ];
 
 $errors = [];

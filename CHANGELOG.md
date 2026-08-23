@@ -14,6 +14,11 @@ with ZeroVer releases before `1.0.0`.
   result-memory benchmarks with dimensional and component controls, fresh-worker
   transient-allocation/RSS samples, and live buffered/unbuffered engine and
   proxy comparisons.
+- Add a deterministic release-consistency check for active plans, support and
+  security policies, benchmark baseline labels, maintained commands, and
+  configuration paths.
+- Add a data-driven connection state-transition matrix covering clean, active
+  cursor, transaction, quarantine, and closed lifecycle paths.
 
 ### Changed
 
@@ -26,6 +31,8 @@ with ZeroVer releases before `1.0.0`.
 - Reduce associative hydration's per-row validation allocation by iterating
   fetched keys in place while preserving duplicate-column behavior,
   numeric-column rejection, and result shapes.
+- Remove retired CodeScene duplication gate rules and synchronize support
+  policy baseline references with the 0.5 release line.
 
 ## [0.5.0] - 2026-08-18
 

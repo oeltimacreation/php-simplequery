@@ -10,7 +10,7 @@ external consumer checks. Correctness-sensitive performance, memory, cursor,
 contention, and direct/proxy behavior belongs to the maintained benchmark and
 probe commands listed in the architecture reference.
 
-Migration tooling is not an active test layer in 0.5. Synthetic migration
+Migration tooling is not an active test layer. Synthetic migration
 fixtures and reports remain historical evidence; future migration reviews use
 the manual characterization checklist in
 [`migration-review.md`](migration-review.md).
