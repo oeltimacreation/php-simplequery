@@ -35,6 +35,7 @@ enum BenchmarkSuite: string
                 ScenarioName::COMPILER_BATCH_INSERT_SMALL,
                 ScenarioName::COMPILER_BATCH_INSERT_NORMAL,
                 ScenarioName::COMPILER_BATCH_INSERT_HIGH,
+                ScenarioName::COMPILER_ATTRIBUTION,
                 ScenarioName::HYDRATION,
                 ScenarioName::HYDRATION_WIDE,
                 ScenarioName::FIRST_ROW,

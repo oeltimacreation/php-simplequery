@@ -46,7 +46,7 @@ descriptor evidence still belongs to the shared target worker.
 
 ## Maintained scenarios
 
-The 29-scenario CI suite covers:
+The 30-scenario CI suite covers 73 fresh-worker operations:
 
 - direct PDO controls at 10, 100, 1,000, and 5,000 rows;
 - predicate scaling, the representative build-and-compile shape, its prepared-
@@ -55,6 +55,13 @@ The 29-scenario CI suite covers:
 - isolated three-column batch-insert compilation at 10, 100, and 1,000 rows;
   each dimensional compiler case reports SQL bytes, binding count, raw and
   median time per item, transient allocation, and worker RSS;
+- equivalent-output high-cardinality controls separately measure `IN`
+  placeholder arrays versus repeated strings and batch column validation,
+  placeholder construction, scalar binding normalization, and pretyped
+  compilation;
+- a prepared 50-wide compiler attribution shape compares structured and raw
+  identifier paths, accumulated and collapsed predicates, and deep and shallow
+  compilation snapshots while requiring exact SQL and binding parity;
 - narrow three-column and wide eighteen-column associative/object hydration,
   first-row terminals, natural cursor exhaustion, and early cursor close, each
   paired with a like-for-like direct-PDO result shape;
@@ -65,6 +72,12 @@ The 29-scenario CI suite covers:
 
 Historical migration validation remains in `docs/evidence/`; retired query-
 plan scenarios and their generators are not active commands.
+
+Component controls are attribution probes, not application throughput claims.
+Each performs and validates its named work against the prepared reference SQL,
+then returns the same normalized correctness facts so the fresh-worker digest
+gate remains exact. Loop changes are considered only when their full prepared-
+builder operation also clears the development plan's decision rule.
 
 ## Comparison and noise policy
 

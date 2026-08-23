@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Oeltima\SimpleQuery\Benchmark;
 
+use LogicException;
+use Oeltima\SimpleQuery\Binding;
 use Oeltima\SimpleQuery\ConditionGroup;
 use Oeltima\SimpleQuery\CompiledQuery;
 use Oeltima\SimpleQuery\Connection;
@@ -31,6 +33,7 @@ final class CompilerScenarios
             ScenarioName::COMPILER_BATCH_INSERT_SMALL,
             ScenarioName::COMPILER_BATCH_INSERT_NORMAL,
             ScenarioName::COMPILER_BATCH_INSERT_HIGH => $this->batch($request),
+            ScenarioName::COMPILER_ATTRIBUTION => $this->attribution($request),
             default => null,
         };
     }
@@ -170,10 +173,26 @@ final class CompilerScenarios
         $connection = CompilerConnection::for(Driver::Sqlite);
         $query = $connection->table('benchmark_rows')->select('id')->whereIn('id', range(1, $values));
         $reference = $query->compile();
+        $summary = $this->compiledSummary($reference);
         $operation = fn (): array => $this->compiledSummary($query->compile());
+        $operations = ['prepared_builder_compile' => $operation];
+        if ($request->name->value() === ScenarioName::COMPILER_IN_LIST_HIGH) {
+            $operations['placeholder_array_control'] = fn (): array => $this->inPlaceholderControl(
+                $reference,
+                $summary,
+                $values,
+                useArray: true,
+            );
+            $operations['placeholder_string_control'] = fn (): array => $this->inPlaceholderControl(
+                $reference,
+                $summary,
+                $values,
+                useArray: false,
+            );
+        }
 
         return [
-            'operations' => ['prepared_builder_compile' => $operation],
+            'operations' => $operations,
             'pdo' => null,
             'dimensions' => [
                 'list_values' => $values,
@@ -195,20 +214,58 @@ final class CompilerScenarios
             $fixture[] = ['id' => $index, 'label' => 'row-' . $index, 'enabled' => $index % 2 === 0];
         }
         $reference = CompiledWriteQuery::insertMany($builder, $fixture);
+        $summary = self::batchSummary($reference, $rows);
         $operation = static function () use ($builder, $fixture, $rows): array {
             $compiled = CompiledWriteQuery::insertMany($builder, $fixture);
 
-            return [
-                'binding_count' => count($compiled->bindings),
-                'expected_bindings' => $rows * 3,
-                'sql_hash' => hash('sha256', $compiled->sql),
-                'first_binding' => $compiled->bindings[0]->value ?? null,
-                'last_binding' => $compiled->bindings[count($compiled->bindings) - 1]->value ?? null,
-            ];
+            return self::batchSummary($compiled, $rows);
         };
+        $operations = ['insert_many_compile' => $operation];
+        if ($request->name->value() === ScenarioName::COMPILER_BATCH_INSERT_HIGH) {
+            $columns = array_keys($fixture[0]);
+            $pretypedFixture = array_map(
+                static fn (array $row): array => array_map(Binding::fromValue(...), $row),
+                $fixture,
+            );
+            $operations['pretyped_insert_many_compile'] = static fn (): array => self::batchSummary(
+                CompiledWriteQuery::insertMany($builder, $pretypedFixture),
+                $rows,
+            );
+            $operations['column_array_keys_control'] = fn (): array => $this->batchColumnControl(
+                $fixture,
+                $columns,
+                $summary,
+                useArrayKeys: true,
+            );
+            $operations['column_iteration_control'] = fn (): array => $this->batchColumnControl(
+                $fixture,
+                $columns,
+                $summary,
+                useArrayKeys: false,
+            );
+            $operations['placeholder_arrays_control'] = fn (): array => $this->batchPlaceholderControl(
+                $reference,
+                $summary,
+                $rows,
+                count($columns),
+                useArrays: true,
+            );
+            $operations['placeholder_string_control'] = fn (): array => $this->batchPlaceholderControl(
+                $reference,
+                $summary,
+                $rows,
+                count($columns),
+                useArrays: false,
+            );
+            $operations['binding_normalization_control'] = fn (): array => $this->batchBindingControl(
+                $fixture,
+                $summary,
+                $rows * count($columns),
+            );
+        }
 
         return [
-            'operations' => ['insert_many_compile' => $operation],
+            'operations' => $operations,
             'pdo' => null,
             'dimensions' => [
                 'rows' => $rows,
@@ -218,6 +275,203 @@ final class CompilerScenarios
             ],
             'normalization' => ['items' => $rows, 'unit' => 'row'],
         ];
+    }
+
+    /** @param array{sql_hash: string, binding_count: int, first_binding: mixed, last_binding: mixed} $summary
+     * @return array{sql_hash: string, binding_count: int, first_binding: mixed, last_binding: mixed}
+     */
+    private function inPlaceholderControl(
+        CompiledQuery $reference,
+        array $summary,
+        int $values,
+        bool $useArray,
+    ): array {
+        $valuesSql = $useArray
+            ? implode(', ', array_fill(0, $values, '?'))
+            : str_repeat('?, ', $values - 1) . '?';
+        $sql = 'SELECT "id" FROM "benchmark_rows" WHERE "id" IN (' . $valuesSql . ')';
+        if ($sql !== $reference->sql) {
+            throw new LogicException('The IN placeholder control changed SQL shape.');
+        }
+
+        return $summary;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $fixture
+     * @param list<string> $columns
+     * @param array<string, mixed> $summary
+     * @return array<string, mixed>
+     */
+    private function batchColumnControl(
+        array $fixture,
+        array $columns,
+        array $summary,
+        bool $useArrayKeys,
+    ): array {
+        foreach ($fixture as $row) {
+            if ($useArrayKeys) {
+                if (array_keys($row) !== $columns) {
+                    throw new LogicException('The batch column control received mismatched columns.');
+                }
+                continue;
+            }
+
+            if (count($row) !== count($columns)) {
+                throw new LogicException('The batch column control received a mismatched column count.');
+            }
+            $index = 0;
+            foreach ($row as $column => $_value) {
+                if ($column !== $columns[$index]) {
+                    throw new LogicException('The batch column control received mismatched ordered columns.');
+                }
+                ++$index;
+            }
+        }
+
+        return $summary;
+    }
+
+    /** @param array<string, mixed> $summary
+     * @return array<string, mixed>
+     */
+    private function batchPlaceholderControl(
+        CompiledQuery $reference,
+        array $summary,
+        int $rows,
+        int $columns,
+        bool $useArrays,
+    ): array {
+        $group = '(' . implode(', ', array_fill(0, $columns, '?')) . ')';
+        $valuesSql = $useArrays
+            ? implode(', ', array_fill(0, $rows, $group))
+            : str_repeat($group . ', ', $rows - 1) . $group;
+        $sql = 'INSERT INTO "batch_rows" ("id", "label", "enabled") VALUES ' . $valuesSql;
+        if ($sql !== $reference->sql) {
+            throw new LogicException('The batch placeholder control changed SQL shape.');
+        }
+
+        return $summary;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $fixture
+     * @param array<string, mixed> $summary
+     * @return array<string, mixed>
+     */
+    private function batchBindingControl(array $fixture, array $summary, int $expectedBindings): array
+    {
+        $bindings = [];
+        foreach ($fixture as $row) {
+            foreach ($row as $value) {
+                $bindings[] = Binding::fromValue($value);
+            }
+        }
+        if (
+            count($bindings) !== $expectedBindings
+            || $bindings[0]->value !== 1
+            || $bindings[count($bindings) - 1]->value !== 1
+        ) {
+            throw new LogicException('The batch binding control changed normalized values.');
+        }
+
+        return $summary;
+    }
+
+    /** @return Scenario */
+    private function attribution(ScenarioRequest $request): array
+    {
+        $width = $request->scale(['ci' => 50, 'reference' => 250]);
+        $connection = CompilerConnection::for(Driver::Sqlite);
+        $structured = $connection->table('profile_rows', 'p');
+        $rawIdentifiers = $connection->table('profile_rows', 'p');
+        $collapsedConditions = $connection->table('profile_rows', 'p');
+        $structuredProjections = [];
+        $rawProjections = [];
+        $structuredGroups = [];
+        $rawGroups = [];
+        $rawConditions = [];
+        $conditionBindings = [];
+
+        for ($index = 0; $index < $width; ++$index) {
+            $projection = 'p.metric_' . $index;
+            $quotedProjection = '"p"."metric_' . $index . '"';
+            $quotedCondition = '"p"."filter_' . $index . '" = ?';
+            $structuredProjections[] = $projection;
+            $rawProjections[] = $connection->raw($quotedProjection);
+            $structuredGroups[] = $projection;
+            $rawGroups[] = $connection->raw($quotedProjection);
+            $rawConditions[] = $quotedCondition;
+            $conditionBindings[] = $index;
+        }
+
+        $structured->select(...$structuredProjections)->groupBy(...$structuredGroups);
+        $rawIdentifiers->select(...$rawProjections)->groupBy(...$rawGroups);
+        $collapsedConditions->select(...$structuredProjections)->groupBy(...$structuredGroups);
+        foreach ($conditionBindings as $index => $binding) {
+            $structured->where('p.filter_' . $index, $binding)->orderBy('p.metric_' . $index);
+            $rawIdentifiers
+                ->where($connection->raw($rawConditions[$index], [$binding]))
+                ->orderBy($rawProjections[$index]);
+            $collapsedConditions->orderBy('p.metric_' . $index);
+        }
+        $collapsedConditions->where($connection->raw(implode(' AND ', $rawConditions), $conditionBindings));
+
+        $reference = $structured->compile();
+        foreach ([$rawIdentifiers, $collapsedConditions] as $variant) {
+            if (!$this->queriesMatch($variant->compile(), $reference)) {
+                throw new LogicException('Compiler attribution variants must produce identical queries.');
+            }
+        }
+        $compiler = $connection->compilerForQueryBuilding();
+        $preparedState = $structured->snapshotForCompilation();
+
+        return [
+            'operations' => [
+                'structured_prepared_compile' => fn (): array => $this->compiledSummary($structured->compile()),
+                'raw_identifier_prepared_compile' => fn (): array => $this->compiledSummary(
+                    $rawIdentifiers->compile(),
+                ),
+                'collapsed_clause_prepared_compile' => fn (): array => $this->compiledSummary(
+                    $collapsedConditions->compile(),
+                ),
+                'deep_snapshot_then_compile' => fn (): array => $this->compiledSummary(
+                    $compiler->select($structured->snapshotForCompilation()),
+                ),
+                'shallow_snapshot_then_compile' => fn (): array => $this->compiledSummary(
+                    $compiler->select($preparedState->copyForCompilation()),
+                ),
+            ],
+            'pdo' => null,
+            'dimensions' => ['shape_width' => $width],
+        ];
+    }
+
+    /** @return array{binding_count: int, expected_bindings: int, sql_hash: string, first_binding: mixed, last_binding: mixed} */
+    private static function batchSummary(CompiledQuery $compiled, int $rows): array
+    {
+        return [
+            'binding_count' => count($compiled->bindings),
+            'expected_bindings' => $rows * 3,
+            'sql_hash' => hash('sha256', $compiled->sql),
+            'first_binding' => $compiled->bindings[0]->value ?? null,
+            'last_binding' => $compiled->bindings[count($compiled->bindings) - 1]->value ?? null,
+        ];
+    }
+
+    private function queriesMatch(CompiledQuery $left, CompiledQuery $right): bool
+    {
+        if ($left->sql !== $right->sql || count($left->bindings) !== count($right->bindings)) {
+            return false;
+        }
+        foreach ($left->bindings as $index => $binding) {
+            $other = $right->bindings[$index];
+            if ($binding->value !== $other->value || $binding->type !== $other->type) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /** @return positive-int */

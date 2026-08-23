@@ -24,6 +24,7 @@ final class ScenarioName
     public const COMPILER_BATCH_INSERT_SMALL = 'compiler_batch_insert_small';
     public const COMPILER_BATCH_INSERT_NORMAL = 'compiler_batch_insert_normal';
     public const COMPILER_BATCH_INSERT_HIGH = 'compiler_batch_insert_high';
+    public const COMPILER_ATTRIBUTION = 'compiler_attribution';
     public const TERMINAL_REUSE = 'terminal_reuse';
     public const HYDRATION = 'hydration';
     public const HYDRATION_WIDE = 'hydration_wide';
@@ -59,6 +60,7 @@ final class ScenarioName
         self::COMPILER_BATCH_INSERT_SMALL,
         self::COMPILER_BATCH_INSERT_NORMAL,
         self::COMPILER_BATCH_INSERT_HIGH,
+        self::COMPILER_ATTRIBUTION,
         self::TERMINAL_REUSE,
         self::HYDRATION,
         self::HYDRATION_WIDE,

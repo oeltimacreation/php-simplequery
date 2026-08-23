@@ -38,14 +38,12 @@ final readonly class CompiledQuery
             throw new InvalidQueryException('Compiled bindings must be a list.');
         }
 
-        $validated = [];
         foreach ($bindings as $binding) {
             if (!$binding instanceof Binding) {
                 throw new InvalidQueryException('Every compiled binding must be a Binding.');
             }
-            $validated[] = $binding;
         }
 
-        return $validated;
+        return $bindings;
     }
 }

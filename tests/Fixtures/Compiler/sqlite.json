@@ -3,6 +3,12 @@
   "driver": "sqlite",
   "cases": [
     {
+      "id": "sqlite-list-filter",
+      "sql": "SELECT \"u\".* FROM \"users\" AS \"u\" WHERE \"u\".\"status\" IN (?, ?)",
+      "bindings": ["active", "pending"],
+      "types": ["string", "string"]
+    },
+    {
       "id": "sqlite-null-empty-list",
       "sql": "SELECT * FROM \"users\" WHERE \"deleted_at\" IS NULL AND 0 = 1",
       "bindings": []
@@ -30,7 +36,8 @@
     {
       "id": "sqlite-insert-many",
       "sql": "INSERT INTO \"users\" (\"name\", \"enabled\") VALUES (?, ?), (?, ?)",
-      "bindings": ["A", 1, "B", 0]
+      "bindings": ["A", 1, "B", 0],
+      "types": ["string", "integer", "string", "integer"]
     },
     {
       "id": "sqlite-update",

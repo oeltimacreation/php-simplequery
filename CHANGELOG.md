@@ -12,13 +12,17 @@ with ZeroVer releases before `1.0.0`.
 
 - Add attributable compiler and hydration benchmarks with prepared-builder,
   dimensional list/batch, narrow/wide result, terminal, and cursor controls,
-  plus fresh-worker transient-allocation and RSS samples.
+  component-level compiler cost controls, and fresh-worker transient-allocation
+  and RSS samples.
 
 ### Changed
 
 - Compare benchmark candidates with immutable `v0.5.0` in both source orders
   using generic artifacts and repeated identical-source noise controls, so
   sub-millisecond percentages and within-control variance are not actionable.
+- Reduce transient allocation for high-cardinality `IN` and batch-insert
+  compilation by removing placeholder, row-group, and validated-binding list
+  intermediates while preserving SQL and binding contracts.
 
 ## [0.5.0] - 2026-08-18
 

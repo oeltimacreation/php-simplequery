@@ -5,7 +5,8 @@
     {
       "id": "mysql-list-filter",
       "sql": "SELECT `u`.* FROM `users` AS `u` WHERE `u`.`status` IN (?, ?)",
-      "bindings": ["active", "pending"]
+      "bindings": ["active", "pending"],
+      "types": ["string", "string"]
     },
     {
       "id": "mysql-shared-lock",
@@ -30,7 +31,8 @@
     {
       "id": "mysql-insert-many",
       "sql": "INSERT INTO `events` (`kind`, `priority`) VALUES (?, ?), (?, ?)",
-      "bindings": ["login", 1, "logout", 2]
+      "bindings": ["login", 1, "logout", 2],
+      "types": ["string", "integer", "string", "integer"]
     },
     {
       "id": "mysql-update-events",

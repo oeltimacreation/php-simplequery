@@ -239,19 +239,25 @@ abstract class AbstractDialectCompiler implements DialectCompiler
         $context = new CompilationContext();
         $compiledColumns = $this->compileWriteColumns($firstColumns);
 
-        $valueGroups = [];
+        $valuesSql = '';
         foreach ($rows as $row) {
             if (array_keys($row) !== $firstColumns) {
                 throw new InvalidQueryException('Every batch insert row must have identical ordered columns.');
             }
-            $valueGroups[] = '(' . implode(', ', $this->compileWriteValues($row, $context)) . ')';
+            $valuesSql .= $valuesSql === '' ? '(' : ', (';
+            $separator = '';
+            foreach ($row as $value) {
+                $valuesSql .= $separator . $this->writeValue($value, $context);
+                $separator = ', ';
+            }
+            $valuesSql .= ')';
         }
 
         $sql = sprintf(
             'INSERT INTO %s (%s) VALUES %s',
             $this->physicalTable($state->source),
             implode(', ', $compiledColumns),
-            implode(', ', $valueGroups),
+            $valuesSql,
         );
 
         return new CompiledQuery($sql, $context->bindings());
@@ -462,7 +468,7 @@ abstract class AbstractDialectCompiler implements DialectCompiler
                     return $predicate->negated ? '1 = 1' : '0 = 1';
                 }
                 $context->bindAll($predicate->values);
-                $valuesSql = implode(', ', array_fill(0, count($predicate->values), '?'));
+                $valuesSql = str_repeat('?, ', count($predicate->values) - 1) . '?';
             } else {
                 $context->bindAll($predicate->values->bindings);
                 $valuesSql = $predicate->values->sql;

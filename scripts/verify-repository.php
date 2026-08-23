@@ -38,6 +38,7 @@ $requiredFiles = [
     'docs/evidence/0.5-maintainability-and-performance.md',
     'docs/evidence/0.6-phase-0-baseline-and-scope.md',
     'docs/evidence/0.6-phase-1-attributable-performance.md',
+    'docs/evidence/0.6-phase-2-compiler-and-binding-efficiency.md',
     'docs/maintainers/migration-validation.md',
     'docs/maintainers/migration-review.md',
     'docs/maintainers/benchmarking.md',
