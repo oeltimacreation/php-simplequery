@@ -38,6 +38,10 @@ Current release evidence:
 
 - [`0.5.0` maintainability and performance evidence](0.5-maintainability-and-performance.md).
 
+Active development evidence:
+
+- [`0.6.0` Phase 0 baseline and scope freeze](0.6-phase-0-baseline-and-scope.md).
+
 Retained decision evidence:
 
 - [`0.2.0` associative hydration experiment](0.2-associative-hydration-experiment.md),

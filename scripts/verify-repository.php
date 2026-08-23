@@ -36,6 +36,7 @@ $requiredFiles = [
     'docs/evidence/0.3-architecture-and-quality-audit.md',
     'docs/evidence/0.3-projection-ergonomics-spike.md',
     'docs/evidence/0.5-maintainability-and-performance.md',
+    'docs/evidence/0.6-phase-0-baseline-and-scope.md',
     'docs/maintainers/migration-validation.md',
     'docs/maintainers/migration-review.md',
     'docs/maintainers/benchmarking.md',
