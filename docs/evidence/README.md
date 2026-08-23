@@ -41,6 +41,7 @@ Current release evidence:
 Active development evidence:
 
 - [`0.6.0` Phase 0 baseline and scope freeze](0.6-phase-0-baseline-and-scope.md).
+- [`0.6.0` Phase 1 attributable performance evidence](0.6-phase-1-attributable-performance.md).
 
 Retained decision evidence:
 

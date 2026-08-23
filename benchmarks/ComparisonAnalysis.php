@@ -11,13 +11,33 @@ final class ComparisonAnalysis
     /**
      * @param array<string, mixed> $baseline
      * @param array<string, mixed> $candidate
+     * @param array<string, array<string, float>> $sameSourceRanges
      * @return array{
      *     threshold_percent: float,
+     *     absolute_noise_floor_ms: float,
+     *     sub_millisecond_ceiling_ms: float,
+     *     same_source_ranges_applied: bool,
      *     measurements: array<string, array<string, array<string, float|bool|null>>>
      * }
      */
-    public static function between(array $baseline, array $candidate, float $thresholdPercent = 5.0): array
-    {
+    public static function between(
+        array $baseline,
+        array $candidate,
+        float $thresholdPercent = 5.0,
+        float $absoluteNoiseFloorMs = 0.0,
+        float $subMillisecondCeilingMs = 1.0,
+        array $sameSourceRanges = [],
+    ): array {
+        if (
+            !is_finite($thresholdPercent)
+            || !is_finite($absoluteNoiseFloorMs)
+            || !is_finite($subMillisecondCeilingMs)
+            || $thresholdPercent < 0.0
+            || $absoluteNoiseFloorMs < 0.0
+            || $subMillisecondCeilingMs <= 0.0
+        ) {
+            throw new RuntimeException('Benchmark comparison thresholds must be non-negative and finite.');
+        }
         $baselineMedians = self::medians($baseline);
         $candidateMedians = self::medians($candidate);
         if (array_keys($baselineMedians) !== array_keys($candidateMedians)) {
@@ -32,23 +52,49 @@ final class ComparisonAnalysis
             foreach ($operations as $operation => $baselineMedian) {
                 $candidateMedian = $candidateMedians[$scenario][$operation];
                 $change = self::percentageChange($baselineMedian, $candidateMedian);
+                $absoluteChange = round($candidateMedian - $baselineMedian, 6);
+                $relativeIgnored = max($baselineMedian, $candidateMedian) < $subMillisecondCeilingMs
+                    && abs($absoluteChange) <= $absoluteNoiseFloorMs;
+                $sameSourceRange = $sameSourceRanges[$scenario][$operation] ?? null;
+                if ($sameSourceRange !== null && (!is_finite($sameSourceRange) || $sameSourceRange < 0.0)) {
+                    throw new RuntimeException(sprintf(
+                        'Invalid same-source range for %s/%s.',
+                        $scenario,
+                        $operation,
+                    ));
+                }
+                $withinSameSourceRange = $sameSourceRange !== null
+                    && abs($absoluteChange) <= $sameSourceRange;
+                $relativeRegression = $change === null || $change > $thresholdPercent;
                 $measurements[$scenario][$operation] = [
                     'baseline_median_ms' => $baselineMedian,
                     'candidate_median_ms' => $candidateMedian,
+                    'absolute_change_ms' => $absoluteChange,
                     'change_percent' => $change,
-                    'review_required' => $change === null || $change > $thresholdPercent,
+                    'relative_change_ignored' => $relativeIgnored,
+                    'same_source_range_ms' => $sameSourceRange,
+                    'within_same_source_range' => $withinSameSourceRange,
+                    'review_required' => $relativeRegression
+                        && !$relativeIgnored
+                        && !$withinSameSourceRange,
                 ];
             }
         }
 
-        return ['threshold_percent' => $thresholdPercent, 'measurements' => $measurements];
+        return [
+            'threshold_percent' => $thresholdPercent,
+            'absolute_noise_floor_ms' => $absoluteNoiseFloorMs,
+            'sub_millisecond_ceiling_ms' => $subMillisecondCeilingMs,
+            'same_source_ranges_applied' => $sameSourceRanges !== [],
+            'measurements' => $measurements,
+        ];
     }
 
     /**
      * @param array<string, mixed> $run
      * @return array<string, array<string, float>>
      */
-    private static function medians(array $run): array
+    public static function medians(array $run): array
     {
         $scenarios = $run['scenarios'] ?? null;
         if (!is_array($scenarios)) {

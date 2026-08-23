@@ -10,7 +10,8 @@ use RuntimeException;
  * @phpstan-type Scenario array{
  *     operations: array<non-empty-string, \Closure(): mixed>,
  *     pdo: \PDO|null,
- *     dimensions: array<string, int>
+ *     dimensions: array<string, int>,
+ *     normalization?: array{items: positive-int, unit: non-empty-string}
  * }
  */
 final class ScenarioCatalog

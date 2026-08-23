@@ -75,10 +75,28 @@ final class Harness
         }
     }
 
-    /** @return array<non-empty-string, non-empty-list<array{elapsed_ms: float, allocated_after_bytes: int}>> */
+    /**
+     * @return array<non-empty-string, non-empty-list<array{
+     *     elapsed_ms: float,
+     *     allocated_after_bytes: int,
+     *     used_after_bytes: int,
+     *     transient_peak_allocated_bytes: int,
+     *     transient_peak_reserved_bytes: int,
+     *     process_rss_after_bytes: int|null
+     * }>>
+     */
     private static function sample(MeasurementRequest $request, string $expectedDigest): array
     {
-        /** @var array<non-empty-string, non-empty-list<array{elapsed_ms: float, allocated_after_bytes: int}>> $samples */
+        /**
+         * @var array<non-empty-string, non-empty-list<array{
+         *     elapsed_ms: float,
+         *     allocated_after_bytes: int,
+         *     used_after_bytes: int,
+         *     transient_peak_allocated_bytes: int,
+         *     transient_peak_reserved_bytes: int,
+         *     process_rss_after_bytes: int|null
+         * }>> $samples
+         */
         $samples = [];
         foreach ($request->operations() as $name => $_operation) {
             $samples[$name] = [];
@@ -92,7 +110,16 @@ final class Harness
             }
         }
 
-        /** @var array<non-empty-string, non-empty-list<array{elapsed_ms: float, allocated_after_bytes: int}>> $samples */
+        /**
+         * @var array<non-empty-string, non-empty-list<array{
+         *     elapsed_ms: float,
+         *     allocated_after_bytes: int,
+         *     used_after_bytes: int,
+         *     transient_peak_allocated_bytes: int,
+         *     transient_peak_reserved_bytes: int,
+         *     process_rss_after_bytes: int|null
+         * }>> $samples
+         */
         return $samples;
     }
 
@@ -105,19 +132,42 @@ final class Harness
         self::assertResultDigest($operation(), $name, $expectedDigest, $phase);
     }
 
-    /** @return array{elapsed_ms: float, allocated_after_bytes: int} */
+    /**
+     * @return array{
+     *     elapsed_ms: float,
+     *     allocated_after_bytes: int,
+     *     used_after_bytes: int,
+     *     transient_peak_allocated_bytes: int,
+     *     transient_peak_reserved_bytes: int,
+     *     process_rss_after_bytes: int|null
+     * }
+     */
     private static function timeOperation(
         string $name,
         Closure $operation,
         string $expectedDigest,
     ): array {
+        $allocatedBefore = memory_get_usage(true);
+        $usedBefore = memory_get_usage();
+        memory_reset_peak_usage();
         $started = hrtime(true);
         $result = $operation();
         $elapsed = (hrtime(true) - $started) / 1_000_000;
         $allocatedAfter = memory_get_usage(true);
+        $usedAfter = memory_get_usage();
+        $peakAllocated = memory_get_peak_usage(true);
+        $peakUsed = memory_get_peak_usage();
+        $processRss = self::currentProcessRss();
         self::assertResultDigest($result, $name, $expectedDigest, 'Timed correctness');
 
-        return ['elapsed_ms' => $elapsed, 'allocated_after_bytes' => $allocatedAfter];
+        return [
+            'elapsed_ms' => $elapsed,
+            'allocated_after_bytes' => $allocatedAfter,
+            'used_after_bytes' => $usedAfter,
+            'transient_peak_allocated_bytes' => max(0, $peakUsed - $usedBefore),
+            'transient_peak_reserved_bytes' => max(0, $peakAllocated - $allocatedBefore),
+            'process_rss_after_bytes' => $processRss,
+        ];
     }
 
     private static function assertResultDigest(
@@ -132,7 +182,14 @@ final class Harness
     }
 
     /**
-     * @param array<non-empty-string, non-empty-list<array{elapsed_ms: float, allocated_after_bytes: int}>> $samples
+     * @param array<non-empty-string, non-empty-list<array{
+     *     elapsed_ms: float,
+     *     allocated_after_bytes: int,
+     *     used_after_bytes: int,
+     *     transient_peak_allocated_bytes: int,
+     *     transient_peak_reserved_bytes: int,
+     *     process_rss_after_bytes: int|null
+     * }>> $samples
      * @param array<non-empty-string, string> $digests
      * @return array<non-empty-string, array<string, mixed>>
      */
@@ -147,16 +204,31 @@ final class Harness
     }
 
     /**
-     * @param non-empty-list<array{elapsed_ms: float, allocated_after_bytes: int}> $rawSamples
+     * @param non-empty-list<array{
+     *     elapsed_ms: float,
+     *     allocated_after_bytes: int,
+     *     used_after_bytes: int,
+     *     transient_peak_allocated_bytes: int,
+     *     transient_peak_reserved_bytes: int,
+     *     process_rss_after_bytes: int|null
+     * }> $rawSamples
      * @return array<string, mixed>
      */
     private static function summarizeOperation(array $rawSamples, string $digest): array
     {
         $timings = [];
         $allocations = [];
+        $used = [];
+        $transientAllocated = [];
+        $transientReserved = [];
+        $processRss = [];
         foreach ($rawSamples as $sample) {
             $timings[] = $sample['elapsed_ms'];
             $allocations[] = $sample['allocated_after_bytes'];
+            $used[] = $sample['used_after_bytes'];
+            $transientAllocated[] = $sample['transient_peak_allocated_bytes'];
+            $transientReserved[] = $sample['transient_peak_reserved_bytes'];
+            $processRss[] = $sample['process_rss_after_bytes'];
         }
         $sorted = $timings;
         sort($sorted);
@@ -170,10 +242,25 @@ final class Harness
             'median_ms' => round($sorted[intdiv(count($sorted), 2)], 6),
             'maximum_ms' => round($sorted[count($sorted) - 1], 6),
             'allocated_after_sample_bytes' => $allocations,
+            'used_after_sample_bytes' => $used,
+            'transient_peak_allocated_sample_bytes' => $transientAllocated,
+            'maximum_transient_peak_allocated_bytes' => max($transientAllocated),
+            'transient_peak_reserved_sample_bytes' => $transientReserved,
+            'maximum_transient_peak_reserved_bytes' => max($transientReserved),
+            'process_rss_after_sample_bytes' => $processRss,
+            'maximum_process_rss_after_sample_bytes' => self::maximumNullable($processRss),
             'retained_growth_bytes' => max(0, $lastAllocation - $firstAllocation),
             'retained_peak_above_first_bytes' => max(0, $peakAllocation - $firstAllocation),
             'correctness_digest' => $digest,
         ];
+    }
+
+    /** @param list<int|null> $values */
+    private static function maximumNullable(array $values): ?int
+    {
+        $known = array_filter($values, static fn (?int $value): bool => $value !== null);
+
+        return $known === [] ? null : max($known);
     }
 
     /**
@@ -227,6 +314,24 @@ final class Harness
             'process_max_rss_bytes' => $rss,
             'rss_source' => 'getrusage.ru_maxrss',
         ];
+    }
+
+    private static function currentProcessRss(): ?int
+    {
+        $status = @file_get_contents('/proc/self/status');
+        if (is_string($status) && preg_match('/^VmRSS:\s+(\d+)\s+kB$/m', $status, $matches) === 1) {
+            return ((int) $matches[1]) * 1024;
+        }
+
+        $usage = getrusage();
+        $rss = is_array($usage) && isset($usage['ru_maxrss']) && is_int($usage['ru_maxrss'])
+            ? $usage['ru_maxrss']
+            : null;
+        if ($rss !== null && PHP_OS_FAMILY !== 'Darwin') {
+            $rss *= 1024;
+        }
+
+        return $rss;
     }
 
     /** @return array{allocated_bytes: int, open_file_descriptors: int|null} */

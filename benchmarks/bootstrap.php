@@ -6,6 +6,7 @@ require_once __DIR__ . '/BenchmarkSuite.php';
 require_once __DIR__ . '/MeasurementRequest.php';
 require_once __DIR__ . '/Harness.php';
 require_once __DIR__ . '/ComparisonAnalysis.php';
+require_once __DIR__ . '/NoiseAnalysis.php';
 require_once __DIR__ . '/ScenarioName.php';
 require_once __DIR__ . '/ScenarioRequest.php';
 require_once __DIR__ . '/ControlScenarios.php';
