@@ -34,8 +34,14 @@ final class ScenarioName
     public const CURSOR_EXHAUSTION_WIDE = 'cursor_exhaustion_wide';
     public const CURSOR_EARLY_CLOSE = 'cursor_early_close';
     public const CURSOR_EARLY_CLOSE_WIDE = 'cursor_early_close_wide';
+    public const HYDRATION_ATTRIBUTION = 'hydration_attribution';
+    public const RESULT_MEMORY_SMALL = 'result_memory_small';
+    public const RESULT_MEMORY_NORMAL = 'result_memory_normal';
+    public const RESULT_MEMORY_HIGH = 'result_memory_high';
     public const READ_TERMINALS = 'read_terminals';
     public const OBSERVER = 'observer';
+    public const OBSERVER_WIDE = 'observer_wide';
+    public const EXECUTION_CLEANUP = 'execution_cleanup';
     public const BATCH_EXECUTE = 'batch_execute';
     public const TRANSACTIONS = 'transactions';
     public const LIFECYCLE = 'lifecycle';
@@ -70,8 +76,14 @@ final class ScenarioName
         self::CURSOR_EXHAUSTION_WIDE,
         self::CURSOR_EARLY_CLOSE,
         self::CURSOR_EARLY_CLOSE_WIDE,
+        self::HYDRATION_ATTRIBUTION,
+        self::RESULT_MEMORY_SMALL,
+        self::RESULT_MEMORY_NORMAL,
+        self::RESULT_MEMORY_HIGH,
         self::READ_TERMINALS,
         self::OBSERVER,
+        self::OBSERVER_WIDE,
+        self::EXECUTION_CLEANUP,
         self::BATCH_EXECUTE,
         self::TRANSACTIONS,
         self::LIFECYCLE,

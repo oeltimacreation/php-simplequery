@@ -74,6 +74,49 @@ final class AssociativeHydrationTest extends TestCase
         $connection->close();
     }
 
+    public function testSuccessfulResultCleanupFailureIsTranslatedAndObserved(): void
+    {
+        ConfigurableStatement::returns(['value' => 42], once: true);
+        ConfigurableStatement::closeThrows();
+        [$connection, $observer] = $this->connection();
+
+        try {
+            $connection->query('SELECT 42 AS value')->getAssociative();
+            self::fail('The controlled terminal cleanup failure unexpectedly succeeded.');
+        } catch (QueryExecutionException $exception) {
+            self::assertInstanceOf(PDOException::class, $exception->getPrevious());
+            self::assertSame(
+                ConfigurableStatement::DEFAULT_CLOSE_FAILURE,
+                $exception->getPrevious()->getMessage(),
+            );
+        }
+
+        self::assertTrue(ConfigurableStatement::$closed);
+        self::assertCount(1, $observer->executions());
+        self::assertFalse($observer->executions()[0]->successful);
+        $connection->close();
+    }
+
+    public function testInvalidResultRemainsPrimaryWhenTerminalCleanupAlsoFails(): void
+    {
+        ConfigurableStatement::returns([0 => 'invalid'], once: true);
+        ConfigurableStatement::closeThrows();
+        [$connection, $observer] = $this->connection();
+
+        try {
+            $connection->query('SELECT 42 AS value')->getAssociative();
+            self::fail('The controlled dual terminal failure unexpectedly succeeded.');
+        } catch (QueryExecutionException $exception) {
+            self::assertSame('PDO returned a non-string column name.', $exception->getMessage());
+            self::assertNull($exception->getPrevious());
+        }
+
+        self::assertTrue(ConfigurableStatement::$closed);
+        self::assertCount(1, $observer->executions());
+        self::assertFalse($observer->executions()[0]->successful);
+        $connection->close();
+    }
+
     public function testCursorObservationEndsAtHandoffAndFetchFailureDoesNotEmitASecondEvent(): void
     {
         ConfigurableStatement::fetchThrows();

@@ -29,9 +29,112 @@ final class HydrationScenarios
             ScenarioName::CURSOR_EXHAUSTION_WIDE => $this->cursorExhaustion($request, true),
             ScenarioName::CURSOR_EARLY_CLOSE => $this->cursorEarlyClose($request, false),
             ScenarioName::CURSOR_EARLY_CLOSE_WIDE => $this->cursorEarlyClose($request, true),
+            ScenarioName::HYDRATION_ATTRIBUTION => $this->hydrationAttribution($request),
+            ScenarioName::RESULT_MEMORY_SMALL,
+            ScenarioName::RESULT_MEMORY_NORMAL,
+            ScenarioName::RESULT_MEMORY_HIGH => $this->resultMemory($request),
             ScenarioName::READ_TERMINALS => $this->readTerminals($request),
             default => null,
         };
+    }
+
+    /** @return Scenario */
+    private function hydrationAttribution(ScenarioRequest $request): array
+    {
+        $rowCount = $request->scale(['ci' => 20_000, 'reference' => 100_000]);
+        $columnCount = 18;
+        $row = $this->attributionRow($columnCount);
+
+        $arrayKeys = static function () use ($row, $rowCount): array {
+            $keyCount = 0;
+            $lastKey = null;
+            for ($rowIndex = 0; $rowIndex < $rowCount; ++$rowIndex) {
+                foreach (array_keys($row) as $key) {
+                    if (!is_string($key)) {
+                        throw new RuntimeException('The attribution row contains a non-string key.');
+                    }
+                    ++$keyCount;
+                    $lastKey = $key;
+                }
+            }
+
+            return ['keys' => $keyCount, 'last_key' => $lastKey];
+        };
+        $directIteration = static function () use ($row, $rowCount): array {
+            $keyCount = 0;
+            $lastKey = null;
+            for ($rowIndex = 0; $rowIndex < $rowCount; ++$rowIndex) {
+                foreach ($row as $key => $_value) {
+                    if (!is_string($key)) {
+                        throw new RuntimeException('The attribution row contains a non-string key.');
+                    }
+                    ++$keyCount;
+                    $lastKey = $key;
+                }
+            }
+
+            return ['keys' => $keyCount, 'last_key' => $lastKey];
+        };
+
+        return [
+            'operations' => [
+                'array_keys_validation_control' => $arrayKeys,
+                'direct_key_iteration_control' => $directIteration,
+            ],
+            'pdo' => null,
+            'dimensions' => ['rows' => $rowCount, 'columns' => $columnCount],
+        ];
+    }
+
+    /** @return array<array-key, int> */
+    private function attributionRow(int $columnCount): array
+    {
+        $row = [];
+        for ($columnIndex = 0; $columnIndex < $columnCount; ++$columnIndex) {
+            $row[sprintf('column_%02d', $columnIndex)] = $columnIndex;
+        }
+
+        return $row;
+    }
+
+    /** @return Scenario */
+    private function resultMemory(ScenarioRequest $request): array
+    {
+        $sizes = match ($request->name->value()) {
+            ScenarioName::RESULT_MEMORY_SMALL => ['ci' => 100, 'reference' => 1_000],
+            ScenarioName::RESULT_MEMORY_NORMAL => ['ci' => 1_000, 'reference' => 10_000],
+            ScenarioName::RESULT_MEMORY_HIGH => ['ci' => 10_000, 'reference' => 50_000],
+            default => throw new RuntimeException('Unknown result-memory benchmark dimension.'),
+        };
+        [$connection, $pdo, $rows, $columns, $rowPayloadBytes] = $this->rowFixture(
+            $request,
+            false,
+            $sizes,
+            256,
+        );
+        $directFull = fn (): array => $this->summarizeAssociativeRows(
+            $this->selectRows($pdo, $columns)->fetchAll(PDO::FETCH_ASSOC),
+        );
+        $simpleQueryFull = fn (): array => $this->summarizeAssociativeRows(
+            $this->builder($connection, $columns)->getAssociative(),
+        );
+        $directCursor = fn (): array => $this->summarizeDirectAssociativeCursor($pdo, $columns);
+        $simpleQueryCursor = fn (): array => $this->summarizeSimpleQueryAssociativeCursor($connection, $columns);
+
+        return [
+            'operations' => [
+                'pdo_full_result' => $directFull,
+                'simplequery_full_result' => $simpleQueryFull,
+                'pdo_streaming_cursor' => $directCursor,
+                'simplequery_streaming_cursor' => $simpleQueryCursor,
+            ],
+            'pdo' => $pdo,
+            'dimensions' => [
+                'rows' => $rows,
+                'columns' => count($columns),
+                'row_payload_bytes' => $rowPayloadBytes,
+            ],
+        ];
     }
 
     /** @return Scenario */
@@ -210,14 +313,18 @@ final class HydrationScenarios
      * @param array{ci: int, reference: int}|null $sizes
      * @return array{Connection, PDO, int, non-empty-list<string>, int}
      */
-    private function rowFixture(ScenarioRequest $request, bool $wide, ?array $sizes = null): array
-    {
+    private function rowFixture(
+        ScenarioRequest $request,
+        bool $wide,
+        ?array $sizes = null,
+        ?int $payloadBytes = null,
+    ): array {
         $sizes ??= $wide
             ? ['ci' => 1_000, 'reference' => 10_000]
             : ['ci' => 1_000, 'reference' => 100_000];
         $rows = $request->scale($sizes);
         $payloadColumns = $wide ? self::WIDE_PAYLOAD_COLUMNS : self::NARROW_PAYLOAD_COLUMNS;
-        $payloadBytes = $wide ? 24 : 96;
+        $payloadBytes ??= $wide ? 24 : 96;
         $columns = ['id', 'category'];
         $definitions = ['id INTEGER PRIMARY KEY', 'category TEXT NOT NULL'];
         for ($index = 1; $index <= $payloadColumns; ++$index) {
@@ -260,6 +367,82 @@ final class HydrationScenarios
     private function normalizeObjects(array $rows): array
     {
         return array_values(array_map(static fn (object $row): array => get_object_vars($row), $rows));
+    }
+
+    /**
+     * @param array<array-key, mixed> $rows
+     * @return array{rows: int, id_sum: int, payload_bytes: int, first_id: int|null, last_id: int|null}
+     */
+    private function summarizeAssociativeRows(array $rows): array
+    {
+        $summary = $this->emptyRowSummary();
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                throw new RuntimeException('The benchmark result contains a non-array row.');
+            }
+            $this->addRowToSummary($summary, $row);
+        }
+
+        return $summary;
+    }
+
+    /**
+     * @param non-empty-list<string> $columns
+     * @return array{rows: int, id_sum: int, payload_bytes: int, first_id: int|null, last_id: int|null}
+     */
+    private function summarizeDirectAssociativeCursor(PDO $pdo, array $columns): array
+    {
+        $statement = $this->selectRows($pdo, $columns);
+        $summary = $this->emptyRowSummary();
+        while (($row = $statement->fetch(PDO::FETCH_ASSOC)) !== false) {
+            if (!is_array($row)) {
+                throw new RuntimeException('The direct benchmark cursor returned a non-array row.');
+            }
+            $this->addRowToSummary($summary, $row);
+        }
+        if (!$statement->closeCursor()) {
+            throw new RuntimeException('The direct benchmark cursor could not be closed.');
+        }
+
+        return $summary;
+    }
+
+    /**
+     * @param non-empty-list<string> $columns
+     * @return array{rows: int, id_sum: int, payload_bytes: int, first_id: int|null, last_id: int|null}
+     */
+    private function summarizeSimpleQueryAssociativeCursor(Connection $connection, array $columns): array
+    {
+        $summary = $this->emptyRowSummary();
+        foreach ($this->builder($connection, $columns)->iterateAssociative() as $row) {
+            $this->addRowToSummary($summary, $row);
+        }
+
+        return $summary;
+    }
+
+    /** @return array{rows: int, id_sum: int, payload_bytes: int, first_id: int|null, last_id: int|null} */
+    private function emptyRowSummary(): array
+    {
+        return ['rows' => 0, 'id_sum' => 0, 'payload_bytes' => 0, 'first_id' => null, 'last_id' => null];
+    }
+
+    /**
+     * @param array{rows: int, id_sum: int, payload_bytes: int, first_id: int|null, last_id: int|null} $summary
+     * @param array<array-key, mixed> $row
+     */
+    private function addRowToSummary(array &$summary, array $row): void
+    {
+        $id = $row['id'] ?? null;
+        $payload = $row['payload'] ?? null;
+        if (!is_int($id) || !is_string($payload)) {
+            throw new RuntimeException('The benchmark result row has an invalid shape.');
+        }
+        ++$summary['rows'];
+        $summary['id_sum'] += $id;
+        $summary['payload_bytes'] += strlen($payload);
+        $summary['first_id'] ??= $id;
+        $summary['last_id'] = $id;
     }
 
     /** @param non-empty-list<string> $columns */

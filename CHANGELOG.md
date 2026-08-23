@@ -10,10 +10,10 @@ with ZeroVer releases before `1.0.0`.
 
 ### Added
 
-- Add attributable compiler and hydration benchmarks with prepared-builder,
-  dimensional list/batch, narrow/wide result, terminal, and cursor controls,
-  component-level compiler cost controls, and fresh-worker transient-allocation
-  and RSS samples.
+- Add attributable compiler, hydration, execution-cleanup, observer, and
+  result-memory benchmarks with dimensional and component controls, fresh-worker
+  transient-allocation/RSS samples, and live buffered/unbuffered engine and
+  proxy comparisons.
 
 ### Changed
 
@@ -23,6 +23,9 @@ with ZeroVer releases before `1.0.0`.
 - Reduce transient allocation for high-cardinality `IN` and batch-insert
   compilation by removing placeholder, row-group, and validated-binding list
   intermediates while preserving SQL and binding contracts.
+- Reduce associative hydration's per-row validation allocation by iterating
+  fetched keys in place while preserving duplicate-column behavior,
+  numeric-column rejection, and result shapes.
 
 ## [0.5.0] - 2026-08-18
 

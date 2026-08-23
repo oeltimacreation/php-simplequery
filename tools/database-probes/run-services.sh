@@ -62,9 +62,20 @@ if [[ "${RUN_BENCHMARKS:-false}" == "true" ]]; then
     mkdir -p "${benchmark_result_dir}"
     find "${benchmark_result_dir}" -mindepth 1 -maxdepth 1 -type f -name '*.json' -delete
 
-    for target in mariadb mysql proxysql maxscale; do
-        php -d pcov.enabled=0 -d xdebug.mode=off "${project_dir}/benchmarks/engine.php" "${target}" \
-            > "${benchmark_result_dir}/${target}.json"
+    for buffering_mode in buffered unbuffered; do
+        if [[ "${buffering_mode}" == "buffered" ]]; then
+            buffered=true
+        else
+            buffered=false
+        fi
+
+        for target in mariadb mysql proxysql maxscale; do
+            PROBE_EMULATE_PREPARES=false \
+            PROBE_BUFFERED="${buffered}" \
+                php -d pcov.enabled=0 -d xdebug.mode=off \
+                "${project_dir}/benchmarks/engine.php" "${target}" \
+                > "${benchmark_result_dir}/${target}-native-${buffering_mode}.json"
+        done
     done
 
     soak_pids=()

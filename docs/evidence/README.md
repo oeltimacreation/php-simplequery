@@ -43,6 +43,7 @@ Active development evidence:
 - [`0.6.0` Phase 0 baseline and scope freeze](0.6-phase-0-baseline-and-scope.md).
 - [`0.6.0` Phase 1 attributable performance evidence](0.6-phase-1-attributable-performance.md).
 - [`0.6.0` Phase 2 compiler and binding efficiency evidence](0.6-phase-2-compiler-and-binding-efficiency.md).
+- [`0.6.0` Phase 3 execution, hydration, and resource efficiency evidence](0.6-phase-3-execution-hydration-and-resource-efficiency.md).
 
 Retained decision evidence:
 

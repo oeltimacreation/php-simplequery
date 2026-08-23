@@ -39,14 +39,16 @@ maximum RSS, allocated and used memory after every sample, retained growth, and
 the worker's file-descriptor delta. This is PHP-process evidence, not total
 database-server or container memory.
 
-The live engine runner retains alternating operations in one target connection
-because connection configuration is part of that control. It uses the same
-per-invocation transient-memory samples, but its process-level RSS and
-descriptor evidence still belongs to the shared target worker.
+The live engine runner retains alternating full-result and non-retaining cursor
+operations in one target connection because connection configuration is part
+of that control. Scheduled service runs execute native prepares in both
+buffered and unbuffered modes. The runner uses the same per-invocation
+transient-memory samples, but its process-level RSS and descriptor evidence
+still belongs to the shared target worker.
 
 ## Maintained scenarios
 
-The 30-scenario CI suite covers 73 fresh-worker operations:
+The 36-scenario CI suite covers 95 fresh-worker operations:
 
 - direct PDO controls at 10, 100, 1,000, and 5,000 rows;
 - predicate scaling, the representative build-and-compile shape, its prepared-
@@ -65,8 +67,15 @@ The 30-scenario CI suite covers 73 fresh-worker operations:
 - narrow three-column and wide eighteen-column associative/object hydration,
   first-row terminals, natural cursor exhaustion, and early cursor close, each
   paired with a like-for-like direct-PDO result shape;
-- combined read terminals, terminal reuse, observer overhead, batch execution,
-  transactions, and connection lifecycle;
+- isolated eighteen-column associative-key validation with `array_keys()` and
+  direct-iteration controls;
+- full associative results and non-retaining cursor summaries at 100, 1,000,
+  and 10,000 rows, proving retained-result allocation growth independently of
+  streaming consumption;
+- disabled, no-op, bounded-recording, and failing observers at one and fifty
+  bindings, plus single/redundant statement-close controls;
+- combined read terminals, terminal reuse, batch execution, transactions, and
+  connection lifecycle;
 - reference-only repeated compilation, lifecycle, cursor-drain, and batch-write
   soak scenarios.
 
@@ -113,10 +122,13 @@ interpretation.
 
 ## Live and release evidence
 
-`benchmarks/engine.php` compares a 1,000-row associative result with direct
-PDO for MariaDB, MySQL, ProxySQL, and MaxScale. The service matrix retains
-native/emulated prepares, buffered/unbuffered queries, execution and
-transaction smokes, direct engine parity, four concurrent soak workers, and
-the SQLite contention probe. Release certification additionally runs the
-coverage floors, no-dev consumer checks, security review, and repository
-verification described in [testing architecture](testing-architecture.md).
+`benchmarks/engine.php` compares 1,000-row full associative results and
+non-retaining associative cursors with direct PDO for MariaDB, MySQL, ProxySQL,
+and MaxScale. The service matrix retains native/emulated prepares,
+buffered/unbuffered behavior probes, native result-memory controls in both
+buffer modes,
+execution and transaction smokes, direct-engine interpretation for proxy
+results, four concurrent soak workers, and the SQLite contention probe.
+Release certification additionally runs the coverage floors, no-dev consumer
+checks, security review, and repository verification described in
+[testing architecture](testing-architecture.md).

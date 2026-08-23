@@ -90,7 +90,7 @@ final readonly class Executor
      */
     private function assertStringKeys(array $row, CompiledQuery $query): void
     {
-        foreach (array_keys($row) as $key) {
+        foreach ($row as $key => $_value) {
             if (!is_string($key)) {
                 throw $this->invalidResult('PDO returned a non-string column name.', $query);
             }
