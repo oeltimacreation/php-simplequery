@@ -147,6 +147,19 @@ final class PublicValuesTest extends TestCase
         (new ReflectionClass(CompiledQuery::class))->newInstanceArgs(['SELECT ?', ['not-a-binding']]);
     }
 
+    public function testCompiledQueryPreservesMemberValidationBeforeConcreteTypeValidation(): void
+    {
+        try {
+            (new ReflectionClass(CompiledQuery::class))->newInstanceArgs([
+                'SELECT ?, ?',
+                [new Binding(1), 'not-a-binding'],
+            ]);
+            self::fail('A non-binding member should fail before an earlier automatic binding.');
+        } catch (InvalidQueryException $exception) {
+            self::assertSame('Every compiled binding must be a Binding.', $exception->getMessage());
+        }
+    }
+
     /** @param list<mixed> $arguments */
     #[DataProvider('invalidQueryExecutions')]
     public function testQueryExecutionValidatesConsumerConstructedValues(array $arguments): void

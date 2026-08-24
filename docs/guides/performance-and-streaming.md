@@ -23,10 +23,21 @@ Use `iterate()` or `iterateAssociative()` when retaining the entire result set
 would consume too much PHP memory. Always close early-terminated cursors in a
 `finally` block.
 
-Streaming at the PHP API does not guarantee server-side streaming. MySQL-family
-buffered mode may receive the complete result into client memory. Unbuffered
-mode changes connection availability and requires explicit configuration and
-tests.
+### Buffered versus unbuffered results
+
+Streaming at the PHP API does not guarantee server-side streaming:
+
+- **MySQL/MariaDB buffered mode (default):** PDO receives the complete result set
+  into client library memory immediately upon execute. PHP memory remains bounded
+  as rows are yielded one-by-one by the cursor, but client network memory holds the
+  full result. Other queries can execute on the connection while the cursor is open.
+- **MySQL/MariaDB unbuffered mode:** `ConnectionOptions(buffered: false)` streams
+  rows directly from the database server socket as they are consumed. This minimizes
+  client memory for huge datasets, but the connection remains occupied in an
+  active-fetch state until the cursor is exhausted or explicitly closed. No other
+  query can execute on the connection while an unbuffered cursor is active.
+- **SQLite:** SQLite is embedded in-process; iteration reads directly from the
+  prepared statement step without network buffering.
 
 ```php
 $cursor = $db->table('report_rows')->orderBy('id')->iterateAssociative();
@@ -50,9 +61,29 @@ early cleanup.
 
 ## Batch writes
 
-`insertMany()` avoids one round trip per row. It does not select a chunk size
-or transaction policy. Applications must account for database parameter,
-packet, statement-size, lock-duration, and rollback costs.
+`insertMany()` compiles one multi-row statement. It requires a uniform list of
+rows with identical keys and deterministic first-row column order.
+
+### Engine parameter and packet limits
+
+`insertMany()` does not automatically chunk queries because chunking alters
+atomicity, error semantics, and lock boundaries. Applications must choose chunk
+sizes based on target database engine limits:
+
+- **SQLite parameter limits:** SQLite enforces a maximum host parameter limit
+  (999 parameters by default in older builds; up to 32,766 in SQLite 3.32.0+). A batch
+  insert with $C$ columns per row can insert at most $\lfloor \text{limit} / C \rfloor$
+  rows per single statement.
+- **MySQL / MariaDB parameter limits:** Prepared statements support at most 65,535
+  parameters (`2^16 - 1`). A batch insert of $C$ columns must not exceed
+  $\lfloor 65,535 / C \rfloor$ rows per query.
+- **Packet and statement size limits:** MySQL's `max_allowed_packet` and MariaDB's
+  statement limits can reject very large batched SQL statements even if parameter
+  counts are within bounds.
+
+### Chunking and transaction policy
+
+Applications choose between two primary batching strategies:
 
 ```php
 $write = static function (Connection $connection) use ($rows, $batchSize): int {
@@ -64,15 +95,22 @@ $write = static function (Connection $connection) use ($rows, $batchSize): int {
     return $affected;
 };
 
-$affected = $atomicImport ? $db->transaction($write) : $write($db);
+// Option A: Single atomic transaction for all chunks
+$affected = $db->transaction($write);
+
+// Option B: Independent chunks (partial progress allowed)
+$affected = $write($db);
 ```
 
-`$batchSize` and `$atomicImport` are application decisions. One transaction can
-make all chunks atomic but also lengthens lock duration and increases rollback
-cost; independent chunks permit partial progress that the application must
-record and reconcile. The runnable
-[SQLite batch-write example](../../examples/sqlite-batch-write.php) keeps both
-choices explicit.
+- **Atomic batch (Option A):** Wrapping the batch loop in `Connection::transaction()`
+  ensures all chunks succeed or all roll back. This holds database locks longer and
+  incurs higher rollback cost if a later batch fails.
+- **Independent chunks (Option B):** Executing chunks outside a shared transaction
+  reduces lock contention and memory, permitting partial progress. The application
+  is responsible for tracking progress and reconciling failures.
+
+The runnable [SQLite batch-write example](../../examples/sqlite-batch-write.php)
+demonstrates both choices with synthetic data.
 
 ## No speculative cache
 

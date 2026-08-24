@@ -47,16 +47,72 @@ for ($id = 1; $id <= 2_000; ++$id) {
 }
 $pdo->commit();
 
-$direct = static function () use ($pdo, $table): array {
+$summarize = static function (iterable $rows): array {
+    $count = 0;
+    $idSum = 0;
+    $payloadBytes = 0;
+    $firstId = null;
+    $lastId = null;
+    foreach ($rows as $row) {
+        if (!is_array($row)) {
+            throw new RuntimeException('The engine benchmark returned a non-array row.');
+        }
+        $id = $row['id'] ?? null;
+        $payload = $row['payload'] ?? null;
+        if (!is_int($id) || !is_string($payload)) {
+            throw new RuntimeException('The engine benchmark returned an invalid row shape.');
+        }
+        ++$count;
+        $idSum += $id;
+        $payloadBytes += strlen($payload);
+        $firstId ??= $id;
+        $lastId = $id;
+    }
+
+    return [
+        'rows' => $count,
+        'id_sum' => $idSum,
+        'payload_bytes' => $payloadBytes,
+        'first_id' => $firstId,
+        'last_id' => $lastId,
+    ];
+};
+$prepareDirect = static function () use ($pdo, $table): PDOStatement {
     $statement = $pdo->prepare(
         'SELECT id, category, payload FROM ' . $table . ' WHERE id >= ? ORDER BY id LIMIT 1000',
     );
     $statement->execute([501]);
 
-    return $statement->fetchAll(PDO::FETCH_ASSOC);
+    return $statement;
 };
-$simpleQuery = static function () use ($connection, $table): array {
-    return $connection->table($table)->where('id', '>=', 501)->orderBy('id')->limit(1000)->getAssociative();
+$directFull = static function () use ($prepareDirect, $summarize): array {
+    $statement = $prepareDirect();
+    $result = $summarize($statement->fetchAll(PDO::FETCH_ASSOC));
+    $statement->closeCursor();
+
+    return $result;
+};
+$simpleQueryFull = static function () use ($connection, $summarize, $table): array {
+    return $summarize(
+        $connection->table($table)->where('id', '>=', 501)->orderBy('id')->limit(1000)->getAssociative(),
+    );
+};
+$directCursor = static function () use ($prepareDirect, $summarize): array {
+    $statement = $prepareDirect();
+    $rows = static function () use ($statement): iterable {
+        while (($row = $statement->fetch(PDO::FETCH_ASSOC)) !== false) {
+            yield $row;
+        }
+    };
+    $result = $summarize($rows());
+    $statement->closeCursor();
+
+    return $result;
+};
+$simpleQueryCursor = static function () use ($connection, $summarize, $table): array {
+    return $summarize(
+        $connection->table($table)->where('id', '>=', 501)->orderBy('id')->limit(1000)->iterateAssociative(),
+    );
 };
 
 try {
@@ -67,16 +123,26 @@ try {
     ]);
     Harness::assertTimingInstrumentationDisabled($environment);
     $measurement = Harness::measure(MeasurementRequest::from(
-        ['simplequery' => $simpleQuery, 'pdo' => $direct],
+        [
+            'simplequery_full_result' => $simpleQueryFull,
+            'pdo_full_result' => $directFull,
+            'simplequery_streaming_cursor' => $simpleQueryCursor,
+            'pdo_streaming_cursor' => $directCursor,
+        ],
         ['warmups' => 2, 'iterations' => 7],
     ));
     $report = [
         'schema_version' => 2,
-        'benchmark' => 'direct-proxy-hydration-comparison',
+        'benchmark' => 'direct-proxy-result-memory-comparison',
         'collected_at' => gmdate(DATE_ATOM),
         'target' => $targetName,
         'engine' => $target->engine,
-        'dimensions' => ['fixture_rows' => 2_000, 'result_rows' => 1_000],
+        'dimensions' => [
+            'fixture_rows' => 2_000,
+            'result_rows' => 1_000,
+            'columns' => 3,
+            'row_payload_bytes' => 96,
+        ],
         'environment' => $environment,
         'correctness' => $measurement['correctness'],
         'measurement' => $measurement['measurement'],

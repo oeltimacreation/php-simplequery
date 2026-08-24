@@ -37,41 +37,53 @@ final class AssociativeHydrationTest extends TestCase
     public function testOnePassHydrationRejectsInvalidRowsAndRecordsFailure(mixed $row): void
     {
         ConfigurableStatement::returns($row, once: true);
-        [$connection, $observer] = $this->connection();
-
-        try {
-            $connection->query('SELECT 42 AS value')->getAssociative();
-            self::fail('The controlled invalid associative row unexpectedly succeeded.');
-        } catch (QueryExecutionException $exception) {
+        $this->assertFailingAssociativeQuery(static function (QueryExecutionException $exception): void {
             self::assertSame('SELECT 42 AS value', $exception->sql);
-        }
-
-        self::assertTrue(ConfigurableStatement::$closed);
-        self::assertCount(1, $observer->executions());
-        self::assertFalse($observer->executions()[0]->successful);
-        $connection->close();
+        });
     }
 
     public function testOnePassHydrationTranslatesFetchFailureAndClosesStatement(): void
     {
         ConfigurableStatement::fetchThrows();
+        $this->assertFailingAssociativeQuery(function (QueryExecutionException $exception): void {
+            $this->assertPreviousPdoException($exception, ConfigurableStatement::DEFAULT_FETCH_FAILURE);
+        });
+    }
+
+    public function testSuccessfulResultCleanupFailureIsTranslatedAndObserved(): void
+    {
+        ConfigurableStatement::returns(['value' => 42], once: true);
+        ConfigurableStatement::closeThrows();
+        $this->assertFailingAssociativeQuery(function (QueryExecutionException $exception): void {
+            $this->assertPreviousPdoException($exception, ConfigurableStatement::DEFAULT_CLOSE_FAILURE);
+        });
+    }
+
+    public function testInvalidResultRemainsPrimaryWhenTerminalCleanupAlsoFails(): void
+    {
+        ConfigurableStatement::returns([0 => 'invalid'], once: true);
+        ConfigurableStatement::closeThrows();
+        $this->assertFailingAssociativeQuery(static function (QueryExecutionException $exception): void {
+            self::assertSame('PDO returned a non-string column name.', $exception->getMessage());
+            self::assertNull($exception->getPrevious());
+        });
+    }
+
+    /**
+     * @param callable(QueryExecutionException): void $assertException
+     */
+    private function assertFailingAssociativeQuery(callable $assertException): void
+    {
         [$connection, $observer] = $this->connection();
 
         try {
             $connection->query('SELECT 42 AS value')->getAssociative();
-            self::fail('The controlled associative fetch failure unexpectedly succeeded.');
+            self::fail('The controlled associative query unexpectedly succeeded.');
         } catch (QueryExecutionException $exception) {
-            self::assertInstanceOf(PDOException::class, $exception->getPrevious());
-            self::assertSame(
-                ConfigurableStatement::DEFAULT_FETCH_FAILURE,
-                $exception->getPrevious()->getMessage(),
-            );
+            $assertException($exception);
         }
 
-        self::assertTrue(ConfigurableStatement::$closed);
-        self::assertCount(1, $observer->executions());
-        self::assertFalse($observer->executions()[0]->successful);
-        $connection->close();
+        $this->assertClosedAndObserved($connection, $observer, successful: false);
     }
 
     public function testCursorObservationEndsAtHandoffAndFetchFailureDoesNotEmitASecondEvent(): void
@@ -92,9 +104,23 @@ final class AssociativeHydrationTest extends TestCase
             self::assertInstanceOf(PDOException::class, $exception->getPrevious());
         }
 
-        self::assertCount(1, $observer->executions());
-        self::assertTrue($observer->executions()[0]->successful);
+        $this->assertClosedAndObserved($connection, $observer, successful: true);
+    }
+
+    private function assertPreviousPdoException(QueryExecutionException $exception, string $expectedMessage): void
+    {
+        self::assertInstanceOf(PDOException::class, $exception->getPrevious());
+        self::assertSame($expectedMessage, $exception->getPrevious()->getMessage());
+    }
+
+    private function assertClosedAndObserved(
+        Connection $connection,
+        RecordingQueryObserver $observer,
+        bool $successful,
+    ): void {
         self::assertTrue(ConfigurableStatement::$closed);
+        self::assertCount(1, $observer->executions());
+        self::assertSame($successful, $observer->executions()[0]->successful);
         $connection->close();
     }
 

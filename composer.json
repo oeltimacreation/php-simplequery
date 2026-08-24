@@ -84,6 +84,7 @@
             "php examples/sqlite-transactions.php",
             "php examples/sqlite-migration-slice.php"
         ],
+        "release:check": "php scripts/check-release-consistency.php",
         "verify": "php scripts/verify-repository.php",
         "check": [
             "@lint",
@@ -95,6 +96,7 @@
             "@public-api:check",
             "@docs:check",
             "@examples:check",
+            "@release:check",
             "@verify"
         ]
     },

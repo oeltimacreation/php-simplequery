@@ -17,6 +17,8 @@ $options = getopt('', [
     'iterations:',
     'warmups:',
     'source-order:',
+    'noise-floor-ms:',
+    'noise-report:',
     'allow-review',
 ]);
 $baseline = $options['baseline-autoload'] ?? null;
@@ -28,6 +30,8 @@ $profile = $options['profile'] ?? 'ci';
 $iterations = $options['iterations'] ?? '5';
 $warmups = $options['warmups'] ?? '1';
 $sourceOrder = $options['source-order'] ?? 'baseline-first';
+$noiseFloor = filter_var($options['noise-floor-ms'] ?? 0.0, FILTER_VALIDATE_FLOAT);
+$noiseReport = $options['noise-report'] ?? null;
 $allowReview = array_key_exists('allow-review', $options);
 if (!is_string($baseline) || !is_file($baseline) || !is_string($candidate) || !is_file($candidate)) {
     throw new RuntimeException('Both baseline and candidate autoloaders are required.');
@@ -42,6 +46,40 @@ if (
 }
 if (!is_string($sourceOrder) || !in_array($sourceOrder, ['baseline-first', 'candidate-first'], true)) {
     throw new RuntimeException('Source order must be baseline-first or candidate-first.');
+}
+if (!is_float($noiseFloor) || $noiseFloor < 0.0) {
+    throw new RuntimeException('The absolute timing noise floor must be a non-negative number.');
+}
+if ($noiseReport !== null && (!is_string($noiseReport) || !is_file($noiseReport))) {
+    throw new RuntimeException('The identical-source noise report does not exist.');
+}
+
+$sameSourceRanges = [];
+if (is_string($noiseReport)) {
+    $noiseContents = file_get_contents($noiseReport);
+    if (!is_string($noiseContents)) {
+        throw new RuntimeException('The identical-source noise report cannot be read.');
+    }
+    $noiseData = json_decode($noiseContents, true, 512, JSON_THROW_ON_ERROR);
+    $analysis = is_array($noiseData) ? ($noiseData['analysis'] ?? null) : null;
+    $reportedFloor = is_array($analysis) ? ($analysis['absolute_noise_floor_ms'] ?? null) : null;
+    $noiseMeasurements = is_array($analysis) ? ($analysis['measurements'] ?? null) : null;
+    if ((!is_int($reportedFloor) && !is_float($reportedFloor)) || !is_array($noiseMeasurements)) {
+        throw new RuntimeException('The identical-source noise report is invalid.');
+    }
+    $noiseFloor = (float) $reportedFloor;
+    foreach ($noiseMeasurements as $scenarioName => $operations) {
+        if (!is_string($scenarioName) || !is_array($operations)) {
+            throw new RuntimeException('The identical-source noise report contains an invalid scenario.');
+        }
+        foreach ($operations as $operationName => $measurement) {
+            $range = is_array($measurement) ? ($measurement['range_ms'] ?? null) : null;
+            if (!is_string($operationName) || (!is_int($range) && !is_float($range))) {
+                throw new RuntimeException('The identical-source noise report contains an invalid operation.');
+            }
+            $sameSourceRanges[$scenarioName][$operationName] = (float) $range;
+        }
+    }
 }
 
 $run = static function (string $autoload) use ($suite, $profile, $iterations, $warmups): array {
@@ -104,12 +142,14 @@ $candidateDigests = $digests($candidateRun);
 if ($baselineDigests !== $candidateDigests) {
     throw new RuntimeException('Baseline and candidate correctness digests differ.');
 }
-$performanceReview = ComparisonAnalysis::between($baselineRun, $candidateRun);
+$performanceReview = ComparisonAnalysis::between(
+    $baselineRun,
+    $candidateRun,
+    absoluteNoiseFloorMs: $noiseFloor,
+    sameSourceRanges: $sameSourceRanges,
+);
 $blocking = [];
 foreach ($performanceReview['measurements'] as $scenario => $operations) {
-    if (!str_contains($scenario, 'compile') && !str_contains($scenario, 'terminal')) {
-        continue;
-    }
     foreach ($operations as $operation => $measurement) {
         if (($measurement['review_required'] ?? false) === true) {
             $blocking[] = sprintf('%s/%s', $scenario, $operation);
@@ -117,7 +157,7 @@ foreach ($performanceReview['measurements'] as $scenario => $operations) {
     }
 }
 if ($blocking !== [] && !$allowReview) {
-    throw new RuntimeException('Unexplained compiler/terminal regressions: ' . implode(', ', $blocking));
+    throw new RuntimeException('Unexplained benchmark regressions: ' . implode(', ', $blocking));
 }
 
 fwrite(STDOUT, json_encode([

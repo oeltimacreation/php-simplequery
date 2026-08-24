@@ -3,6 +3,12 @@
   "driver": "mariadb",
   "cases": [
     {
+      "id": "mariadb-list-filter",
+      "sql": "SELECT `u`.* FROM `users` AS `u` WHERE `u`.`status` IN (?, ?)",
+      "bindings": ["active", "pending"],
+      "types": ["string", "string"]
+    },
+    {
       "id": "mariadb-filter-order",
       "sql": "SELECT `id`, `email` FROM `users` WHERE `active` = ? ORDER BY `id` DESC LIMIT 5",
       "bindings": [1]
@@ -31,7 +37,8 @@
     {
       "id": "mariadb-insert-many",
       "sql": "INSERT INTO `users` (`email`, `active`) VALUES (?, ?), (?, ?)",
-      "bindings": ["a@example.test", 1, "b@example.test", 0]
+      "bindings": ["a@example.test", 1, "b@example.test", 0],
+      "types": ["string", "integer", "string", "integer"]
     },
     {
       "id": "mariadb-update",

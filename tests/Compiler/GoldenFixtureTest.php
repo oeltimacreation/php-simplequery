@@ -121,6 +121,8 @@ final class GoldenFixtureTest extends TestCase
     private function compileMariaDbCase(string $case): CompiledQuery
     {
         return match ($case) {
+            'mariadb-list-filter' => CompilerConnection::for(Driver::MariaDb)
+                ->table('users', 'u')->select('u.*')->whereIn('u.status', ['active', 'pending'])->compile(),
             'mariadb-filter-order' => CompilerConnection::for(Driver::MariaDb)
                 ->table('users')->select('id', 'email')->where('active', true)->orderBy('id', 'DESC')->limit(5)
                 ->compile(),
@@ -194,6 +196,8 @@ final class GoldenFixtureTest extends TestCase
         return match ($case) {
             'sqlite-null-empty-list' => CompilerConnection::for(Driver::Sqlite)
                 ->table('users')->whereNull('deleted_at')->whereIn('id', [])->compile(),
+            'sqlite-list-filter' => CompilerConnection::for(Driver::Sqlite)
+                ->table('users', 'u')->select('u.*')->whereIn('u.status', ['active', 'pending'])->compile(),
             'sqlite-subquery' => $this->sqliteSubquery(),
             'sqlite-delete' => CompiledWriteQuery::delete(
                 CompilerConnection::for(Driver::Sqlite)->table('users')->where('id', 7),

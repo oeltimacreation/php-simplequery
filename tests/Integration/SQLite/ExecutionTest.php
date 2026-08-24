@@ -107,6 +107,23 @@ final class ExecutionTest extends TestCase
         self::assertSame(3, $this->connection->table('users')->count());
     }
 
+    public function testBatchInsertTerminalDoesNotMutateReusableBuilderState(): void
+    {
+        $builder = $this->connection->table('users');
+        $before = $builder->compile();
+
+        self::assertSame(2, $builder->insertMany([
+            ['name' => 'First', 'score' => 1, 'active' => true, 'category' => 'batch'],
+            ['name' => 'Second', 'score' => 2, 'active' => false, 'category' => 'batch'],
+        ]));
+        self::assertSame(1, $builder->insertMany([
+            ['name' => 'Third', 'score' => 3, 'active' => true, 'category' => 'batch'],
+        ]));
+
+        self::assertEquals($before, $builder->compile());
+        self::assertSame(3, $builder->count());
+    }
+
     public function testForPageReturnsTheRequestedSliceAndDoesNotChangeTerminalState(): void
     {
         $this->connection->table('users')->insertMany([

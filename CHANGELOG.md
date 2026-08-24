@@ -8,6 +8,44 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-08-24
+
+### Added
+
+- Add attributable compiler, hydration, execution-cleanup, observer, and
+  result-memory benchmarks with dimensional and component controls, fresh-worker
+  transient-allocation/RSS samples, and live buffered/unbuffered engine and
+  proxy comparisons.
+- Add a deterministic release-consistency check for active plans, support and
+  security policies, benchmark baseline labels, maintained commands, and
+  configuration paths.
+- Add a data-driven connection state-transition matrix covering clean, active
+  cursor, transaction, quarantine, and closed lifecycle paths.
+- Add an automated clean no-dev consumer lifecycle test suite covering
+  connection, compilation, read/write/aggregate terminals, streaming cursors,
+  savepoint transactions, and safe failure diagnostics.
+- Add a concise terminal choice decision matrix and driver caveats to the results
+  and writes guide.
+- Add an exception troubleshooting matrix mapping all error classes to safe
+  application remediation actions and redaction guarantees in the public API
+  reference.
+- Add guidance on engine parameter limits, packet ceilings, buffered versus
+  unbuffered cursor streaming, and deterministic pagination ordering.
+
+### Changed
+
+- Compare benchmark candidates with immutable `v0.5.0` in both source orders
+  using generic artifacts and repeated identical-source noise controls, so
+  sub-millisecond percentages and within-control variance are not actionable.
+- Reduce transient allocation for high-cardinality `IN` and batch-insert
+  compilation by removing placeholder, row-group, and validated-binding list
+  intermediates while preserving SQL and binding contracts.
+- Reduce associative hydration's per-row validation allocation by iterating
+  fetched keys in place while preserving duplicate-column behavior,
+  numeric-column rejection, and result shapes.
+- Remove retired CodeScene duplication gate rules and synchronize support
+  policy baseline references with the 0.6 release line.
+
 ## [0.5.0] - 2026-08-18
 
 ### Added

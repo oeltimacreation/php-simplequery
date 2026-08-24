@@ -80,8 +80,48 @@ final class ResultEdgeCasesTest extends TestCase
         )->firstAssociative();
         self::assertSame(['duplicate_name' => 2], $associative);
 
-        $this->expectException(QueryExecutionException::class);
-        $this->connection->query('SELECT 3 AS "0"')->getAssociative();
+        foreach (
+            [
+                'full result' => fn (): mixed => $this->connection
+                    ->query('SELECT 3 AS "0"')
+                    ->getAssociative(),
+                'first row' => fn (): mixed => $this->connection
+                    ->query('SELECT 3 AS "0"')
+                    ->firstAssociative(),
+            ] as $terminal => $operation
+        ) {
+            try {
+                $operation();
+                self::fail(sprintf('The %s terminal accepted a numeric associative column.', $terminal));
+            } catch (QueryExecutionException) {
+                self::addToAssertionCount(1);
+            }
+        }
+
+        $cursor = $this->connection->query('SELECT 3 AS "0"')->iterateAssociative();
+        try {
+            foreach ($cursor as $_row) {
+            }
+            self::fail('The cursor accepted a numeric associative column.');
+        } catch (QueryExecutionException) {
+            self::assertTrue($cursor->isClosed());
+        }
+    }
+
+    public function testWideAssociativeHydrationPreservesStringKeysAndTerminalReuse(): void
+    {
+        $projections = [];
+        $expected = [];
+        for ($column = 1; $column <= 32; ++$column) {
+            $name = sprintf('column_%02d', $column);
+            $projections[] = sprintf('%d AS %s', $column, $name);
+            $expected[$name] = $column;
+        }
+        $query = $this->connection->query('SELECT ' . implode(', ', $projections));
+
+        self::assertSame([$expected], $query->getAssociative());
+        self::assertSame($expected, $query->firstAssociative());
+        self::assertSame([$expected], $query->getAssociative());
     }
 
     /** @return list<int> */

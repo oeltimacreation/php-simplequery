@@ -11,148 +11,166 @@ final class ComparisonAnalysis
     /**
      * @param array<string, mixed> $baseline
      * @param array<string, mixed> $candidate
+     * @param array<string, array<string, float>> $sameSourceRanges
      * @return array{
      *     threshold_percent: float,
+     *     absolute_noise_floor_ms: float,
+     *     sub_millisecond_ceiling_ms: float,
+     *     same_source_ranges_applied: bool,
      *     measurements: array<string, array<string, array<string, float|bool|null>>>
      * }
      */
-    public static function between(array $baseline, array $candidate, float $thresholdPercent = 5.0): array
-    {
+    public static function between(
+        array $baseline,
+        array $candidate,
+        float $thresholdPercent = 5.0,
+        float $absoluteNoiseFloorMs = 0.0,
+        float $subMillisecondCeilingMs = 1.0,
+        array $sameSourceRanges = [],
+    ): array {
+        $thresholds = new ComparisonThresholds(
+            $thresholdPercent,
+            $absoluteNoiseFloorMs,
+            $subMillisecondCeilingMs,
+        );
+
         $baselineMedians = self::medians($baseline);
         $candidateMedians = self::medians($candidate);
+
+        return [
+            'threshold_percent' => $thresholdPercent,
+            'absolute_noise_floor_ms' => $absoluteNoiseFloorMs,
+            'sub_millisecond_ceiling_ms' => $subMillisecondCeilingMs,
+            'same_source_ranges_applied' => $sameSourceRanges !== [],
+            'measurements' => self::compareRuns(
+                $baselineMedians,
+                $candidateMedians,
+                $thresholds,
+                $sameSourceRanges,
+            ),
+        ];
+    }
+
+    /**
+     * @param array<string, array<string, float>> $baselineMedians
+     * @param array<string, array<string, float>> $candidateMedians
+     * @param array<string, array<string, float>> $sameSourceRanges
+     * @return array<string, array<string, array<string, float|bool|null>>>
+     */
+    private static function compareRuns(
+        array $baselineMedians,
+        array $candidateMedians,
+        ComparisonThresholds $thresholds,
+        array $sameSourceRanges,
+    ): array {
         if (array_keys($baselineMedians) !== array_keys($candidateMedians)) {
             throw new RuntimeException('Baseline and candidate benchmark scenarios differ.');
         }
 
         $measurements = [];
         foreach ($baselineMedians as $scenario => $operations) {
-            if (array_keys($operations) !== array_keys($candidateMedians[$scenario])) {
+            $candidate = $candidateMedians[$scenario] ?? null;
+            if ($candidate === null || array_keys($operations) !== array_keys($candidate)) {
                 throw new RuntimeException(sprintf('Benchmark operations differ for scenario "%s".', $scenario));
             }
-            foreach ($operations as $operation => $baselineMedian) {
-                $candidateMedian = $candidateMedians[$scenario][$operation];
-                $change = self::percentageChange($baselineMedian, $candidateMedian);
-                $measurements[$scenario][$operation] = [
-                    'baseline_median_ms' => $baselineMedian,
-                    'candidate_median_ms' => $candidateMedian,
-                    'change_percent' => $change,
-                    'review_required' => $change === null || $change > $thresholdPercent,
-                ];
-            }
+            $measurements[$scenario] = self::compareOperations(
+                $operations,
+                $candidate,
+                $thresholds,
+                $sameSourceRanges[$scenario] ?? [],
+            );
         }
 
-        return ['threshold_percent' => $thresholdPercent, 'measurements' => $measurements];
+        return $measurements;
+    }
+
+    /**
+     * @param array<string, float> $operations
+     * @param array<string, float> $candidateOperations
+     * @param array<string, float> $ranges
+     * @return array<string, array<string, float|bool|null>>
+     */
+    private static function compareOperations(
+        array $operations,
+        array $candidateOperations,
+        ComparisonThresholds $thresholds,
+        array $ranges,
+    ): array {
+        $measurements = [];
+        foreach ($operations as $operation => $baselineMedian) {
+            $candidateMedian = $candidateOperations[$operation];
+            $sameSourceRange = self::assertValidRange($ranges[$operation] ?? null, $operation);
+            $measurements[$operation] = self::evaluateMeasurement(
+                $baselineMedian,
+                $candidateMedian,
+                $thresholds,
+                $sameSourceRange,
+            );
+        }
+
+        return $measurements;
+    }
+
+    private static function assertValidRange(?float $range, string $operation): ?float
+    {
+        if ($range === null) {
+            return null;
+        }
+
+        if (!is_finite($range) || $range < 0.0) {
+            throw new RuntimeException(sprintf('Invalid same-source range for operation "%s".', $operation));
+        }
+
+        return $range;
+    }
+
+    /**
+     * @return array{
+     *     baseline_median_ms: float,
+     *     candidate_median_ms: float,
+     *     absolute_change_ms: float,
+     *     change_percent: float|null,
+     *     relative_change_ignored: bool,
+     *     same_source_range_ms: float|null,
+     *     within_same_source_range: bool,
+     *     review_required: bool
+     * }
+     */
+    private static function evaluateMeasurement(
+        float $baselineMedian,
+        float $candidateMedian,
+        ComparisonThresholds $thresholds,
+        ?float $sameSourceRange,
+    ): array {
+        $change = self::percentageChange($baselineMedian, $candidateMedian);
+        $absoluteChange = round($candidateMedian - $baselineMedian, 6);
+        $relativeIgnored = $thresholds->isRelativeChangeIgnored(
+            $baselineMedian,
+            $candidateMedian,
+            $absoluteChange,
+        );
+        $withinRange = $sameSourceRange !== null && abs($absoluteChange) <= $sameSourceRange;
+        $reviewRequired = $thresholds->isReviewRequired($change, $relativeIgnored, $withinRange);
+
+        return [
+            'baseline_median_ms' => $baselineMedian,
+            'candidate_median_ms' => $candidateMedian,
+            'absolute_change_ms' => $absoluteChange,
+            'change_percent' => $change,
+            'relative_change_ignored' => $relativeIgnored,
+            'same_source_range_ms' => $sameSourceRange,
+            'within_same_source_range' => $withinRange,
+            'review_required' => $reviewRequired,
+        ];
     }
 
     /**
      * @param array<string, mixed> $run
      * @return array<string, array<string, float>>
      */
-    private static function medians(array $run): array
+    public static function medians(array $run): array
     {
-        $scenarios = $run['scenarios'] ?? null;
-        if (!is_array($scenarios)) {
-            throw new RuntimeException('Comparison run has no scenarios.');
-        }
-
-        $medians = [];
-        foreach ($scenarios as $scenario) {
-            self::addScenarioMedians($medians, $scenario);
-        }
-
-        return $medians;
-    }
-
-    /** @param array<string, array<string, float>> $medians */
-    private static function addScenarioMedians(array &$medians, mixed $scenario): void
-    {
-        $definition = self::scenarioDefinition($scenario);
-        foreach ($definition['operations'] as $name => $operation) {
-            $medians[$definition['name']][self::operationName($name)] = self::operationMedian($operation);
-        }
-    }
-
-    /** @return array{name: string, operations: array<mixed, mixed>} */
-    private static function scenarioDefinition(mixed $scenario): array
-    {
-        $scenario = self::scenarioArray($scenario);
-
-        return [
-            'name' => self::scenarioName($scenario['scenario'] ?? null),
-            'operations' => self::scenarioOperations($scenario['measurement'] ?? null),
-        ];
-    }
-
-    /** @return array<mixed, mixed> */
-    private static function scenarioArray(mixed $scenario): array
-    {
-        if (!is_array($scenario)) {
-            throw new RuntimeException('Comparison run contains an invalid scenario.');
-        }
-
-        return $scenario;
-    }
-
-    private static function scenarioName(mixed $name): string
-    {
-        if (!is_string($name)) {
-            throw new RuntimeException('Comparison run contains an invalid scenario.');
-        }
-
-        return $name;
-    }
-
-    /** @return array<mixed, mixed> */
-    private static function scenarioOperations(mixed $measurement): array
-    {
-        $measurement = self::scenarioMeasurement($measurement);
-
-        return self::operationMap($measurement['operations'] ?? null);
-    }
-
-    /** @return array<mixed, mixed> */
-    private static function scenarioMeasurement(mixed $measurement): array
-    {
-        if (!is_array($measurement)) {
-            throw new RuntimeException('Comparison scenario has no operation measurements.');
-        }
-
-        return $measurement;
-    }
-
-    /** @return array<mixed, mixed> */
-    private static function operationMap(mixed $operations): array
-    {
-        if (!is_array($operations)) {
-            throw new RuntimeException('Comparison scenario has no operation measurements.');
-        }
-
-        return $operations;
-    }
-
-    private static function operationName(mixed $name): string
-    {
-        if (!is_string($name)) {
-            throw new RuntimeException('Comparison operation has no median.');
-        }
-
-        return $name;
-    }
-
-    private static function operationMedian(mixed $operation): float
-    {
-        if (!is_array($operation)) {
-            throw new RuntimeException('Comparison operation has no median.');
-        }
-        $median = $operation['median_ms'] ?? null;
-        if (is_int($median)) {
-            return (float) $median;
-        }
-        if (is_float($median)) {
-            return $median;
-        }
-
-        throw new RuntimeException('Comparison operation has no median.');
+        return BenchmarkMedians::fromRun($run);
     }
 
     private static function percentageChange(float $baseline, float $candidate): ?float

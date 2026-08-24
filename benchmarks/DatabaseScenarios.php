@@ -21,8 +21,50 @@ final class DatabaseScenarios
             ScenarioName::TRANSACTIONS => $this->transactions($request),
             ScenarioName::LIFECYCLE, ScenarioName::LIFECYCLE_SOAK => $this->lifecycle($request),
             ScenarioName::TERMINAL_REUSE => $this->terminalReuse($request),
+            ScenarioName::EXECUTION_CLEANUP => $this->executionCleanup($request),
             default => null,
         };
+    }
+
+    /** @return Scenario */
+    private function executionCleanup(ScenarioRequest $request): array
+    {
+        $calls = $request->scale(['ci' => 500, 'reference' => 5_000]);
+        $connection = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
+        $pdo = $connection->pdo();
+        $direct = static function (bool $redundant) use ($calls, $pdo): array {
+            $last = null;
+            for ($index = 0; $index < $calls; ++$index) {
+                $statement = $pdo->prepare('SELECT ? AS value');
+                $statement->bindValue(1, $index, PDO::PARAM_INT);
+                $statement->execute();
+                $last = $statement->fetchColumn();
+                $statement->closeCursor();
+                if ($redundant) {
+                    $statement->closeCursor();
+                }
+            }
+
+            return ['calls' => $calls, 'last' => $last];
+        };
+        $simpleQuery = static function () use ($calls, $connection): array {
+            $last = null;
+            for ($index = 0; $index < $calls; ++$index) {
+                $last = $connection->query('SELECT ? AS value', [$index])->firstAssociative()['value'] ?? null;
+            }
+
+            return ['calls' => $calls, 'last' => $last];
+        };
+
+        return [
+            'operations' => [
+                'pdo_single_close_control' => static fn (): array => $direct(false),
+                'pdo_redundant_close_control' => static fn (): array => $direct(true),
+                'simplequery_terminal' => $simpleQuery,
+            ],
+            'pdo' => $pdo,
+            'dimensions' => ['calls_per_sample' => $calls],
+        ];
     }
 
     /** @return Scenario */

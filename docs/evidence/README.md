@@ -38,6 +38,16 @@ Current release evidence:
 
 - [`0.5.0` maintainability and performance evidence](0.5-maintainability-and-performance.md).
 
+Active development evidence:
+
+- [`0.6.0` Phase 0 baseline and scope freeze](0.6-phase-0-baseline-and-scope.md).
+- [`0.6.0` Phase 1 attributable performance evidence](0.6-phase-1-attributable-performance.md).
+- [`0.6.0` Phase 2 compiler and binding efficiency evidence](0.6-phase-2-compiler-and-binding-efficiency.md).
+- [`0.6.0` Phase 3 execution, hydration, and resource efficiency evidence](0.6-phase-3-execution-hydration-and-resource-efficiency.md).
+- [`0.6.0` Phase 4 code quality and maintainer efficiency evidence](0.6-phase-4-code-quality-and-maintainer-efficiency.md).
+- [`0.6.0` Phase 5 user experience and documentation evidence](0.6-phase-5-user-experience-and-documentation.md).
+- [`0.6.0` Phase 6 release certification evidence](0.6-phase-6-release-certification.md).
+
 Retained decision evidence:
 
 - [`0.2.0` associative hydration experiment](0.2-associative-hydration-experiment.md),

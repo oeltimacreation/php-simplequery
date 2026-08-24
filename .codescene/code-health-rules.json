@@ -1,5 +1,5 @@
 {
-  "usage": "The duplication gate and the SQLite contention probe are path/process-scanning repository tools whose steps must exchange repository paths, worker modes, and worker arguments as strings. The benchmark harness also has a typed process-boundary environment adapter, and the compiler behavior test intentionally groups independent PHPUnit cases. The rules disabled for those narrow paths add no actionable signal; critical rules stay enforced elsewhere.",
+  "usage": "The SQLite contention probe is a path/process-scanning repository tool whose steps must exchange repository paths, worker modes, and worker arguments as strings. The benchmark harness also has a typed process-boundary environment adapter, and the compiler behavior test intentionally groups independent PHPUnit cases. The rules disabled for those narrow paths add no actionable signal; critical rules stay enforced elsewhere.",
   "rule_sets": [
     {
       "matching_content_path": "tests/Compiler/QueryBuilderBehaviorTest.php",
@@ -17,20 +17,6 @@
       "rules": [
         {
           "name": "Primitive Obsession",
-          "weight": 0.0
-        }
-      ]
-    },
-    {
-      "matching_content_path": "tools/quality/DuplicationGate.php",
-      "matching_content_path_doc": "Glob pattern relative to the repository root.",
-      "rules": [
-        {
-          "name": "Primitive Obsession",
-          "weight": 0.0
-        },
-        {
-          "name": "String Heavy Function Arguments",
           "weight": 0.0
         }
       ]

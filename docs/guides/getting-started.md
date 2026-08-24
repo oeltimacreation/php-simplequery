@@ -6,7 +6,7 @@ the same query-builder calls work with MariaDB and MySQL.
 ## 1. Install the package
 
 ```bash
-composer require oeltimacreation/php-simplequery:^0.5
+composer require oeltimacreation/php-simplequery:^0.6
 php -m | grep -E 'PDO|pdo_sqlite'
 ```
 

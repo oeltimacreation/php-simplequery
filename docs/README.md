@@ -37,7 +37,7 @@ plan, not in reference documentation.
 ## Project records
 
 - [Maintainer documentation](maintainers/README.md)
-- [0.5 development plan](plans/0.5.md)
+- [0.6 development plan](plans/0.6.md)
 - [Architecture decisions](adr/README.md)
 - [Compatibility and release evidence](evidence/README.md)
 
