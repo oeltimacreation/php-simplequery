@@ -35,22 +35,29 @@ final class BenchmarkMedians
             throw new RuntimeException('Comparison run contains an invalid scenario.');
         }
 
-        $operations = is_array($scenario['measurement'] ?? null)
-            ? ($scenario['measurement']['operations'] ?? null)
-            : null;
-        if (!is_array($operations)) {
-            throw new RuntimeException('Comparison scenario has no operation measurements.');
-        }
-
+        $operations = self::extractOperations($scenario);
         $scenarioMedians = [];
         foreach ($operations as $opName => $operation) {
-            if (!is_string($opName)) {
-                throw new RuntimeException('Comparison operation has no median.');
-            }
             $scenarioMedians[$opName] = self::extractMedian($operation);
         }
 
         return [$scenario['scenario'], $scenarioMedians];
+    }
+
+    /**
+     * @param array<string, mixed> $scenario
+     * @return array<string, mixed>
+     */
+    private static function extractOperations(array $scenario): array
+    {
+        $measurement = $scenario['measurement'] ?? null;
+        $operations = is_array($measurement) ? ($measurement['operations'] ?? null) : null;
+        if (!is_array($operations)) {
+            throw new RuntimeException('Comparison scenario has no operation measurements.');
+        }
+
+        /** @var array<string, mixed> $operations */
+        return $operations;
     }
 
     private static function extractMedian(mixed $operation): float

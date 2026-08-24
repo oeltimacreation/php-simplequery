@@ -36,38 +36,82 @@ final class ComparisonAnalysis
 
         $baselineMedians = self::medians($baseline);
         $candidateMedians = self::medians($candidate);
-        if (array_keys($baselineMedians) !== array_keys($candidateMedians)) {
-            throw new RuntimeException('Baseline and candidate benchmark scenarios differ.');
-        }
-
-        $measurements = [];
-        foreach ($baselineMedians as $scenario => $operations) {
-            $candidateOperations = $candidateMedians[$scenario] ?? null;
-            if ($candidateOperations === null || array_keys($operations) !== array_keys($candidateOperations)) {
-                throw new RuntimeException(sprintf('Benchmark operations differ for scenario "%s".', $scenario));
-            }
-            foreach ($operations as $operation => $baselineMedian) {
-                $candidateMedian = $candidateOperations[$operation];
-                $sameSourceRange = $sameSourceRanges[$scenario][$operation] ?? null;
-                if ($sameSourceRange !== null && (!is_finite($sameSourceRange) || $sameSourceRange < 0.0)) {
-                    throw new RuntimeException(sprintf('Invalid same-source range for %s/%s.', $scenario, $operation));
-                }
-                $measurements[$scenario][$operation] = self::evaluateMeasurement(
-                    $baselineMedian,
-                    $candidateMedian,
-                    $thresholds,
-                    $sameSourceRange,
-                );
-            }
-        }
 
         return [
             'threshold_percent' => $thresholdPercent,
             'absolute_noise_floor_ms' => $absoluteNoiseFloorMs,
             'sub_millisecond_ceiling_ms' => $subMillisecondCeilingMs,
             'same_source_ranges_applied' => $sameSourceRanges !== [],
-            'measurements' => $measurements,
+            'measurements' => self::compareRuns(
+                $baselineMedians,
+                $candidateMedians,
+                $thresholds,
+                $sameSourceRanges,
+            ),
         ];
+    }
+
+    /**
+     * @param array<string, array<string, float>> $baselineMedians
+     * @param array<string, array<string, float>> $candidateMedians
+     * @param array<string, array<string, float>> $sameSourceRanges
+     * @return array<string, array<string, array<string, float|bool|null>>>
+     */
+    private static function compareRuns(
+        array $baselineMedians,
+        array $candidateMedians,
+        ComparisonThresholds $thresholds,
+        array $sameSourceRanges,
+    ): array {
+        if (array_keys($baselineMedians) !== array_keys($candidateMedians)) {
+            throw new RuntimeException('Baseline and candidate benchmark scenarios differ.');
+        }
+
+        $measurements = [];
+        foreach ($baselineMedians as $scenario => $operations) {
+            $candidate = $candidateMedians[$scenario] ?? null;
+            if ($candidate === null || array_keys($operations) !== array_keys($candidate)) {
+                throw new RuntimeException(sprintf('Benchmark operations differ for scenario "%s".', $scenario));
+            }
+            $measurements[$scenario] = self::compareOperations(
+                $operations,
+                $candidate,
+                $thresholds,
+                $sameSourceRanges[$scenario] ?? [],
+            );
+        }
+
+        return $measurements;
+    }
+
+    /**
+     * @param array<string, float> $operations
+     * @param array<string, float> $candidateOperations
+     * @param array<string, float> $ranges
+     * @return array<string, array<string, float|bool|null>>
+     */
+    private static function compareOperations(
+        array $operations,
+        array $candidateOperations,
+        ComparisonThresholds $thresholds,
+        array $ranges,
+    ): array {
+        $measurements = [];
+        foreach ($operations as $operation => $baselineMedian) {
+            $candidateMedian = $candidateOperations[$operation];
+            $sameSourceRange = $ranges[$operation] ?? null;
+            if ($sameSourceRange !== null && (!is_finite($sameSourceRange) || $sameSourceRange < 0.0)) {
+                throw new RuntimeException(sprintf('Invalid same-source range for operation "%s".', $operation));
+            }
+            $measurements[$operation] = self::evaluateMeasurement(
+                $baselineMedian,
+                $candidateMedian,
+                $thresholds,
+                $sameSourceRange,
+            );
+        }
+
+        return $measurements;
     }
 
     /**
