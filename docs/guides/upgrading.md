@@ -8,7 +8,7 @@ lines. The first public release is `0.1.0`.
 - `0.y.0` may contain documented breaking changes.
 - `0.y.z` patch releases should remain compatible within that minor line,
   except for urgent security or data-integrity fixes.
-- Consumers should pin a tested minor line such as `~0.5.0`.
+- Consumers should pin a tested minor line such as `~0.6.0`.
 - Changelog entries are not a substitute for migration instructions; every
   breaking change must be documented here.
 
@@ -25,13 +25,13 @@ For each upgrade:
 7. review generated SQL for raw or dialect-specific queries;
 8. deploy through the application's normal staged rollout.
 
-## Installing 0.5.0
+## Installing 0.6.0
 
 ```bash
-composer require oeltimacreation/php-simplequery:^0.5
+composer require oeltimacreation/php-simplequery:^0.6
 ```
 
-`0.5.0` requires PHP 8.2+, `ext-pdo`, and either `pdo_sqlite` or `pdo_mysql`.
+`0.6.0` requires PHP 8.2+, `ext-pdo`, and either `pdo_sqlite` or `pdo_mysql`.
 Select `Driver::MariaDb`, `Driver::MySql`, or `Driver::Sqlite` explicitly. See
 [getting started](getting-started.md) for connection examples and
 [database support](../reference/database-support.md) for engine floors.
@@ -109,3 +109,24 @@ The development-only Pixie migration analyzer and the 0.4-specific
 duplication gate are no longer shipped in the source repository. Use the
 manual migration checklist and the ordinary compiler, integration, static
 analysis, and live-engine checks instead.
+
+## Upgrading from 0.5 to 0.6
+
+`0.6.0` is a 100% backward-compatible efficiency, maintainability, and
+user-experience release. It introduces zero breaking changes to public builder,
+connection, terminal, transaction, or cursor signatures.
+
+Key internal optimizations and improvements include:
+
+- Transient allocation reductions during query compilation: high-cardinality
+  `IN` lists (up to 54.4% reduction for 5,000 values) and multi-row batch inserts
+  (25.8% to 54.2% reduction for 1,000 rows) by removing placeholder and
+  intermediate binding allocations while preserving exact SQL and binding order.
+- Associative hydration optimizes per-row key validation in place, eliminating
+  transient array allocations while maintaining strict column types and duplicate
+  resolution rules.
+- New task-focused guides: terminal selection matrix, exception troubleshooting
+  and redaction rules, driver caveats, streaming cursor unbuffered execution,
+  and deterministic pagination ordering.
+- Deterministic release consistency gating and full clean `--no-dev` consumer
+  lifecycle verification.

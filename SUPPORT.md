@@ -5,11 +5,11 @@ in production and stabilized.
 
 ## Release compatibility
 
-- `0.1.0` was the first public release; `0.5.0` is the current minor release.
+- `0.1.0` was the first public release; `0.6.0` is the current minor release.
 - Patch releases within one `0.y` line should remain backward compatible,
   except for urgent security or data-integrity corrections.
 - A `0.y.0` release may contain documented breaking changes.
-- Consumers should pin a tested ZeroVer minor, such as `~0.5.0`.
+- Consumers should pin a tested ZeroVer minor, such as `~0.6.0`.
 - Every breaking change receives changelog and upgrade-guide coverage.
 
 ## Runtime policy

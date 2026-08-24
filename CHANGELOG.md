@@ -8,6 +8,8 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-08-24
+
 ### Added
 
 - Add attributable compiler, hydration, execution-cleanup, observer, and
@@ -30,7 +32,6 @@ with ZeroVer releases before `1.0.0`.
 - Add guidance on engine parameter limits, packet ceilings, buffered versus
   unbuffered cursor streaming, and deterministic pagination ordering.
 
-
 ### Changed
 
 - Compare benchmark candidates with immutable `v0.5.0` in both source orders
@@ -43,7 +44,7 @@ with ZeroVer releases before `1.0.0`.
   fetched keys in place while preserving duplicate-column behavior,
   numeric-column rejection, and result shapes.
 - Remove retired CodeScene duplication gate rules and synchronize support
-  policy baseline references with the 0.5 release line.
+  policy baseline references with the 0.6 release line.
 
 ## [0.5.0] - 2026-08-18
 
