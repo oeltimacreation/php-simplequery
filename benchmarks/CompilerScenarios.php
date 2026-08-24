@@ -337,18 +337,27 @@ final class CompilerScenarios
      */
     private function validateFixtureIterationKeys(array $fixture, array $columns): void
     {
-        $expectedCount = count($columns);
         foreach ($fixture as $row) {
-            if (count($row) !== $expectedCount) {
-                throw new LogicException('The batch column control received a mismatched column count.');
+            $this->validateRowIterationKeys($row, $columns);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @param list<string> $columns
+     */
+    private function validateRowIterationKeys(array $row, array $columns): void
+    {
+        if (count($row) !== count($columns)) {
+            throw new LogicException('The batch column control received a mismatched column count.');
+        }
+
+        $index = 0;
+        foreach ($row as $column => $_value) {
+            if ($column !== $columns[$index]) {
+                throw new LogicException('The batch column control received mismatched ordered columns.');
             }
-            $index = 0;
-            foreach ($row as $column => $_value) {
-                if ($column !== $columns[$index]) {
-                    throw new LogicException('The batch column control received mismatched ordered columns.');
-                }
-                ++$index;
-            }
+            ++$index;
         }
     }
 
@@ -387,15 +396,24 @@ final class CompilerScenarios
                 $bindings[] = Binding::fromValue($value);
             }
         }
-        if (
-            count($bindings) !== $expectedBindings
-            || $bindings[0]->value !== 1
-            || $bindings[count($bindings) - 1]->value !== 1
-        ) {
+
+        $this->assertValidBatchBindings($bindings, $expectedBindings);
+
+        return $summary;
+    }
+
+    /** @param list<Binding> $bindings */
+    private function assertValidBatchBindings(array $bindings, int $expectedBindings): void
+    {
+        if (count($bindings) !== $expectedBindings) {
             throw new LogicException('The batch binding control changed normalized values.');
         }
 
-        return $summary;
+        $first = $bindings[0]->value ?? null;
+        $last = $bindings[count($bindings) - 1]->value ?? null;
+        if ($first !== 1 || $last !== 1) {
+            throw new LogicException('The batch binding control changed normalized values.');
+        }
     }
 
     /** @return Scenario */

@@ -35,13 +35,14 @@ final class ReleaseConsistencyChecker
         'create-project',
     ];
 
+    private string $root = '';
+
     /** @return list<string> */
     public function check(string $root): array
     {
-        $errors = [];
-        $root = rtrim($root, DIRECTORY_SEPARATOR);
+        $this->root = rtrim($root, DIRECTORY_SEPARATOR);
 
-        $composerJsonPath = $root . '/composer.json';
+        $composerJsonPath = $this->root . '/composer.json';
         if (!is_file($composerJsonPath)) {
             return ['composer.json is missing.'];
         }
@@ -55,11 +56,12 @@ final class ReleaseConsistencyChecker
         $composer = json_decode($composerContent, true) ?? [];
         $definedScripts = array_keys($composer['scripts'] ?? []);
 
-        array_push($errors, ...$this->checkActivePlans($root));
-        array_push($errors, ...$this->checkSupportAndSecurity($root));
-        array_push($errors, ...$this->checkBenchmarkBaseline($root));
-        array_push($errors, ...$this->checkMaintainedCommands($root, $definedScripts));
-        array_push($errors, ...$this->checkConfigurationPaths($root));
+        $errors = [];
+        array_push($errors, ...$this->checkActivePlans());
+        array_push($errors, ...$this->checkSupportAndSecurity());
+        array_push($errors, ...$this->checkBenchmarkBaseline());
+        array_push($errors, ...$this->checkMaintainedCommands($definedScripts));
+        array_push($errors, ...$this->checkConfigurationPaths());
 
         sort($errors);
 
@@ -67,9 +69,9 @@ final class ReleaseConsistencyChecker
     }
 
     /** @return list<string> */
-    private function checkActivePlans(string $root): array
+    private function checkActivePlans(): array
     {
-        $plansDir = $root . '/docs/plans';
+        $plansDir = $this->root . '/docs/plans';
         if (!is_dir($plansDir)) {
             return [];
         }
@@ -85,7 +87,7 @@ final class ReleaseConsistencyChecker
         }
 
         if (count($planFiles) === 1) {
-            return $this->checkActivePlanReferences($root, $planFiles[0]);
+            return $this->checkActivePlanReferences($planFiles[0]);
         }
 
         return [];
@@ -97,23 +99,25 @@ final class ReleaseConsistencyChecker
         $planFiles = [];
         $iterator = new RecursiveDirectoryIterator($plansDir);
         foreach ($iterator as $file) {
-            if ($file instanceof SplFileInfo && $file->isFile() && $file->getExtension() === 'md') {
-                $filename = $file->getFilename();
-                if ($filename !== 'README.md') {
-                    $planFiles[] = $filename;
-                }
+            if ($file instanceof SplFileInfo && $this->isPlanFile($file)) {
+                $planFiles[] = $file->getFilename();
             }
         }
 
         return $planFiles;
     }
 
+    private function isPlanFile(SplFileInfo $file): bool
+    {
+        return $file->isFile() && $file->getExtension() === 'md' && $file->getFilename() !== 'README.md';
+    }
+
     /** @return list<string> */
-    private function checkActivePlanReferences(string $root, string $activePlan): array
+    private function checkActivePlanReferences(string $activePlan): array
     {
         $errors = [];
         foreach (['docs/README.md', 'docs/maintainers/README.md', 'docs/plans/README.md'] as $indexDoc) {
-            $indexPath = $root . '/' . $indexDoc;
+            $indexPath = $this->root . '/' . $indexDoc;
             if (!is_file($indexPath)) {
                 continue;
             }
@@ -127,10 +131,10 @@ final class ReleaseConsistencyChecker
     }
 
     /** @return list<string> */
-    private function checkSupportAndSecurity(string $root): array
+    private function checkSupportAndSecurity(): array
     {
-        $securityPath = $root . '/SECURITY.md';
-        $supportPath = $root . '/SUPPORT.md';
+        $securityPath = $this->root . '/SECURITY.md';
+        $supportPath = $this->root . '/SUPPORT.md';
 
         if (!is_file($securityPath) || !is_file($supportPath)) {
             return [];
@@ -173,10 +177,10 @@ final class ReleaseConsistencyChecker
     }
 
     /** @return list<string> */
-    private function checkBenchmarkBaseline(string $root): array
+    private function checkBenchmarkBaseline(): array
     {
-        $ciPath = $root . '/.github/workflows/ci.yml';
-        $benchDocPath = $root . '/docs/maintainers/benchmarking.md';
+        $ciPath = $this->root . '/.github/workflows/ci.yml';
+        $benchDocPath = $this->root . '/docs/maintainers/benchmarking.md';
 
         if (!is_file($ciPath) || !is_file($benchDocPath)) {
             return [];
@@ -209,40 +213,55 @@ final class ReleaseConsistencyChecker
      * @param list<string> $definedScripts
      * @return list<string>
      */
-    private function checkMaintainedCommands(string $root, array $definedScripts): array
+    private function checkMaintainedCommands(array $definedScripts): array
     {
         $errors = [];
-        $filesToCheck = $this->activeDocumentationFiles($root);
+        foreach ($this->activeDocumentationFiles() as $filePath) {
+            array_push($errors, ...$this->checkFileCommands($filePath, $definedScripts));
+        }
 
-        foreach ($filesToCheck as $filePath) {
-            $content = file_get_contents($filePath);
-            if (!is_string($content)) {
-                continue;
-            }
+        return $errors;
+    }
 
-            $relativePath = $this->relativePath($root, $filePath);
-            preg_match_all('/\bcomposer\s+([a-z0-9]+(?:[:-][a-z0-9]+)*)/', $content, $matches);
-            foreach ($matches[1] as $command) {
-                if (in_array($command, self::STANDARD_COMPOSER_COMMANDS, true)) {
-                    continue;
-                }
-                if (!in_array($command, $definedScripts, true)) {
-                    $errors[] = sprintf(
-                        '%s references unmaintained composer command "%s".',
-                        $relativePath,
-                        $command,
-                    );
-                }
+    /**
+     * @param list<string> $definedScripts
+     * @return list<string>
+     */
+    private function checkFileCommands(string $filePath, array $definedScripts): array
+    {
+        $content = file_get_contents($filePath);
+        if (!is_string($content)) {
+            return [];
+        }
+
+        $relativePath = $this->relativePath($filePath);
+        preg_match_all('/\bcomposer\s+([a-z0-9]+(?:[:-][a-z0-9]+)*)/', $content, $matches);
+        $errors = [];
+
+        foreach ($matches[1] as $command) {
+            if ($this->isUnmaintainedCommand($command, $definedScripts)) {
+                $errors[] = sprintf(
+                    '%s references unmaintained composer command "%s".',
+                    $relativePath,
+                    $command,
+                );
             }
         }
 
         return $errors;
     }
 
-    /** @return list<string> */
-    private function checkConfigurationPaths(string $root): array
+    /** @param list<string> $definedScripts */
+    private function isUnmaintainedCommand(string $command, array $definedScripts): bool
     {
-        $codescenePath = $root . '/.codescene/code-health-rules.json';
+        return !in_array($command, self::STANDARD_COMPOSER_COMMANDS, true)
+            && !in_array($command, $definedScripts, true);
+    }
+
+    /** @return list<string> */
+    private function checkConfigurationPaths(): array
+    {
+        $codescenePath = $this->root . '/.codescene/code-health-rules.json';
         if (!is_file($codescenePath)) {
             return [];
         }
@@ -258,7 +277,7 @@ final class ReleaseConsistencyChecker
 
         foreach ($codescene['rule_sets'] ?? [] as $ruleSet) {
             $path = $ruleSet['matching_content_path'] ?? null;
-            if ($path !== null && !file_exists($root . '/' . $path)) {
+            if ($path !== null && !file_exists($this->root . '/' . $path)) {
                 $errors[] = sprintf(
                     '.codescene/code-health-rules.json configures non-existent path: %s.',
                     $path,
@@ -270,22 +289,22 @@ final class ReleaseConsistencyChecker
     }
 
     /** @return list<string> */
-    private function activeDocumentationFiles(string $root): array
+    private function activeDocumentationFiles(): array
     {
         $files = [];
 
         foreach (['README.md', 'AGENTS.md', 'SUPPORT.md', 'SECURITY.md'] as $rootDoc) {
-            $path = $root . '/' . $rootDoc;
+            $path = $this->root . '/' . $rootDoc;
             if (is_file($path)) {
                 $files[] = $path;
             }
         }
 
         $directories = [
-            $root . '/docs/guides',
-            $root . '/docs/maintainers',
-            $root . '/docs/reference',
-            $root . '/.github/workflows',
+            $this->root . '/docs/guides',
+            $this->root . '/docs/maintainers',
+            $this->root . '/docs/reference',
+            $this->root . '/.github/workflows',
         ];
 
         foreach ($directories as $dir) {
@@ -318,9 +337,9 @@ final class ReleaseConsistencyChecker
         return $file->isFile() && in_array($file->getExtension(), ['md', 'yml', 'yaml'], true);
     }
 
-    private function relativePath(string $root, string $filePath): string
+    private function relativePath(string $filePath): string
     {
-        $prefix = rtrim($root, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        $prefix = $this->root . DIRECTORY_SEPARATOR;
 
         return str_starts_with($filePath, $prefix) ? substr($filePath, strlen($prefix)) : $filePath;
     }

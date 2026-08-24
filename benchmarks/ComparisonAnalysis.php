@@ -142,35 +142,51 @@ final class ComparisonAnalysis
 
         $medians = [];
         foreach ($scenarios as $scenario) {
-            if (!is_array($scenario)) {
-                throw new RuntimeException('Comparison run contains an invalid scenario.');
-            }
-
-            $name = $scenario['scenario'] ?? null;
-            $measurement = $scenario['measurement'] ?? null;
-            $operations = is_array($measurement) ? ($measurement['operations'] ?? null) : null;
-
-            if (!is_string($name) || !is_array($operations)) {
-                throw new RuntimeException(
-                    !is_string($name)
-                        ? 'Comparison run contains an invalid scenario.'
-                        : 'Comparison scenario has no operation measurements.',
-                );
-            }
-
-            foreach ($operations as $opName => $operation) {
-                if (!is_string($opName) || !is_array($operation)) {
-                    throw new RuntimeException('Comparison operation has no median.');
-                }
-                $median = $operation['median_ms'] ?? null;
-                if (!is_int($median) && !is_float($median)) {
-                    throw new RuntimeException('Comparison operation has no median.');
-                }
-                $medians[$name][$opName] = (float) $median;
-            }
+            [$name, $scenarioMedians] = self::parseScenarioMedians($scenario);
+            $medians[$name] = $scenarioMedians;
         }
 
         return $medians;
+    }
+
+    /** @return array{string, array<string, float>} */
+    private static function parseScenarioMedians(mixed $scenario): array
+    {
+        if (!is_array($scenario) || !is_string($scenario['scenario'] ?? null)) {
+            throw new RuntimeException('Comparison run contains an invalid scenario.');
+        }
+
+        $measurement = is_array($scenario['measurement'] ?? null) ? $scenario['measurement'] : null;
+        $operations = $measurement['operations'] ?? null;
+        if (!is_array($operations)) {
+            throw new RuntimeException('Comparison scenario has no operation measurements.');
+        }
+
+        $scenarioMedians = [];
+        foreach ($operations as $opName => $operation) {
+            $scenarioMedians[self::assertOperationName($opName)] = self::extractMedian($operation);
+        }
+
+        return [$scenario['scenario'], $scenarioMedians];
+    }
+
+    private static function assertOperationName(mixed $opName): string
+    {
+        if (!is_string($opName)) {
+            throw new RuntimeException('Comparison operation has no median.');
+        }
+
+        return $opName;
+    }
+
+    private static function extractMedian(mixed $operation): float
+    {
+        $median = is_array($operation) ? ($operation['median_ms'] ?? null) : null;
+        if (!is_int($median) && !is_float($median)) {
+            throw new RuntimeException('Comparison operation has no median.');
+        }
+
+        return (float) $median;
     }
 
     private static function percentageChange(float $baseline, float $candidate): ?float

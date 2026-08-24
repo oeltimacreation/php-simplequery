@@ -47,8 +47,16 @@ final class HydrationScenarios
 
         return [
             'operations' => [
-                'array_keys_validation_control' => static fn (): array => self::countArrayKeys($row, $rowCount),
-                'direct_key_iteration_control' => static fn (): array => self::countDirectKeys($row, $rowCount),
+                'array_keys_validation_control' => static fn (): array => self::countAttributionKeys(
+                    $row,
+                    $rowCount,
+                    true,
+                ),
+                'direct_key_iteration_control' => static fn (): array => self::countAttributionKeys(
+                    $row,
+                    $rowCount,
+                    false,
+                ),
             ],
             'pdo' => null,
             'dimensions' => ['rows' => $rowCount, 'columns' => $columnCount],
@@ -59,31 +67,16 @@ final class HydrationScenarios
      * @param array<array-key, int> $row
      * @return array{keys: int, last_key: string|null}
      */
-    private static function countArrayKeys(array $row, int $rowCount): array
+    private static function countAttributionKeys(array $row, int $rowCount, bool $useArrayKeys): array
     {
         $keyCount = 0;
         $lastKey = null;
-        for ($rowIndex = 0; $rowIndex < $rowCount; ++$rowIndex) {
-            foreach (array_keys($row) as $key) {
-                $lastKey = self::assertStringKey($key);
-                ++$keyCount;
-            }
-        }
+        $keys = $useArrayKeys ? array_keys($row) : null;
 
-        return ['keys' => $keyCount, 'last_key' => $lastKey];
-    }
-
-    /**
-     * @param array<array-key, int> $row
-     * @return array{keys: int, last_key: string|null}
-     */
-    private static function countDirectKeys(array $row, int $rowCount): array
-    {
-        $keyCount = 0;
-        $lastKey = null;
         for ($rowIndex = 0; $rowIndex < $rowCount; ++$rowIndex) {
-            foreach ($row as $key => $_value) {
-                $lastKey = self::assertStringKey($key);
+            $iterable = $keys ?? $row;
+            foreach ($iterable as $key => $_value) {
+                $lastKey = self::assertStringKey($keys !== null ? $_value : $key);
                 ++$keyCount;
             }
         }

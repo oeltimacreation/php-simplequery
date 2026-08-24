@@ -45,12 +45,8 @@ final class AssociativeHydrationTest extends TestCase
     public function testOnePassHydrationTranslatesFetchFailureAndClosesStatement(): void
     {
         ConfigurableStatement::fetchThrows();
-        $this->assertFailingAssociativeQuery(static function (QueryExecutionException $exception): void {
-            self::assertInstanceOf(PDOException::class, $exception->getPrevious());
-            self::assertSame(
-                ConfigurableStatement::DEFAULT_FETCH_FAILURE,
-                $exception->getPrevious()->getMessage(),
-            );
+        $this->assertFailingAssociativeQuery(function (QueryExecutionException $exception): void {
+            $this->assertPreviousPdoException($exception, ConfigurableStatement::DEFAULT_FETCH_FAILURE);
         });
     }
 
@@ -58,12 +54,8 @@ final class AssociativeHydrationTest extends TestCase
     {
         ConfigurableStatement::returns(['value' => 42], once: true);
         ConfigurableStatement::closeThrows();
-        $this->assertFailingAssociativeQuery(static function (QueryExecutionException $exception): void {
-            self::assertInstanceOf(PDOException::class, $exception->getPrevious());
-            self::assertSame(
-                ConfigurableStatement::DEFAULT_CLOSE_FAILURE,
-                $exception->getPrevious()->getMessage(),
-            );
+        $this->assertFailingAssociativeQuery(function (QueryExecutionException $exception): void {
+            $this->assertPreviousPdoException($exception, ConfigurableStatement::DEFAULT_CLOSE_FAILURE);
         });
     }
 
@@ -91,10 +83,7 @@ final class AssociativeHydrationTest extends TestCase
             $assertException($exception);
         }
 
-        self::assertTrue(ConfigurableStatement::$closed);
-        self::assertCount(1, $observer->executions());
-        self::assertFalse($observer->executions()[0]->successful);
-        $connection->close();
+        $this->assertClosedAndObserved($connection, $observer, successful: false);
     }
 
     public function testCursorObservationEndsAtHandoffAndFetchFailureDoesNotEmitASecondEvent(): void
@@ -115,9 +104,23 @@ final class AssociativeHydrationTest extends TestCase
             self::assertInstanceOf(PDOException::class, $exception->getPrevious());
         }
 
-        self::assertCount(1, $observer->executions());
-        self::assertTrue($observer->executions()[0]->successful);
+        $this->assertClosedAndObserved($connection, $observer, successful: true);
+    }
+
+    private function assertPreviousPdoException(QueryExecutionException $exception, string $expectedMessage): void
+    {
+        self::assertInstanceOf(PDOException::class, $exception->getPrevious());
+        self::assertSame($expectedMessage, $exception->getPrevious()->getMessage());
+    }
+
+    private function assertClosedAndObserved(
+        Connection $connection,
+        RecordingQueryObserver $observer,
+        bool $successful,
+    ): void {
         self::assertTrue(ConfigurableStatement::$closed);
+        self::assertCount(1, $observer->executions());
+        self::assertSame($successful, $observer->executions()[0]->successful);
         $connection->close();
     }
 
