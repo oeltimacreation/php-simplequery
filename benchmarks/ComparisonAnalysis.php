@@ -49,7 +49,9 @@ final class ComparisonAnalysis
             foreach ($operations as $operation => $baselineMedian) {
                 $candidateMedian = $candidateOperations[$operation];
                 $sameSourceRange = $sameSourceRanges[$scenario][$operation] ?? null;
-                self::assertValidSameSourceRange($scenario, $operation, $sameSourceRange);
+                if ($sameSourceRange !== null && (!is_finite($sameSourceRange) || $sameSourceRange < 0.0)) {
+                    throw new RuntimeException(sprintf('Invalid same-source range for %s/%s.', $scenario, $operation));
+                }
                 $measurements[$scenario][$operation] = self::evaluateMeasurement(
                     $baselineMedian,
                     $candidateMedian,
@@ -66,17 +68,6 @@ final class ComparisonAnalysis
             'same_source_ranges_applied' => $sameSourceRanges !== [],
             'measurements' => $measurements,
         ];
-    }
-
-    private static function assertValidSameSourceRange(string $scenario, string $operation, ?float $range): void
-    {
-        if ($range === null) {
-            return;
-        }
-
-        if (!is_finite($range) || $range < 0.0) {
-            throw new RuntimeException(sprintf('Invalid same-source range for %s/%s.', $scenario, $operation));
-        }
     }
 
     /**
@@ -99,14 +90,13 @@ final class ComparisonAnalysis
     ): array {
         $change = self::percentageChange($baselineMedian, $candidateMedian);
         $absoluteChange = round($candidateMedian - $baselineMedian, 6);
-        $relativeIgnored = self::isRelativeChangeIgnored(
+        $relativeIgnored = $thresholds->isRelativeChangeIgnored(
             $baselineMedian,
             $candidateMedian,
             $absoluteChange,
-            $thresholds,
         );
-        $withinRange = self::isWithinSameSourceRange($sameSourceRange, $absoluteChange);
-        $reviewRequired = self::isReviewRequired($change, $thresholds, $relativeIgnored, $withinRange);
+        $withinRange = $sameSourceRange !== null && abs($absoluteChange) <= $sameSourceRange;
+        $reviewRequired = $thresholds->isReviewRequired($change, $relativeIgnored, $withinRange);
 
         return [
             'baseline_median_ms' => $baselineMedian,
@@ -118,32 +108,6 @@ final class ComparisonAnalysis
             'within_same_source_range' => $withinRange,
             'review_required' => $reviewRequired,
         ];
-    }
-
-    private static function isRelativeChangeIgnored(
-        float $baseline,
-        float $candidate,
-        float $absChange,
-        ComparisonThresholds $thresholds,
-    ): bool {
-        return max($baseline, $candidate) < $thresholds->subMillisecondCeilingMs
-            && abs($absChange) <= $thresholds->absoluteNoiseFloorMs;
-    }
-
-    private static function isWithinSameSourceRange(?float $sameSourceRange, float $absChange): bool
-    {
-        return $sameSourceRange !== null && abs($absChange) <= $sameSourceRange;
-    }
-
-    private static function isReviewRequired(
-        ?float $change,
-        ComparisonThresholds $thresholds,
-        bool $relativeIgnored,
-        bool $withinRange,
-    ): bool {
-        $regression = $change === null || $change > $thresholds->thresholdPercent;
-
-        return $regression && !$relativeIgnored && !$withinRange;
     }
 
     /**

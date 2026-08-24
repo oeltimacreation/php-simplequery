@@ -24,4 +24,17 @@ final readonly class ComparisonThresholds
             throw new RuntimeException('Benchmark comparison thresholds must be non-negative and finite.');
         }
     }
+
+    public function isRelativeChangeIgnored(float $baseline, float $candidate, float $absChange): bool
+    {
+        return max($baseline, $candidate) < $this->subMillisecondCeilingMs
+            && abs($absChange) <= $this->absoluteNoiseFloorMs;
+    }
+
+    public function isReviewRequired(?float $change, bool $relativeIgnored, bool $withinRange): bool
+    {
+        $regression = $change === null || $change > $this->thresholdPercent;
+
+        return $regression && !$relativeIgnored && !$withinRange;
+    }
 }
