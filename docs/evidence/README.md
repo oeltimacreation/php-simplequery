@@ -44,6 +44,8 @@ Active development evidence:
 - [`0.6.0` Phase 1 attributable performance evidence](0.6-phase-1-attributable-performance.md).
 - [`0.6.0` Phase 2 compiler and binding efficiency evidence](0.6-phase-2-compiler-and-binding-efficiency.md).
 - [`0.6.0` Phase 3 execution, hydration, and resource efficiency evidence](0.6-phase-3-execution-hydration-and-resource-efficiency.md).
+- [`0.6.0` Phase 4 code quality and maintainer efficiency evidence](0.6-phase-4-code-quality-and-maintainer-efficiency.md).
+- [`0.6.0` Phase 5 user experience and documentation evidence](0.6-phase-5-user-experience-and-documentation.md).
 
 Retained decision evidence:
 

@@ -281,6 +281,22 @@ failures, and whether the connection is unusable. Domain exceptions retain
 identity when rollback succeeds. Pixie's broad vendor-normalized constraint
 subclass family is not part of the public contract.
 
+### Exception troubleshooting matrix
+
+Use this matrix to diagnose failures and choose safe application-layer remediation actions without exposing sensitive bindings, credentials, or network topology:
+
+| Exception class | Common trigger scenarios | Diagnostic properties | Safe remediation action | Redaction & safety guarantee |
+| --- | --- | --- | --- | --- |
+| `ConfigurationException` | Unsupported driver/options combination, invalid SQLite busy timeout, missing `utf8mb4`, or driver option mismatch. | `$message` | Correct the connection options or driver choice in application configuration before connecting. | Sensitive DSN credentials and passwords are never included in exception messages. |
+| `ConnectionException` | Database server unreachable, authentication rejected, or operations attempted on a closed connection (`close()`). | `$message` | Verify database availability, credentials, or lifecycle handling. Discard closed connection instances. | Passwords and connection DSNs are omitted from diagnostic output. |
+| `InvalidQueryException` | Malformed clauses (e.g. empty selection, null ordering comparison, non-list bindings, conflicting aliases, or missing join operands). | `$message` | Fix builder clause arguments in application code. Discard or recreate the builder instance rather than retrying mutated state. | Runtime query bindings and domain values are never interpolated into the query error message. |
+| `UnsupportedFeatureException` | Valid SQL concept unsupported by target engine dialect or structured API (e.g., SQLite row locks, aggregates on `distinct`/`groupBy`). | `$message` | Use supported structured clauses for the engine, or switch to an explicit trusted raw query (`Connection::query()`). | Dialect messages identify the unsupported feature without exposing application data. |
+| `QueryExecutionException` | SQL syntax error, constraint violation, foreign key failure, deadlock, lock wait timeout, or cursor close failure. | `$sqlState`, `$driverCode`, `$sql`, `$driver`, `$connectionLabel`, `$previous` | Inspect `$sqlState` and normalized `$driverCode` within your engine's documented error codes. Never retry blind writes. | Contains placeholder SQL only; parameter bindings are never interpolated. |
+| `NumericOverflowException` | Aggregate `count()` result exceeds PHP's 64-bit signed integer capacity (`PHP_INT_MAX`). | `$message` | Use raw SQL queries or fetch chunked/segmented subsets to handle very large counts in application domain logic. | No data row contents are exposed in the exception. |
+| `TransactionException` | Rollback failure, commit failure, savepoint release failure, or active cursor present at transaction boundary. | `$operation`, `$managedDepth`, `$driver`, `$connectionLabel`, `$callbackFailure`, `$controlFailure`, `$recoveryFailure`, `$connectionUnusable` | If `$connectionUnusable` is true, discard the connection immediately. Close open cursors before transaction completion. | Operation and depth are recorded; application domain exceptions are preserved in chain. |
+| `ExternalTransactionException` | `Connection::transaction()` called when physical PDO is already inside an externally initiated transaction. | `$operation`, `$managedDepth`, `$driver`, `$connectionLabel` | Choose a single transaction owner: let the external manager complete the scope, or start the transaction with SimpleQuery. | No internal PDO connection state or data is leaked. |
+| `TransactionStateException` | Direct PDO commit/rollback called inside a managed transaction, or DDL statements caused implicit commit state loss. | `$operation`, `$managedDepth`, `$driver`, `$connectionLabel` | Do not call `PDO::commit()` or `PDO::rollBack()` inside `transaction()` callbacks. Avoid DDL inside transactions. | State machine transition details are recorded safely. |
+
 No public exception classifier labels a statement or transaction retryable.
 Applications may interpret SQLSTATE and driver codes only within their known
 driver/deployment policy and must treat ambiguous commits separately.
@@ -288,3 +304,4 @@ driver/deployment policy and must treat ambiguous commits separately.
 SQLite immediate begin is not a managed mode because PDO transaction-state
 tracking differs across supported PHP versions. It remains a deliberate,
 application-owned direct-PDO escape path.
+

@@ -240,7 +240,7 @@ Repeated group, having, and order clauses append. Repeated limit or offset
 calls replace the prior value. Negative pagination values are rejected, and an
 offset without a limit throws during compilation.
 
-`forPage()` provides strict 1-based pagination by setting both values:
+`forPage()` provides strict 1-based pagination by setting both limit and offset:
 
 ```php
 $page = $db->table('users')->orderBy('id')->forPage(3, 25);
@@ -249,8 +249,27 @@ $page = $db->table('users')->orderBy('id')->forPage(3, 25);
 The example emits `LIMIT 25 OFFSET 50`. Page and page-size values must both be
 positive, and an offset outside the supported integer range is rejected before
 the builder changes. `forPage()` does not add ordering or execute a count
-query; callers are responsible for deterministic ordering when page boundaries
-matter. Later `limit()` or `offset()` calls continue to replace its values.
+query.
+
+### Deterministic pagination ordering
+
+Pagination without deterministic sorting can cause rows to shift or be duplicated
+across pages between fetches. For reliable pagination:
+
+- Always provide an explicit `orderBy()`.
+- If sorting on a non-unique column (such as `created_at` or `status`), append a
+  unique tie-breaker column (such as the primary key `id`):
+
+```php
+$deterministicPage = $db
+    ->table('orders')
+    ->orderBy('created_at', SortDirection::Desc)
+    ->orderBy('id', SortDirection::Desc)
+    ->forPage(1, 20);
+```
+
+Later `limit()` or `offset()` calls continue to replace pagination values.
+
 
 ## Subquery snapshots
 

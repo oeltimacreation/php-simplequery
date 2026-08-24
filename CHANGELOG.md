@@ -19,6 +19,17 @@ with ZeroVer releases before `1.0.0`.
   configuration paths.
 - Add a data-driven connection state-transition matrix covering clean, active
   cursor, transaction, quarantine, and closed lifecycle paths.
+- Add an automated clean no-dev consumer lifecycle test suite covering
+  connection, compilation, read/write/aggregate terminals, streaming cursors,
+  savepoint transactions, and safe failure diagnostics.
+- Add a concise terminal choice decision matrix and driver caveats to the results
+  and writes guide.
+- Add an exception troubleshooting matrix mapping all error classes to safe
+  application remediation actions and redaction guarantees in the public API
+  reference.
+- Add guidance on engine parameter limits, packet ceilings, buffered versus
+  unbuffered cursor streaming, and deterministic pagination ordering.
+
 
 ### Changed
 

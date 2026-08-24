@@ -40,6 +40,8 @@ $requiredFiles = [
     'docs/evidence/0.6-phase-1-attributable-performance.md',
     'docs/evidence/0.6-phase-2-compiler-and-binding-efficiency.md',
     'docs/evidence/0.6-phase-3-execution-hydration-and-resource-efficiency.md',
+    'docs/evidence/0.6-phase-4-code-quality-and-maintainer-efficiency.md',
+    'docs/evidence/0.6-phase-5-user-experience-and-documentation.md',
     'docs/maintainers/migration-validation.md',
     'docs/maintainers/migration-review.md',
     'docs/maintainers/benchmarking.md',
