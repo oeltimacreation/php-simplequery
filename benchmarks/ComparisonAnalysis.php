@@ -40,34 +40,79 @@ final class ComparisonAnalysis
             throw new RuntimeException('Baseline and candidate benchmark scenarios differ.');
         }
 
+        return [
+            'threshold_percent' => $thresholdPercent,
+            'absolute_noise_floor_ms' => $absoluteNoiseFloorMs,
+            'sub_millisecond_ceiling_ms' => $subMillisecondCeilingMs,
+            'same_source_ranges_applied' => $sameSourceRanges !== [],
+            'measurements' => self::compareScenarios(
+                $baselineMedians,
+                $candidateMedians,
+                $thresholds,
+                $sameSourceRanges,
+            ),
+        ];
+    }
+
+    /**
+     * @param array<string, array<string, float>> $baselineMedians
+     * @param array<string, array<string, float>> $candidateMedians
+     * @param array<string, array<string, float>> $sameSourceRanges
+     * @return array<string, array<string, array<string, float|bool|null>>>
+     */
+    private static function compareScenarios(
+        array $baselineMedians,
+        array $candidateMedians,
+        ComparisonThresholds $thresholds,
+        array $sameSourceRanges,
+    ): array {
         $measurements = [];
         foreach ($baselineMedians as $scenario => $operations) {
             $candidateOperations = $candidateMedians[$scenario] ?? null;
             if ($candidateOperations === null || array_keys($operations) !== array_keys($candidateOperations)) {
                 throw new RuntimeException(sprintf('Benchmark operations differ for scenario "%s".', $scenario));
             }
-            foreach ($operations as $operation => $baselineMedian) {
-                $candidateMedian = $candidateOperations[$operation];
-                $sameSourceRange = $sameSourceRanges[$scenario][$operation] ?? null;
-                if ($sameSourceRange !== null && (!is_finite($sameSourceRange) || $sameSourceRange < 0.0)) {
-                    throw new RuntimeException(sprintf('Invalid same-source range for %s/%s.', $scenario, $operation));
-                }
-                $measurements[$scenario][$operation] = self::evaluateMeasurement(
-                    $baselineMedian,
-                    $candidateMedian,
-                    $thresholds,
-                    $sameSourceRange,
-                );
-            }
+            $measurements[$scenario] = self::compareScenarioOperations(
+                $scenario,
+                $operations,
+                $candidateOperations,
+                $thresholds,
+                $sameSourceRanges[$scenario] ?? [],
+            );
         }
 
-        return [
-            'threshold_percent' => $thresholdPercent,
-            'absolute_noise_floor_ms' => $absoluteNoiseFloorMs,
-            'sub_millisecond_ceiling_ms' => $subMillisecondCeilingMs,
-            'same_source_ranges_applied' => $sameSourceRanges !== [],
-            'measurements' => $measurements,
-        ];
+        return $measurements;
+    }
+
+    /**
+     * @param array<string, float> $operations
+     * @param array<string, float> $candidateOperations
+     * @param array<string, float> $scenarioRanges
+     * @return array<string, array<string, float|bool|null>>
+     */
+    private static function compareScenarioOperations(
+        string $scenario,
+        array $operations,
+        array $candidateOperations,
+        ComparisonThresholds $thresholds,
+        array $scenarioRanges,
+    ): array {
+        $measurements = [];
+        foreach ($operations as $operation => $baselineMedian) {
+            $candidateMedian = $candidateOperations[$operation];
+            $sameSourceRange = $scenarioRanges[$operation] ?? null;
+            if ($sameSourceRange !== null && (!is_finite($sameSourceRange) || $sameSourceRange < 0.0)) {
+                throw new RuntimeException(sprintf('Invalid same-source range for %s/%s.', $scenario, $operation));
+            }
+            $measurements[$operation] = self::evaluateMeasurement(
+                $baselineMedian,
+                $candidateMedian,
+                $thresholds,
+                $sameSourceRange,
+            );
+        }
+
+        return $measurements;
     }
 
     /**
