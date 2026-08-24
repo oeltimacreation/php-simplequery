@@ -99,10 +99,7 @@ final class ComparisonAnalysis
         $measurements = [];
         foreach ($operations as $operation => $baselineMedian) {
             $candidateMedian = $candidateOperations[$operation];
-            $sameSourceRange = $ranges[$operation] ?? null;
-            if ($sameSourceRange !== null && (!is_finite($sameSourceRange) || $sameSourceRange < 0.0)) {
-                throw new RuntimeException(sprintf('Invalid same-source range for operation "%s".', $operation));
-            }
+            $sameSourceRange = self::assertValidRange($ranges[$operation] ?? null, $operation);
             $measurements[$operation] = self::evaluateMeasurement(
                 $baselineMedian,
                 $candidateMedian,
@@ -112,6 +109,19 @@ final class ComparisonAnalysis
         }
 
         return $measurements;
+    }
+
+    private static function assertValidRange(?float $range, string $operation): ?float
+    {
+        if ($range === null) {
+            return null;
+        }
+
+        if (!is_finite($range) || $range < 0.0) {
+            throw new RuntimeException(sprintf('Invalid same-source range for operation "%s".', $operation));
+        }
+
+        return $range;
     }
 
     /**
