@@ -37,78 +37,58 @@ final class AssociativeHydrationTest extends TestCase
     public function testOnePassHydrationRejectsInvalidRowsAndRecordsFailure(mixed $row): void
     {
         ConfigurableStatement::returns($row, once: true);
-        [$connection, $observer] = $this->connection();
-
-        try {
-            $connection->query('SELECT 42 AS value')->getAssociative();
-            self::fail('The controlled invalid associative row unexpectedly succeeded.');
-        } catch (QueryExecutionException $exception) {
+        $this->assertFailingAssociativeQuery(static function (QueryExecutionException $exception): void {
             self::assertSame('SELECT 42 AS value', $exception->sql);
-        }
-
-        self::assertTrue(ConfigurableStatement::$closed);
-        self::assertCount(1, $observer->executions());
-        self::assertFalse($observer->executions()[0]->successful);
-        $connection->close();
+        });
     }
 
     public function testOnePassHydrationTranslatesFetchFailureAndClosesStatement(): void
     {
         ConfigurableStatement::fetchThrows();
-        [$connection, $observer] = $this->connection();
-
-        try {
-            $connection->query('SELECT 42 AS value')->getAssociative();
-            self::fail('The controlled associative fetch failure unexpectedly succeeded.');
-        } catch (QueryExecutionException $exception) {
+        $this->assertFailingAssociativeQuery(static function (QueryExecutionException $exception): void {
             self::assertInstanceOf(PDOException::class, $exception->getPrevious());
             self::assertSame(
                 ConfigurableStatement::DEFAULT_FETCH_FAILURE,
                 $exception->getPrevious()->getMessage(),
             );
-        }
-
-        self::assertTrue(ConfigurableStatement::$closed);
-        self::assertCount(1, $observer->executions());
-        self::assertFalse($observer->executions()[0]->successful);
-        $connection->close();
+        });
     }
 
     public function testSuccessfulResultCleanupFailureIsTranslatedAndObserved(): void
     {
         ConfigurableStatement::returns(['value' => 42], once: true);
         ConfigurableStatement::closeThrows();
-        [$connection, $observer] = $this->connection();
-
-        try {
-            $connection->query('SELECT 42 AS value')->getAssociative();
-            self::fail('The controlled terminal cleanup failure unexpectedly succeeded.');
-        } catch (QueryExecutionException $exception) {
+        $this->assertFailingAssociativeQuery(static function (QueryExecutionException $exception): void {
             self::assertInstanceOf(PDOException::class, $exception->getPrevious());
             self::assertSame(
                 ConfigurableStatement::DEFAULT_CLOSE_FAILURE,
                 $exception->getPrevious()->getMessage(),
             );
-        }
-
-        self::assertTrue(ConfigurableStatement::$closed);
-        self::assertCount(1, $observer->executions());
-        self::assertFalse($observer->executions()[0]->successful);
-        $connection->close();
+        });
     }
 
     public function testInvalidResultRemainsPrimaryWhenTerminalCleanupAlsoFails(): void
     {
         ConfigurableStatement::returns([0 => 'invalid'], once: true);
         ConfigurableStatement::closeThrows();
+        $this->assertFailingAssociativeQuery(static function (QueryExecutionException $exception): void {
+            self::assertSame('PDO returned a non-string column name.', $exception->getMessage());
+            self::assertNull($exception->getPrevious());
+        });
+    }
+
+    /**
+     * @param callable(QueryExecutionException): void $assertException
+     */
+    private function assertFailingAssociativeQuery(callable $assertException): void
+    {
         [$connection, $observer] = $this->connection();
 
         try {
             $connection->query('SELECT 42 AS value')->getAssociative();
-            self::fail('The controlled dual terminal failure unexpectedly succeeded.');
+            self::fail('The controlled associative query unexpectedly succeeded.');
         } catch (QueryExecutionException $exception) {
-            self::assertSame('PDO returned a non-string column name.', $exception->getMessage());
-            self::assertNull($exception->getPrevious());
+            $assertException($exception);
         }
 
         self::assertTrue(ConfigurableStatement::$closed);

@@ -20,14 +20,26 @@ final class CleanConsumerLifecycleTest extends TestCase
 {
     public function testCompleteConsumerLifecycle(): void
     {
-        // 1. Connection setup
+        $this->assertDetachedCompilerLifecycle();
+
         $db = Connection::connect(
             Driver::Sqlite,
             'sqlite::memory:',
             connectionOptions: new ConnectionOptions(label: 'test-consumer'),
         );
 
-        // 2. Detached compiler testing without execution
+        $this->createTasksTable($db);
+        $this->assertWritesAndIdGeneration($db);
+        $this->assertReadsAndAggregates($db);
+        $this->assertCursorStreaming($db);
+        $this->assertUpdatesAndDeletes($db);
+        $this->assertTransactionsAndRollback($db);
+        $this->assertFailureDiagnostics($db);
+        $this->assertConnectionClose($db);
+    }
+
+    private function assertDetachedCompilerLifecycle(): void
+    {
         $compiler = CompilerConnection::for(Driver::Sqlite);
         $compiled = $compiler
             ->table('tasks')
@@ -41,8 +53,10 @@ final class CleanConsumerLifecycleTest extends TestCase
             'SELECT * FROM "tasks" WHERE "active" = ? ORDER BY "id" DESC LIMIT 10 OFFSET 0',
             [1],
         );
+    }
 
-        // 3. Table creation via raw DDL
+    private function createTasksTable(Connection $db): void
+    {
         $db->query(
             'CREATE TABLE tasks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -51,8 +65,10 @@ final class CleanConsumerLifecycleTest extends TestCase
                 completed INTEGER NOT NULL
             )',
         )->execute();
+    }
 
-        // 4. Single writes & ID generation
+    private function assertWritesAndIdGeneration(Connection $db): void
+    {
         $id1 = $db->table('tasks')->insertGetId([
             'title' => 'First task',
             'score' => 10,
@@ -67,15 +83,16 @@ final class CleanConsumerLifecycleTest extends TestCase
         ]);
         self::assertSame(1, $affected);
 
-        // 5. Batch writes
         $batchAffected = $db->table('tasks')->insertMany([
             ['title' => 'Batch 1', 'score' => 30, 'completed' => 1],
             ['title' => 'Batch 2', 'score' => 40, 'completed' => 1],
             ['title' => 'Batch 3', 'score' => 50, 'completed' => 1],
         ]);
         self::assertSame(3, $batchAffected);
+    }
 
-        // 6. Reads: Objects, Associative, Aggregates
+    private function assertReadsAndAggregates(Connection $db): void
+    {
         $allRows = $db->table('tasks')->orderBy('id')->get();
         self::assertCount(5, $allRows);
         self::assertSame('First task', $allRows[0]->title);
@@ -95,7 +112,6 @@ final class CleanConsumerLifecycleTest extends TestCase
         $missing = $db->table('tasks')->where('id', 999)->firstAssociative();
         self::assertNull($missing);
 
-        // Aggregates
         self::assertSame(5, $db->table('tasks')->count());
         self::assertSame(3, $db->table('tasks')->where('completed', 1)->count());
 
@@ -114,8 +130,10 @@ final class CleanConsumerLifecycleTest extends TestCase
         $max = $db->table('tasks')->max('score');
         self::assertTrue(is_numeric($max));
         self::assertSame(50, (int) $max);
+    }
 
-        // 7. Streaming & Cursor cleanup
+    private function assertCursorStreaming(Connection $db): void
+    {
         $cursor = $db->table('tasks')->orderBy('id')->iterateAssociative();
         $streamed = [];
         try {
@@ -129,16 +147,20 @@ final class CleanConsumerLifecycleTest extends TestCase
             $cursor->close();
         }
         self::assertSame(['First task', 'Second task'], $streamed);
+    }
 
-        // 8. Updates & Deletes
+    private function assertUpdatesAndDeletes(Connection $db): void
+    {
         $updated = $db->table('tasks')->where('id', 1)->update(['score' => 99]);
         self::assertSame(1, $updated);
 
         $deleted = $db->table('tasks')->where('id', 1)->delete();
         self::assertSame(1, $deleted);
         self::assertSame(4, $db->table('tasks')->count());
+    }
 
-        // 9. Managed transactions & savepoints
+    private function assertTransactionsAndRollback(Connection $db): void
+    {
         $txResult = $db->transaction(function (Connection $connection): string {
             $newId = $connection->table('tasks')->insertGetId([
                 'title' => 'Tx item',
@@ -146,7 +168,6 @@ final class CleanConsumerLifecycleTest extends TestCase
                 'completed' => 0,
             ]);
 
-            // Nested savepoint
             $connection->transaction(function (Connection $nested) use ($newId): void {
                 $nested->table('tasks')->where('id', (int) $newId)->update(['score' => 88]);
             });
@@ -160,7 +181,6 @@ final class CleanConsumerLifecycleTest extends TestCase
         self::assertTrue(is_numeric($txScore));
         self::assertSame(88, (int) $txScore);
 
-        // Rollback test
         try {
             $db->transaction(function (Connection $connection): void {
                 $connection->table('tasks')->insert([
@@ -174,8 +194,10 @@ final class CleanConsumerLifecycleTest extends TestCase
             self::assertSame('Intentional domain rollback', $exception->getMessage());
         }
         self::assertNull($db->table('tasks')->where('title', 'To be rolled back')->firstAssociative());
+    }
 
-        // 10. Failure diagnostics without credential/binding leaks
+    private function assertFailureDiagnostics(Connection $db): void
+    {
         try {
             $db->table('tasks')->where('invalid_col', '>', null);
             self::fail('Expected InvalidQueryException');
@@ -192,8 +214,10 @@ final class CleanConsumerLifecycleTest extends TestCase
             self::assertStringNotContainsString('secret_value_12345', $exception->getMessage());
             self::assertNotNull($exception->sqlState);
         }
+    }
 
-        // 11. Connection close
+    private function assertConnectionClose(Connection $db): void
+    {
         $db->close();
 
         try {

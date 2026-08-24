@@ -28,6 +28,50 @@ final class ComparisonAnalysis
         float $subMillisecondCeilingMs = 1.0,
         array $sameSourceRanges = [],
     ): array {
+        self::assertValidThresholds($thresholdPercent, $absoluteNoiseFloorMs, $subMillisecondCeilingMs);
+
+        $baselineMedians = self::medians($baseline);
+        $candidateMedians = self::medians($candidate);
+        if (array_keys($baselineMedians) !== array_keys($candidateMedians)) {
+            throw new RuntimeException('Baseline and candidate benchmark scenarios differ.');
+        }
+
+        $measurements = [];
+        foreach ($baselineMedians as $scenario => $operations) {
+            $candidateOperations = $candidateMedians[$scenario] ?? null;
+            if ($candidateOperations === null || array_keys($operations) !== array_keys($candidateOperations)) {
+                throw new RuntimeException(sprintf('Benchmark operations differ for scenario "%s".', $scenario));
+            }
+            foreach ($operations as $operation => $baselineMedian) {
+                $candidateMedian = $candidateOperations[$operation];
+                $sameSourceRange = $sameSourceRanges[$scenario][$operation] ?? null;
+                $measurements[$scenario][$operation] = self::evaluateMeasurement(
+                    $scenario,
+                    $operation,
+                    $baselineMedian,
+                    $candidateMedian,
+                    $thresholdPercent,
+                    $absoluteNoiseFloorMs,
+                    $subMillisecondCeilingMs,
+                    $sameSourceRange,
+                );
+            }
+        }
+
+        return [
+            'threshold_percent' => $thresholdPercent,
+            'absolute_noise_floor_ms' => $absoluteNoiseFloorMs,
+            'sub_millisecond_ceiling_ms' => $subMillisecondCeilingMs,
+            'same_source_ranges_applied' => $sameSourceRanges !== [],
+            'measurements' => $measurements,
+        ];
+    }
+
+    private static function assertValidThresholds(
+        float $thresholdPercent,
+        float $absoluteNoiseFloorMs,
+        float $subMillisecondCeilingMs,
+    ): void {
         if (
             !is_finite($thresholdPercent)
             || !is_finite($absoluteNoiseFloorMs)
@@ -38,55 +82,50 @@ final class ComparisonAnalysis
         ) {
             throw new RuntimeException('Benchmark comparison thresholds must be non-negative and finite.');
         }
-        $baselineMedians = self::medians($baseline);
-        $candidateMedians = self::medians($candidate);
-        if (array_keys($baselineMedians) !== array_keys($candidateMedians)) {
-            throw new RuntimeException('Baseline and candidate benchmark scenarios differ.');
+    }
+
+    /**
+     * @return array{
+     *     baseline_median_ms: float,
+     *     candidate_median_ms: float,
+     *     absolute_change_ms: float,
+     *     change_percent: float|null,
+     *     relative_change_ignored: bool,
+     *     same_source_range_ms: float|null,
+     *     within_same_source_range: bool,
+     *     review_required: bool
+     * }
+     */
+    private static function evaluateMeasurement(
+        string $scenario,
+        string $operation,
+        float $baselineMedian,
+        float $candidateMedian,
+        float $thresholdPercent,
+        float $absoluteNoiseFloorMs,
+        float $subMillisecondCeilingMs,
+        ?float $sameSourceRange,
+    ): array {
+        if ($sameSourceRange !== null && (!is_finite($sameSourceRange) || $sameSourceRange < 0.0)) {
+            throw new RuntimeException(sprintf('Invalid same-source range for %s/%s.', $scenario, $operation));
         }
 
-        $measurements = [];
-        foreach ($baselineMedians as $scenario => $operations) {
-            if (array_keys($operations) !== array_keys($candidateMedians[$scenario])) {
-                throw new RuntimeException(sprintf('Benchmark operations differ for scenario "%s".', $scenario));
-            }
-            foreach ($operations as $operation => $baselineMedian) {
-                $candidateMedian = $candidateMedians[$scenario][$operation];
-                $change = self::percentageChange($baselineMedian, $candidateMedian);
-                $absoluteChange = round($candidateMedian - $baselineMedian, 6);
-                $relativeIgnored = max($baselineMedian, $candidateMedian) < $subMillisecondCeilingMs
-                    && abs($absoluteChange) <= $absoluteNoiseFloorMs;
-                $sameSourceRange = $sameSourceRanges[$scenario][$operation] ?? null;
-                if ($sameSourceRange !== null && (!is_finite($sameSourceRange) || $sameSourceRange < 0.0)) {
-                    throw new RuntimeException(sprintf(
-                        'Invalid same-source range for %s/%s.',
-                        $scenario,
-                        $operation,
-                    ));
-                }
-                $withinSameSourceRange = $sameSourceRange !== null
-                    && abs($absoluteChange) <= $sameSourceRange;
-                $relativeRegression = $change === null || $change > $thresholdPercent;
-                $measurements[$scenario][$operation] = [
-                    'baseline_median_ms' => $baselineMedian,
-                    'candidate_median_ms' => $candidateMedian,
-                    'absolute_change_ms' => $absoluteChange,
-                    'change_percent' => $change,
-                    'relative_change_ignored' => $relativeIgnored,
-                    'same_source_range_ms' => $sameSourceRange,
-                    'within_same_source_range' => $withinSameSourceRange,
-                    'review_required' => $relativeRegression
-                        && !$relativeIgnored
-                        && !$withinSameSourceRange,
-                ];
-            }
-        }
+        $change = self::percentageChange($baselineMedian, $candidateMedian);
+        $absoluteChange = round($candidateMedian - $baselineMedian, 6);
+        $relativeIgnored = max($baselineMedian, $candidateMedian) < $subMillisecondCeilingMs
+            && abs($absoluteChange) <= $absoluteNoiseFloorMs;
+        $withinSameSourceRange = $sameSourceRange !== null && abs($absoluteChange) <= $sameSourceRange;
+        $relativeRegression = $change === null || $change > $thresholdPercent;
 
         return [
-            'threshold_percent' => $thresholdPercent,
-            'absolute_noise_floor_ms' => $absoluteNoiseFloorMs,
-            'sub_millisecond_ceiling_ms' => $subMillisecondCeilingMs,
-            'same_source_ranges_applied' => $sameSourceRanges !== [],
-            'measurements' => $measurements,
+            'baseline_median_ms' => $baselineMedian,
+            'candidate_median_ms' => $candidateMedian,
+            'absolute_change_ms' => $absoluteChange,
+            'change_percent' => $change,
+            'relative_change_ignored' => $relativeIgnored,
+            'same_source_range_ms' => $sameSourceRange,
+            'within_same_source_range' => $withinSameSourceRange,
+            'review_required' => $relativeRegression && !$relativeIgnored && !$withinSameSourceRange,
         ];
     }
 
@@ -103,102 +142,35 @@ final class ComparisonAnalysis
 
         $medians = [];
         foreach ($scenarios as $scenario) {
-            self::addScenarioMedians($medians, $scenario);
+            if (!is_array($scenario)) {
+                throw new RuntimeException('Comparison run contains an invalid scenario.');
+            }
+
+            $name = $scenario['scenario'] ?? null;
+            $measurement = $scenario['measurement'] ?? null;
+            $operations = is_array($measurement) ? ($measurement['operations'] ?? null) : null;
+
+            if (!is_string($name) || !is_array($operations)) {
+                throw new RuntimeException(
+                    !is_string($name)
+                        ? 'Comparison run contains an invalid scenario.'
+                        : 'Comparison scenario has no operation measurements.',
+                );
+            }
+
+            foreach ($operations as $opName => $operation) {
+                if (!is_string($opName) || !is_array($operation)) {
+                    throw new RuntimeException('Comparison operation has no median.');
+                }
+                $median = $operation['median_ms'] ?? null;
+                if (!is_int($median) && !is_float($median)) {
+                    throw new RuntimeException('Comparison operation has no median.');
+                }
+                $medians[$name][$opName] = (float) $median;
+            }
         }
 
         return $medians;
-    }
-
-    /** @param array<string, array<string, float>> $medians */
-    private static function addScenarioMedians(array &$medians, mixed $scenario): void
-    {
-        $definition = self::scenarioDefinition($scenario);
-        foreach ($definition['operations'] as $name => $operation) {
-            $medians[$definition['name']][self::operationName($name)] = self::operationMedian($operation);
-        }
-    }
-
-    /** @return array{name: string, operations: array<mixed, mixed>} */
-    private static function scenarioDefinition(mixed $scenario): array
-    {
-        $scenario = self::scenarioArray($scenario);
-
-        return [
-            'name' => self::scenarioName($scenario['scenario'] ?? null),
-            'operations' => self::scenarioOperations($scenario['measurement'] ?? null),
-        ];
-    }
-
-    /** @return array<mixed, mixed> */
-    private static function scenarioArray(mixed $scenario): array
-    {
-        if (!is_array($scenario)) {
-            throw new RuntimeException('Comparison run contains an invalid scenario.');
-        }
-
-        return $scenario;
-    }
-
-    private static function scenarioName(mixed $name): string
-    {
-        if (!is_string($name)) {
-            throw new RuntimeException('Comparison run contains an invalid scenario.');
-        }
-
-        return $name;
-    }
-
-    /** @return array<mixed, mixed> */
-    private static function scenarioOperations(mixed $measurement): array
-    {
-        $measurement = self::scenarioMeasurement($measurement);
-
-        return self::operationMap($measurement['operations'] ?? null);
-    }
-
-    /** @return array<mixed, mixed> */
-    private static function scenarioMeasurement(mixed $measurement): array
-    {
-        if (!is_array($measurement)) {
-            throw new RuntimeException('Comparison scenario has no operation measurements.');
-        }
-
-        return $measurement;
-    }
-
-    /** @return array<mixed, mixed> */
-    private static function operationMap(mixed $operations): array
-    {
-        if (!is_array($operations)) {
-            throw new RuntimeException('Comparison scenario has no operation measurements.');
-        }
-
-        return $operations;
-    }
-
-    private static function operationName(mixed $name): string
-    {
-        if (!is_string($name)) {
-            throw new RuntimeException('Comparison operation has no median.');
-        }
-
-        return $name;
-    }
-
-    private static function operationMedian(mixed $operation): float
-    {
-        if (!is_array($operation)) {
-            throw new RuntimeException('Comparison operation has no median.');
-        }
-        $median = $operation['median_ms'] ?? null;
-        if (is_int($median)) {
-            return (float) $median;
-        }
-        if (is_float($median)) {
-            return $median;
-        }
-
-        throw new RuntimeException('Comparison operation has no median.');
     }
 
     private static function percentageChange(float $baseline, float $candidate): ?float

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Oeltima\SimpleQuery\Tests\Unit;
 
-use Closure;
 use Oeltima\SimpleQuery\Connection;
 use Oeltima\SimpleQuery\Driver;
 use Oeltima\SimpleQuery\Exception\ConnectionException;
@@ -20,27 +19,15 @@ use PHPUnit\Framework\TestCase;
 #[RequiresPhpExtension('pdo_sqlite')]
 final class ConnectionStateMatrixTest extends TestCase
 {
-    /**
-     * @param Closure(): array{Connection, mixed, Closure(): void} $fixtureFactory
-     * @param Closure(Connection): mixed $operation
-     * @param class-string<\Throwable>|null $expectedException
-     */
     #[DataProvider('stateMatrix')]
-    public function testConnectionStateTransitions(
-        string $stateLabel,
-        string $operationLabel,
-        Closure $fixtureFactory,
-        Closure $operation,
-        ?string $expectedException,
-        ?string $expectedOperation = null,
-        ?bool $expectedUnusable = null,
-    ): void {
-        [$connection, $retained, $cleanup] = $fixtureFactory();
+    public function testConnectionStateTransitions(StateTransitionCase $case): void
+    {
+        [$connection, $retained, $cleanup] = ($case->fixtureFactory)();
 
         $thrown = null;
         try {
-            $result = $operation($connection);
-            if ($expectedException === null) {
+            $result = ($case->operation)($connection);
+            if ($case->expectedException === null) {
                 self::assertNotNull($result);
             }
         } catch (\Throwable $exception) {
@@ -50,39 +37,50 @@ final class ConnectionStateMatrixTest extends TestCase
             $cleanup();
         }
 
-        if ($expectedException !== null) {
-            self::assertNotNull(
-                $thrown,
-                sprintf('Expected %s was not thrown for %s on %s.', $expectedException, $operationLabel, $stateLabel),
-            );
-            self::assertInstanceOf($expectedException, $thrown);
-            if ($expectedOperation !== null) {
-                if ($thrown instanceof TransactionStateException) {
-                    self::assertSame($expectedOperation, $thrown->operation);
-                } elseif ($thrown instanceof ExternalTransactionException) {
-                    self::assertSame($expectedOperation, $thrown->operation);
-                }
-            }
-            if ($expectedUnusable !== null && $thrown instanceof TransactionStateException) {
-                self::assertSame($expectedUnusable, $thrown->connectionUnusable);
-            }
-        } else {
+        $this->assertTransitionOutcome($case, $thrown);
+    }
+
+    private function assertTransitionOutcome(StateTransitionCase $case, ?\Throwable $thrown): void
+    {
+        if ($case->expectedException === null) {
             if ($thrown !== null) {
                 throw $thrown;
             }
+
+            return;
+        }
+
+        self::assertNotNull(
+            $thrown,
+            sprintf(
+                'Expected %s was not thrown for %s on %s.',
+                $case->expectedException,
+                $case->operationLabel,
+                $case->stateLabel,
+            ),
+        );
+        self::assertInstanceOf($case->expectedException, $thrown);
+        $this->assertExceptionProperties($case, $thrown);
+    }
+
+    private function assertExceptionProperties(StateTransitionCase $case, \Throwable $thrown): void
+    {
+        if ($case->expectedOperation !== null) {
+            $operation = match (true) {
+                $thrown instanceof TransactionStateException => $thrown->operation,
+                $thrown instanceof ExternalTransactionException => $thrown->operation,
+                default => null,
+            };
+            self::assertSame($case->expectedOperation, $operation);
+        }
+
+        if ($case->expectedUnusable !== null && $thrown instanceof TransactionStateException) {
+            self::assertSame($case->expectedUnusable, $thrown->connectionUnusable);
         }
     }
 
     /**
-     * @return iterable<string, array{
-     *     0: string,
-     *     1: string,
-     *     2: Closure(): array{Connection, mixed, Closure(): void},
-     *     3: Closure(Connection): mixed,
-     *     4: class-string<\Throwable>|null,
-     *     5?: string|null,
-     *     6?: bool|null
-     * }>
+     * @return iterable<string, array{0: StateTransitionCase}>
      */
     public static function stateMatrix(): iterable
     {
@@ -224,13 +222,15 @@ final class ConnectionStateMatrixTest extends TestCase
                 $expected = $stateConfig['expectations'][$opName];
                 $label = sprintf('%s on %s', $opName, $stateName);
                 yield $label => [
-                    $stateName,
-                    $opName,
-                    $stateConfig['factory'],
-                    $operation,
-                    $expected[0] ?? null,
-                    $expected[1] ?? null,
-                    $expected[2] ?? null,
+                    new StateTransitionCase(
+                        stateLabel: $stateName,
+                        operationLabel: $opName,
+                        fixtureFactory: $stateConfig['factory'],
+                        operation: $operation,
+                        expectedException: $expected[0] ?? null,
+                        expectedOperation: $expected[1] ?? null,
+                        expectedUnusable: $expected[2] ?? null,
+                    ),
                 ];
             }
         }

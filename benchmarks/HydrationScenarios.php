@@ -45,45 +45,59 @@ final class HydrationScenarios
         $columnCount = 18;
         $row = $this->attributionRow($columnCount);
 
-        $arrayKeys = static function () use ($row, $rowCount): array {
-            $keyCount = 0;
-            $lastKey = null;
-            for ($rowIndex = 0; $rowIndex < $rowCount; ++$rowIndex) {
-                foreach (array_keys($row) as $key) {
-                    if (!is_string($key)) {
-                        throw new RuntimeException('The attribution row contains a non-string key.');
-                    }
-                    ++$keyCount;
-                    $lastKey = $key;
-                }
-            }
-
-            return ['keys' => $keyCount, 'last_key' => $lastKey];
-        };
-        $directIteration = static function () use ($row, $rowCount): array {
-            $keyCount = 0;
-            $lastKey = null;
-            for ($rowIndex = 0; $rowIndex < $rowCount; ++$rowIndex) {
-                foreach ($row as $key => $_value) {
-                    if (!is_string($key)) {
-                        throw new RuntimeException('The attribution row contains a non-string key.');
-                    }
-                    ++$keyCount;
-                    $lastKey = $key;
-                }
-            }
-
-            return ['keys' => $keyCount, 'last_key' => $lastKey];
-        };
-
         return [
             'operations' => [
-                'array_keys_validation_control' => $arrayKeys,
-                'direct_key_iteration_control' => $directIteration,
+                'array_keys_validation_control' => static fn (): array => self::countArrayKeys($row, $rowCount),
+                'direct_key_iteration_control' => static fn (): array => self::countDirectKeys($row, $rowCount),
             ],
             'pdo' => null,
             'dimensions' => ['rows' => $rowCount, 'columns' => $columnCount],
         ];
+    }
+
+    /**
+     * @param array<array-key, int> $row
+     * @return array{keys: int, last_key: string|null}
+     */
+    private static function countArrayKeys(array $row, int $rowCount): array
+    {
+        $keyCount = 0;
+        $lastKey = null;
+        for ($rowIndex = 0; $rowIndex < $rowCount; ++$rowIndex) {
+            foreach (array_keys($row) as $key) {
+                $lastKey = self::assertStringKey($key);
+                ++$keyCount;
+            }
+        }
+
+        return ['keys' => $keyCount, 'last_key' => $lastKey];
+    }
+
+    /**
+     * @param array<array-key, int> $row
+     * @return array{keys: int, last_key: string|null}
+     */
+    private static function countDirectKeys(array $row, int $rowCount): array
+    {
+        $keyCount = 0;
+        $lastKey = null;
+        for ($rowIndex = 0; $rowIndex < $rowCount; ++$rowIndex) {
+            foreach ($row as $key => $_value) {
+                $lastKey = self::assertStringKey($key);
+                ++$keyCount;
+            }
+        }
+
+        return ['keys' => $keyCount, 'last_key' => $lastKey];
+    }
+
+    private static function assertStringKey(mixed $key): string
+    {
+        if (!is_string($key)) {
+            throw new RuntimeException('The attribution row contains a non-string key.');
+        }
+
+        return $key;
     }
 
     /** @return array<array-key, int> */
@@ -170,9 +184,9 @@ final class HydrationScenarios
     private function firstRow(ScenarioRequest $request, bool $wide): array
     {
         [$connection, $pdo, $rows, $columns, $rowPayloadBytes] = $this->rowFixture($request, $wide);
-        $directAssociative = fn (): ?array => $this->fetchFirstAssociative($pdo, $columns);
+        $directAssociative = fn (): ?array => $this->fetchFirstPdo($pdo, $columns, PDO::FETCH_ASSOC);
         $simpleQueryAssociative = fn (): ?array => $this->builder($connection, $columns)->firstAssociative();
-        $directObject = fn (): ?array => $this->fetchFirstObject($pdo, $columns);
+        $directObject = fn (): ?array => $this->fetchFirstPdo($pdo, $columns, PDO::FETCH_OBJ);
         $simpleQueryObject = function () use ($connection, $columns): ?array {
             $row = $this->builder($connection, $columns)->first();
 
@@ -200,7 +214,7 @@ final class HydrationScenarios
     private function cursorExhaustion(ScenarioRequest $request, bool $wide): array
     {
         [$connection, $pdo, $rows, $columns, $rowPayloadBytes] = $this->rowFixture($request, $wide);
-        $directAssociative = fn (): array => $this->drainAssociative($pdo, $columns);
+        $directAssociative = fn (): array => $this->drainPdo($pdo, $columns, PDO::FETCH_ASSOC);
         $simpleQueryAssociative = function () use ($connection, $columns): array {
             $result = [];
             foreach ($this->builder($connection, $columns)->iterateAssociative() as $row) {
@@ -209,7 +223,7 @@ final class HydrationScenarios
 
             return $result;
         };
-        $directObjects = fn (): array => $this->drainObjects($pdo, $columns);
+        $directObjects = fn (): array => $this->drainPdo($pdo, $columns, PDO::FETCH_OBJ);
         $simpleQueryObjects = function () use ($connection, $columns): array {
             $result = [];
             foreach ($this->builder($connection, $columns)->iterate() as $row) {
@@ -239,7 +253,7 @@ final class HydrationScenarios
     private function cursorEarlyClose(ScenarioRequest $request, bool $wide): array
     {
         [$connection, $pdo, $rows, $columns, $rowPayloadBytes] = $this->rowFixture($request, $wide);
-        $directAssociative = fn (): array => $this->closeAssociativeEarly($pdo, $columns);
+        $directAssociative = fn (): array => $this->closePdoEarly($pdo, $columns, PDO::FETCH_ASSOC);
         $simpleQueryAssociative = function () use ($connection, $columns): array {
             $cursor = $this->builder($connection, $columns)->iterateAssociative();
             $first = null;
@@ -251,7 +265,7 @@ final class HydrationScenarios
 
             return ['first' => $first, 'closed' => $cursor->isClosed()];
         };
-        $directObject = fn (): array => $this->closeObjectEarly($pdo, $columns);
+        $directObject = fn (): array => $this->closePdoEarly($pdo, $columns, PDO::FETCH_OBJ);
         $simpleQueryObject = function () use ($connection, $columns): array {
             $cursor = $this->builder($connection, $columns)->iterate();
             $first = null;
@@ -296,7 +310,7 @@ final class HydrationScenarios
         ];
         $direct = function () use ($pdo, $columns): array {
             return [
-                'first' => $this->fetchFirstAssociative($pdo, $columns),
+                'first' => $this->fetchFirstPdo($pdo, $columns, PDO::FETCH_ASSOC),
                 'count' => (int) $this->countRows($pdo)->fetchColumn(),
                 'sum' => $this->sumIds($pdo)->fetchColumn(),
             ];
@@ -458,69 +472,25 @@ final class HydrationScenarios
 
     /**
      * @param non-empty-list<string> $columns
-     * @return array<mixed>|null
-     */
-    private function fetchFirstAssociative(PDO $pdo, array $columns): ?array
-    {
-        $row = $this->selectRows($pdo, $columns, true)->fetch(PDO::FETCH_ASSOC);
-        if ($row === false) {
-            return null;
-        }
-        if (!is_array($row)) {
-            throw new RuntimeException('The benchmark query returned a non-array associative row.');
-        }
-
-        return $row;
-    }
-
-    /**
-     * @param non-empty-list<string> $columns
      * @return array<string, mixed>|null
      */
-    private function fetchFirstObject(PDO $pdo, array $columns): ?array
+    private function fetchFirstPdo(PDO $pdo, array $columns, int $fetchMode): ?array
     {
-        $row = $this->selectRows($pdo, $columns, true)->fetch(PDO::FETCH_OBJ);
-        if ($row === false) {
-            return null;
-        }
-        if (!is_object($row)) {
-            throw new RuntimeException('The benchmark query returned a non-object row.');
-        }
+        $row = $this->selectRows($pdo, $columns, true)->fetch($fetchMode);
 
-        return get_object_vars($row);
-    }
-
-    /**
-     * @param non-empty-list<string> $columns
-     * @return list<array<mixed>>
-     */
-    private function drainAssociative(PDO $pdo, array $columns): array
-    {
-        $statement = $this->selectRows($pdo, $columns);
-        $result = [];
-        while (($row = $statement->fetch(PDO::FETCH_ASSOC)) !== false) {
-            if (!is_array($row)) {
-                throw new RuntimeException('The benchmark cursor returned a non-array associative row.');
-            }
-            $result[] = $row;
-        }
-
-        return $result;
+        return $row === false ? null : self::normalizePdoRow($row);
     }
 
     /**
      * @param non-empty-list<string> $columns
      * @return list<array<string, mixed>>
      */
-    private function drainObjects(PDO $pdo, array $columns): array
+    private function drainPdo(PDO $pdo, array $columns, int $fetchMode): array
     {
         $statement = $this->selectRows($pdo, $columns);
         $result = [];
-        while (($row = $statement->fetch(PDO::FETCH_OBJ)) !== false) {
-            if (!is_object($row)) {
-                throw new RuntimeException('The benchmark cursor returned a non-object row.');
-            }
-            $result[] = get_object_vars($row);
+        while (($row = $statement->fetch($fetchMode)) !== false) {
+            $result[] = self::normalizePdoRow($row);
         }
 
         return $result;
@@ -528,35 +498,29 @@ final class HydrationScenarios
 
     /**
      * @param non-empty-list<string> $columns
-     * @return array{first: array<mixed>|null, closed: bool}
-     */
-    private function closeAssociativeEarly(PDO $pdo, array $columns): array
-    {
-        $statement = $this->selectRows($pdo, $columns);
-        $row = $statement->fetch(PDO::FETCH_ASSOC);
-        if ($row !== false && !is_array($row)) {
-            throw new RuntimeException('The benchmark cursor returned a non-array associative row.');
-        }
-
-        return ['first' => $row === false ? null : $row, 'closed' => $statement->closeCursor()];
-    }
-
-    /**
-     * @param non-empty-list<string> $columns
      * @return array{first: array<string, mixed>|null, closed: bool}
      */
-    private function closeObjectEarly(PDO $pdo, array $columns): array
+    private function closePdoEarly(PDO $pdo, array $columns, int $fetchMode): array
     {
         $statement = $this->selectRows($pdo, $columns);
-        $row = $statement->fetch(PDO::FETCH_OBJ);
-        if ($row !== false && !is_object($row)) {
-            throw new RuntimeException('The benchmark cursor returned a non-object row.');
+        $row = $statement->fetch($fetchMode);
+        $first = $row === false ? null : self::normalizePdoRow($row);
+
+        return ['first' => $first, 'closed' => $statement->closeCursor()];
+    }
+
+    /** @return array<string, mixed> */
+    private static function normalizePdoRow(mixed $row): array
+    {
+        if (is_array($row)) {
+            /** @var array<string, mixed> $row */
+            return $row;
+        }
+        if (is_object($row)) {
+            return get_object_vars($row);
         }
 
-        return [
-            'first' => $row === false ? null : get_object_vars($row),
-            'closed' => $statement->closeCursor(),
-        ];
+        throw new RuntimeException('The benchmark cursor returned an unexpected row type.');
     }
 
     private function countRows(PDO $pdo): PDOStatement

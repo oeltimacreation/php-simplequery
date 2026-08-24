@@ -309,15 +309,37 @@ final class CompilerScenarios
         array $summary,
         bool $useArrayKeys,
     ): array {
-        foreach ($fixture as $row) {
-            if ($useArrayKeys) {
-                if (array_keys($row) !== $columns) {
-                    throw new LogicException('The batch column control received mismatched columns.');
-                }
-                continue;
-            }
+        if ($useArrayKeys) {
+            $this->validateFixtureArrayKeys($fixture, $columns);
+        } else {
+            $this->validateFixtureIterationKeys($fixture, $columns);
+        }
 
-            if (count($row) !== count($columns)) {
+        return $summary;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $fixture
+     * @param list<string> $columns
+     */
+    private function validateFixtureArrayKeys(array $fixture, array $columns): void
+    {
+        foreach ($fixture as $row) {
+            if (array_keys($row) !== $columns) {
+                throw new LogicException('The batch column control received mismatched columns.');
+            }
+        }
+    }
+
+    /**
+     * @param list<array<string, mixed>> $fixture
+     * @param list<string> $columns
+     */
+    private function validateFixtureIterationKeys(array $fixture, array $columns): void
+    {
+        $expectedCount = count($columns);
+        foreach ($fixture as $row) {
+            if (count($row) !== $expectedCount) {
                 throw new LogicException('The batch column control received a mismatched column count.');
             }
             $index = 0;
@@ -328,8 +350,6 @@ final class CompilerScenarios
                 ++$index;
             }
         }
-
-        return $summary;
     }
 
     /** @param array<string, mixed> $summary
