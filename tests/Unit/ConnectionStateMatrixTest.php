@@ -114,21 +114,36 @@ final class ConnectionStateMatrixTest extends TestCase
         }
     }
 
+    /**
+     * @param ?\Closure(Connection): mixed $setup
+     * @param ?\Closure(Connection, mixed): void $extraCleanup
+     * @return \Closure(): array{Connection, mixed, \Closure(): void}
+     */
+    private static function createMemoryTableFixture(?\Closure $setup = null, ?\Closure $extraCleanup = null): \Closure
+    {
+        return static function () use ($setup, $extraCleanup): array {
+            $connection = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
+            $connection->pdo()->exec('CREATE TABLE items (id INT, name TEXT)');
+            $connection->pdo()->exec("INSERT INTO items VALUES (1, 'one')");
+            $retained = $setup !== null ? $setup($connection) : null;
+
+            return [$connection, $retained, static function () use ($connection, $retained, $extraCleanup): void {
+                if ($extraCleanup !== null) {
+                    $extraCleanup($connection, $retained);
+                }
+                try {
+                    $connection->close();
+                } catch (\Throwable) {
+                }
+            }];
+        };
+    }
+
     /** @return array{factory: \Closure(): array{Connection, mixed, \Closure(): void}, expectations: array<string, array{0?: class-string<\Throwable>|null, 1?: string|null, 2?: bool|null}>} */
     private static function cleanState(): array
     {
         return [
-            'factory' => static function (): array {
-                $connection = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
-                $connection->pdo()->exec('CREATE TABLE items (id INT, name TEXT)');
-                $connection->pdo()->exec("INSERT INTO items VALUES (1, 'one')");
-                return [$connection, null, static function () use ($connection): void {
-                    try {
-                        $connection->close();
-                    } catch (\Throwable) {
-                    }
-                }];
-            },
+            'factory' => self::createMemoryTableFixture(),
             'expectations' => [
                 'table' => [null],
                 'query' => [null],
@@ -145,19 +160,14 @@ final class ConnectionStateMatrixTest extends TestCase
     private static function activeCursorState(): array
     {
         return [
-            'factory' => static function (): array {
-                $connection = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
-                $connection->pdo()->exec('CREATE TABLE items (id INT, name TEXT)');
-                $connection->pdo()->exec("INSERT INTO items VALUES (1, 'one')");
-                $cursor = $connection->query('SELECT * FROM items')->iterateAssociative();
-                return [$connection, $cursor, static function () use ($cursor, $connection): void {
-                    $cursor->close();
-                    try {
-                        $connection->close();
-                    } catch (\Throwable) {
+            'factory' => self::createMemoryTableFixture(
+                setup: static fn (Connection $c): mixed => $c->query('SELECT * FROM items')->iterateAssociative(),
+                extraCleanup: static function (Connection $_c, mixed $cursor): void {
+                    if (is_object($cursor) && method_exists($cursor, 'close')) {
+                        $cursor->close();
                     }
-                }];
-            },
+                },
+            ),
             'expectations' => [
                 'table' => [null],
                 'query' => [null],
@@ -174,21 +184,16 @@ final class ConnectionStateMatrixTest extends TestCase
     private static function externalTransactionState(): array
     {
         return [
-            'factory' => static function (): array {
-                $connection = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
-                $connection->pdo()->exec('CREATE TABLE items (id INT, name TEXT)');
-                $connection->pdo()->exec("INSERT INTO items VALUES (1, 'one')");
-                $connection->pdo()->beginTransaction();
-                return [$connection, null, static function () use ($connection): void {
-                    try {
-                        if ($connection->pdo()->inTransaction()) {
-                            $connection->pdo()->rollBack();
-                        }
-                        $connection->close();
-                    } catch (\Throwable) {
+            'factory' => self::createMemoryTableFixture(
+                setup: static function (Connection $c): void {
+                    $c->pdo()->beginTransaction();
+                },
+                extraCleanup: static function (Connection $c): void {
+                    if ($c->pdo()->inTransaction()) {
+                        $c->pdo()->rollBack();
                     }
-                }];
-            },
+                },
+            ),
             'expectations' => [
                 'table' => [null],
                 'query' => [null],

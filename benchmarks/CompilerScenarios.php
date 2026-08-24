@@ -222,46 +222,7 @@ final class CompilerScenarios
         };
         $operations = ['insert_many_compile' => $operation];
         if ($request->name->value() === ScenarioName::COMPILER_BATCH_INSERT_HIGH) {
-            $columns = array_keys($fixture[0]);
-            $pretypedFixture = array_map(
-                static fn (array $row): array => array_map(Binding::fromValue(...), $row),
-                $fixture,
-            );
-            $operations['pretyped_insert_many_compile'] = static fn (): array => self::batchSummary(
-                CompiledWriteQuery::insertMany($builder, $pretypedFixture),
-                $rows,
-            );
-            $operations['column_array_keys_control'] = fn (): array => $this->batchColumnControl(
-                $fixture,
-                $columns,
-                $summary,
-                useArrayKeys: true,
-            );
-            $operations['column_iteration_control'] = fn (): array => $this->batchColumnControl(
-                $fixture,
-                $columns,
-                $summary,
-                useArrayKeys: false,
-            );
-            $operations['placeholder_arrays_control'] = fn (): array => $this->batchPlaceholderControl(
-                $reference,
-                $summary,
-                $rows,
-                count($columns),
-                useArrays: true,
-            );
-            $operations['placeholder_string_control'] = fn (): array => $this->batchPlaceholderControl(
-                $reference,
-                $summary,
-                $rows,
-                count($columns),
-                useArrays: false,
-            );
-            $operations['binding_normalization_control'] = fn (): array => $this->batchBindingControl(
-                $fixture,
-                $summary,
-                $rows * count($columns),
-            );
+            $operations += $this->batchHighTierOperations($builder, $fixture, $reference, $summary, $rows);
         }
 
         return [
@@ -295,6 +256,63 @@ final class CompilerScenarios
         }
 
         return $summary;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $fixture
+     * @param array<string, mixed> $summary
+     * @return array<non-empty-string, \Closure(): array<string, mixed>>
+     */
+    private function batchHighTierOperations(
+        QueryBuilder $builder,
+        array $fixture,
+        CompiledQuery $reference,
+        array $summary,
+        int $rows,
+    ): array {
+        $columns = array_keys($fixture[0]);
+        $pretypedFixture = array_map(
+            static fn (array $row): array => array_map(Binding::fromValue(...), $row),
+            $fixture,
+        );
+
+        return [
+            'pretyped_insert_many_compile' => static fn (): array => self::batchSummary(
+                CompiledWriteQuery::insertMany($builder, $pretypedFixture),
+                $rows,
+            ),
+            'column_array_keys_control' => fn (): array => $this->batchColumnControl(
+                $fixture,
+                $columns,
+                $summary,
+                useArrayKeys: true,
+            ),
+            'column_iteration_control' => fn (): array => $this->batchColumnControl(
+                $fixture,
+                $columns,
+                $summary,
+                useArrayKeys: false,
+            ),
+            'placeholder_arrays_control' => fn (): array => $this->batchPlaceholderControl(
+                $reference,
+                $summary,
+                $rows,
+                count($columns),
+                useArrays: true,
+            ),
+            'placeholder_string_control' => fn (): array => $this->batchPlaceholderControl(
+                $reference,
+                $summary,
+                $rows,
+                count($columns),
+                useArrays: false,
+            ),
+            'binding_normalization_control' => fn (): array => $this->batchBindingControl(
+                $fixture,
+                $summary,
+                $rows * count($columns),
+            ),
+        ];
     }
 
     /**

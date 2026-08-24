@@ -28,7 +28,11 @@ final class ComparisonAnalysis
         float $subMillisecondCeilingMs = 1.0,
         array $sameSourceRanges = [],
     ): array {
-        self::assertValidThresholds($thresholdPercent, $absoluteNoiseFloorMs, $subMillisecondCeilingMs);
+        $thresholds = new ComparisonThresholds(
+            $thresholdPercent,
+            $absoluteNoiseFloorMs,
+            $subMillisecondCeilingMs,
+        );
 
         $baselineMedians = self::medians($baseline);
         $candidateMedians = self::medians($candidate);
@@ -50,9 +54,7 @@ final class ComparisonAnalysis
                     $operation,
                     $baselineMedian,
                     $candidateMedian,
-                    $thresholdPercent,
-                    $absoluteNoiseFloorMs,
-                    $subMillisecondCeilingMs,
+                    $thresholds,
                     $sameSourceRange,
                 );
             }
@@ -65,23 +67,6 @@ final class ComparisonAnalysis
             'same_source_ranges_applied' => $sameSourceRanges !== [],
             'measurements' => $measurements,
         ];
-    }
-
-    private static function assertValidThresholds(
-        float $thresholdPercent,
-        float $absoluteNoiseFloorMs,
-        float $subMillisecondCeilingMs,
-    ): void {
-        if (
-            !is_finite($thresholdPercent)
-            || !is_finite($absoluteNoiseFloorMs)
-            || !is_finite($subMillisecondCeilingMs)
-            || $thresholdPercent < 0.0
-            || $absoluteNoiseFloorMs < 0.0
-            || $subMillisecondCeilingMs <= 0.0
-        ) {
-            throw new RuntimeException('Benchmark comparison thresholds must be non-negative and finite.');
-        }
     }
 
     /**
@@ -101,9 +86,7 @@ final class ComparisonAnalysis
         string $operation,
         float $baselineMedian,
         float $candidateMedian,
-        float $thresholdPercent,
-        float $absoluteNoiseFloorMs,
-        float $subMillisecondCeilingMs,
+        ComparisonThresholds $thresholds,
         ?float $sameSourceRange,
     ): array {
         if ($sameSourceRange !== null && (!is_finite($sameSourceRange) || $sameSourceRange < 0.0)) {
@@ -112,10 +95,10 @@ final class ComparisonAnalysis
 
         $change = self::percentageChange($baselineMedian, $candidateMedian);
         $absoluteChange = round($candidateMedian - $baselineMedian, 6);
-        $relativeIgnored = max($baselineMedian, $candidateMedian) < $subMillisecondCeilingMs
-            && abs($absoluteChange) <= $absoluteNoiseFloorMs;
+        $relativeIgnored = max($baselineMedian, $candidateMedian) < $thresholds->subMillisecondCeilingMs
+            && abs($absoluteChange) <= $thresholds->absoluteNoiseFloorMs;
         $withinSameSourceRange = $sameSourceRange !== null && abs($absoluteChange) <= $sameSourceRange;
-        $relativeRegression = $change === null || $change > $thresholdPercent;
+        $relativeRegression = $change === null || $change > $thresholds->thresholdPercent;
 
         return [
             'baseline_median_ms' => $baselineMedian,

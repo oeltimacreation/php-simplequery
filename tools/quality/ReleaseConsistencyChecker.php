@@ -71,17 +71,14 @@ final class ReleaseConsistencyChecker
     /** @return list<string> */
     private function checkActivePlans(): array
     {
-        $plansDir = $this->root . '/docs/plans';
-        if (!is_dir($plansDir)) {
-            return [];
-        }
-
-        $planFiles = $this->collectPlanFiles($plansDir);
+        $planFiles = $this->collectPlanFiles();
         if (count($planFiles) > 1) {
+            $names = array_map(static fn (SplFileInfo $file): string => $file->getFilename(), $planFiles);
+
             return [
                 sprintf(
                     'Multiple active plan files found in docs/plans: %s. Exactly one active release plan is permitted.',
-                    implode(', ', $planFiles),
+                    implode(', ', $names),
                 ),
             ];
         }
@@ -93,14 +90,19 @@ final class ReleaseConsistencyChecker
         return [];
     }
 
-    /** @return list<string> */
-    private function collectPlanFiles(string $plansDir): array
+    /** @return list<SplFileInfo> */
+    private function collectPlanFiles(): array
     {
+        $plansDir = $this->root . '/docs/plans';
+        if (!is_dir($plansDir)) {
+            return [];
+        }
+
         $planFiles = [];
         $iterator = new RecursiveDirectoryIterator($plansDir);
         foreach ($iterator as $file) {
             if ($file instanceof SplFileInfo && $this->isPlanFile($file)) {
-                $planFiles[] = $file->getFilename();
+                $planFiles[] = $file;
             }
         }
 
@@ -113,8 +115,9 @@ final class ReleaseConsistencyChecker
     }
 
     /** @return list<string> */
-    private function checkActivePlanReferences(string $activePlan): array
+    private function checkActivePlanReferences(SplFileInfo $activePlan): array
     {
+        $planName = $activePlan->getFilename();
         $errors = [];
         foreach (['docs/README.md', 'docs/maintainers/README.md', 'docs/plans/README.md'] as $indexDoc) {
             $indexPath = $this->root . '/' . $indexDoc;
@@ -122,8 +125,8 @@ final class ReleaseConsistencyChecker
                 continue;
             }
             $content = file_get_contents($indexPath);
-            if (is_string($content) && !str_contains($content, $activePlan)) {
-                $errors[] = sprintf('%s does not reference the active plan %s.', $indexDoc, $activePlan);
+            if (is_string($content) && !str_contains($content, $planName)) {
+                $errors[] = sprintf('%s does not reference the active plan %s.', $indexDoc, $planName);
             }
         }
 
@@ -216,8 +219,8 @@ final class ReleaseConsistencyChecker
     private function checkMaintainedCommands(array $definedScripts): array
     {
         $errors = [];
-        foreach ($this->activeDocumentationFiles() as $filePath) {
-            array_push($errors, ...$this->checkFileCommands($filePath, $definedScripts));
+        foreach ($this->activeDocumentationFiles() as $file) {
+            array_push($errors, ...$this->checkFileCommands($file, $definedScripts));
         }
 
         return $errors;
@@ -227,14 +230,14 @@ final class ReleaseConsistencyChecker
      * @param list<string> $definedScripts
      * @return list<string>
      */
-    private function checkFileCommands(string $filePath, array $definedScripts): array
+    private function checkFileCommands(SplFileInfo $file, array $definedScripts): array
     {
-        $content = file_get_contents($filePath);
+        $content = file_get_contents($file->getPathname());
         if (!is_string($content)) {
             return [];
         }
 
-        $relativePath = $this->relativePath($filePath);
+        $relativePath = $this->relativePath($file);
         preg_match_all('/\bcomposer\s+([a-z0-9]+(?:[:-][a-z0-9]+)*)/', $content, $matches);
         $errors = [];
 
@@ -288,7 +291,7 @@ final class ReleaseConsistencyChecker
         return $errors;
     }
 
-    /** @return list<string> */
+    /** @return list<SplFileInfo> */
     private function activeDocumentationFiles(): array
     {
         $files = [];
@@ -296,7 +299,7 @@ final class ReleaseConsistencyChecker
         foreach (['README.md', 'AGENTS.md', 'SUPPORT.md', 'SECURITY.md'] as $rootDoc) {
             $path = $this->root . '/' . $rootDoc;
             if (is_file($path)) {
-                $files[] = $path;
+                $files[] = new SplFileInfo($path);
             }
         }
 
@@ -314,7 +317,7 @@ final class ReleaseConsistencyChecker
         return $files;
     }
 
-    /** @return list<string> */
+    /** @return list<SplFileInfo> */
     private function collectDirectoryDocumentationFiles(string $dir): array
     {
         if (!is_dir($dir)) {
@@ -325,7 +328,7 @@ final class ReleaseConsistencyChecker
         $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir));
         foreach ($iterator as $file) {
             if ($file instanceof SplFileInfo && $this->isDocumentationFile($file)) {
-                $files[] = $file->getPathname();
+                $files[] = $file;
             }
         }
 
@@ -337,8 +340,9 @@ final class ReleaseConsistencyChecker
         return $file->isFile() && in_array($file->getExtension(), ['md', 'yml', 'yaml'], true);
     }
 
-    private function relativePath(string $filePath): string
+    private function relativePath(SplFileInfo $file): string
     {
+        $filePath = $file->getPathname();
         $prefix = $this->root . DIRECTORY_SEPARATOR;
 
         return str_starts_with($filePath, $prefix) ? substr($filePath, strlen($prefix)) : $filePath;
