@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/BenchmarkSuite.php';
 require_once __DIR__ . '/MeasurementRequest.php';
 require_once __DIR__ . '/Harness.php';
+require_once __DIR__ . '/BenchmarkMedians.php';
 require_once __DIR__ . '/ComparisonThresholds.php';
 require_once __DIR__ . '/ComparisonAnalysis.php';
 require_once __DIR__ . '/NoiseAnalysis.php';
