@@ -222,7 +222,7 @@ final class CompilerScenarios
         };
         $operations = ['insert_many_compile' => $operation];
         if ($request->name->value() === ScenarioName::COMPILER_BATCH_INSERT_HIGH) {
-            $operations += $this->batchHighTierOperations($builder, $fixture, $reference, $summary, $rows);
+            $operations += $this->batchHighTierOperations($builder, $fixture, $reference);
         }
 
         return [
@@ -260,16 +260,15 @@ final class CompilerScenarios
 
     /**
      * @param list<array<string, mixed>> $fixture
-     * @param array<string, mixed> $summary
      * @return array<non-empty-string, \Closure(): array<string, mixed>>
      */
     private function batchHighTierOperations(
         QueryBuilder $builder,
         array $fixture,
         CompiledQuery $reference,
-        array $summary,
-        int $rows,
     ): array {
+        $rows = count($fixture);
+        $summary = self::batchSummary($reference, $rows);
         $columns = array_keys($fixture[0]);
         $pretypedFixture = array_map(
             static fn (array $row): array => array_map(Binding::fromValue(...), $row),

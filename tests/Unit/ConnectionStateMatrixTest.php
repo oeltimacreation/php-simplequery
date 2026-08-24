@@ -84,13 +84,7 @@ final class ConnectionStateMatrixTest extends TestCase
      */
     public static function stateMatrix(): iterable
     {
-        $states = [
-            'clean' => self::cleanState(),
-            'active_cursor' => self::activeCursorState(),
-            'external_transaction' => self::externalTransactionState(),
-            'quarantined' => self::quarantinedState(),
-            'closed' => self::closedState(),
-        ];
+        $states = self::stateConfigurations();
         $operations = self::stateOperations();
 
         foreach ($states as $stateName => $stateConfig) {
@@ -139,121 +133,108 @@ final class ConnectionStateMatrixTest extends TestCase
         };
     }
 
-    /** @return array{factory: \Closure(): array{Connection, mixed, \Closure(): void}, expectations: array<string, array{0?: class-string<\Throwable>|null, 1?: string|null, 2?: bool|null}>} */
-    private static function cleanState(): array
+    /**
+     * @return array<string, array{
+     *     factory: \Closure(): array{Connection, mixed, \Closure(): void},
+     *     expectations: array<string, array{0?: class-string<\Throwable>|null, 1?: string|null, 2?: bool|null}>
+     * }>
+     */
+    private static function stateConfigurations(): array
     {
         return [
-            'factory' => self::createMemoryTableFixture(),
-            'expectations' => [
-                'table' => [null],
-                'query' => [null],
-                'pdo' => [null],
-                'execute_query' => [null],
-                'transaction' => [null],
-                'close' => [null],
-                'require_lock' => [TransactionStateException::class, 'lock_query', false],
+            'clean' => [
+                'factory' => self::createMemoryTableFixture(),
+                'expectations' => [
+                    'table' => [null],
+                    'query' => [null],
+                    'pdo' => [null],
+                    'execute_query' => [null],
+                    'transaction' => [null],
+                    'close' => [null],
+                    'require_lock' => [TransactionStateException::class, 'lock_query', false],
+                ],
             ],
-        ];
-    }
-
-    /** @return array{factory: \Closure(): array{Connection, mixed, \Closure(): void}, expectations: array<string, array{0?: class-string<\Throwable>|null, 1?: string|null, 2?: bool|null}>} */
-    private static function activeCursorState(): array
-    {
-        return [
-            'factory' => self::createMemoryTableFixture(
-                setup: static fn (Connection $c): mixed => $c->query('SELECT * FROM items')->iterateAssociative(),
-                extraCleanup: static function (Connection $_c, mixed $cursor): void {
-                    if (is_object($cursor) && method_exists($cursor, 'close')) {
-                        $cursor->close();
-                    }
-                },
-            ),
-            'expectations' => [
-                'table' => [null],
-                'query' => [null],
-                'pdo' => [null],
-                'execute_query' => [null],
-                'transaction' => [TransactionStateException::class, 'commit', true],
-                'close' => [TransactionStateException::class, 'close', false],
-                'require_lock' => [TransactionStateException::class, 'lock_query', false],
-            ],
-        ];
-    }
-
-    /** @return array{factory: \Closure(): array{Connection, mixed, \Closure(): void}, expectations: array<string, array{0?: class-string<\Throwable>|null, 1?: string|null, 2?: bool|null}>} */
-    private static function externalTransactionState(): array
-    {
-        return [
-            'factory' => self::createMemoryTableFixture(
-                setup: static function (Connection $c): void {
-                    $c->pdo()->beginTransaction();
-                },
-                extraCleanup: static function (Connection $c): void {
-                    if ($c->pdo()->inTransaction()) {
-                        $c->pdo()->rollBack();
-                    }
-                },
-            ),
-            'expectations' => [
-                'table' => [null],
-                'query' => [null],
-                'pdo' => [null],
-                'execute_query' => [null],
-                'transaction' => [ExternalTransactionException::class, 'begin', false],
-                'close' => [TransactionStateException::class, 'close', false],
-                'require_lock' => [null],
-            ],
-        ];
-    }
-
-    /** @return array{factory: \Closure(): array{Connection, mixed, \Closure(): void}, expectations: array<string, array{0?: class-string<\Throwable>|null, 1?: string|null, 2?: bool|null}>} */
-    private static function quarantinedState(): array
-    {
-        return [
-            'factory' => static function (): array {
-                $connection = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
-                $connection->quarantine();
-                return [$connection, null, static function () use ($connection): void {
-                    try {
-                        $connection->close();
-                    } catch (\Throwable) {
-                    }
-                }];
-            },
-            'expectations' => [
-                'table' => [null],
-                'query' => [null],
-                'pdo' => [TransactionStateException::class, 'use_connection', true],
-                'execute_query' => [TransactionStateException::class, 'use_connection', true],
-                'transaction' => [TransactionStateException::class, 'use_connection', true],
-                'close' => [null],
-                'require_lock' => [TransactionStateException::class, 'use_connection', true],
-            ],
-        ];
-    }
-
-    /** @return array{factory: \Closure(): array{Connection, mixed, \Closure(): void}, expectations: array<string, array{0?: class-string<\Throwable>|null, 1?: string|null, 2?: bool|null}>} */
-    private static function closedState(): array
-    {
-        return [
-            'factory' => static function (): array {
-                $connection = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
-                $connection->close();
-                return [
-                    $connection,
-                    null,
-                    static function (): void {
+            'active_cursor' => [
+                'factory' => self::createMemoryTableFixture(
+                    setup: static fn (Connection $c): mixed => $c->query('SELECT * FROM items')->iterateAssociative(),
+                    extraCleanup: static function (Connection $_c, mixed $cursor): void {
+                        if (is_object($cursor) && method_exists($cursor, 'close')) {
+                            $cursor->close();
+                        }
                     },
-                ];
-            },
-            'expectations' => [
-                'table' => [ConnectionException::class],
-                'query' => [ConnectionException::class],
-                'pdo' => [ConnectionException::class],
-                'execute_query' => [ConnectionException::class],
-                'transaction' => [ConnectionException::class],
-                'close' => [null],
-                'require_lock' => [ConnectionException::class],
+                ),
+                'expectations' => [
+                    'table' => [null],
+                    'query' => [null],
+                    'pdo' => [null],
+                    'execute_query' => [null],
+                    'transaction' => [TransactionStateException::class, 'commit', true],
+                    'close' => [TransactionStateException::class, 'close', false],
+                    'require_lock' => [TransactionStateException::class, 'lock_query', false],
+                ],
+            ],
+            'external_transaction' => [
+                'factory' => self::createMemoryTableFixture(
+                    setup: static function (Connection $c): void {
+                        $c->pdo()->beginTransaction();
+                    },
+                    extraCleanup: static function (Connection $c): void {
+                        if ($c->pdo()->inTransaction()) {
+                            $c->pdo()->rollBack();
+                        }
+                    },
+                ),
+                'expectations' => [
+                    'table' => [null],
+                    'query' => [null],
+                    'pdo' => [null],
+                    'execute_query' => [null],
+                    'transaction' => [ExternalTransactionException::class, 'begin', false],
+                    'close' => [TransactionStateException::class, 'close', false],
+                    'require_lock' => [null],
+                ],
+            ],
+            'quarantined' => [
+                'factory' => static function (): array {
+                    $connection = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
+                    $connection->quarantine();
+                    return [$connection, null, static function () use ($connection): void {
+                        try {
+                            $connection->close();
+                        } catch (\Throwable) {
+                        }
+                    }];
+                },
+                'expectations' => [
+                    'table' => [null],
+                    'query' => [null],
+                    'pdo' => [TransactionStateException::class, 'use_connection', true],
+                    'execute_query' => [TransactionStateException::class, 'use_connection', true],
+                    'transaction' => [TransactionStateException::class, 'use_connection', true],
+                    'close' => [null],
+                    'require_lock' => [TransactionStateException::class, 'use_connection', true],
+                ],
+            ],
+            'closed' => [
+                'factory' => static function (): array {
+                    $connection = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
+                    $connection->close();
+                    return [
+                        $connection,
+                        null,
+                        static function (): void {
+                        },
+                    ];
+                },
+                'expectations' => [
+                    'table' => [ConnectionException::class],
+                    'query' => [ConnectionException::class],
+                    'pdo' => [ConnectionException::class],
+                    'execute_query' => [ConnectionException::class],
+                    'transaction' => [ConnectionException::class],
+                    'close' => [null],
+                    'require_lock' => [ConnectionException::class],
+                ],
             ],
         ];
     }
