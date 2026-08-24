@@ -296,14 +296,12 @@ final class CompilerScenarios
                 $reference,
                 $summary,
                 $rows,
-                count($columns),
                 useArrays: true,
             ),
             'placeholder_string_control' => fn (): array => $this->batchPlaceholderControl(
                 $reference,
                 $summary,
                 $rows,
-                count($columns),
                 useArrays: false,
             ),
             'binding_normalization_control' => fn (): array => $this->batchBindingControl(
@@ -385,10 +383,9 @@ final class CompilerScenarios
         CompiledQuery $reference,
         array $summary,
         int $rows,
-        int $columns,
         bool $useArrays,
     ): array {
-        $group = '(' . implode(', ', array_fill(0, $columns, '?')) . ')';
+        $group = '(?, ?, ?)';
         $valuesSql = $useArrays
             ? implode(', ', array_fill(0, $rows, $group))
             : str_repeat($group . ', ', $rows - 1) . $group;

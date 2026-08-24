@@ -70,7 +70,11 @@ final class ComparisonAnalysis
 
     private static function assertValidSameSourceRange(string $scenario, string $operation, ?float $range): void
     {
-        if ($range !== null && (!is_finite($range) || $range < 0.0)) {
+        if ($range === null) {
+            return;
+        }
+
+        if (!is_finite($range) || $range < 0.0) {
             throw new RuntimeException(sprintf('Invalid same-source range for %s/%s.', $scenario, $operation));
         }
     }

@@ -141,6 +141,17 @@ final class ConnectionStateMatrixTest extends TestCase
      */
     private static function stateConfigurations(): array
     {
+        return self::activeStates() + self::terminalStates();
+    }
+
+    /**
+     * @return array<string, array{
+     *     factory: \Closure(): array{Connection, mixed, \Closure(): void},
+     *     expectations: array<string, array{0?: class-string<\Throwable>|null, 1?: string|null, 2?: bool|null}>
+     * }>
+     */
+    private static function activeStates(): array
+    {
         return [
             'clean' => [
                 'factory' => self::createMemoryTableFixture(),
@@ -194,6 +205,18 @@ final class ConnectionStateMatrixTest extends TestCase
                     'require_lock' => [null],
                 ],
             ],
+        ];
+    }
+
+    /**
+     * @return array<string, array{
+     *     factory: \Closure(): array{Connection, mixed, \Closure(): void},
+     *     expectations: array<string, array{0?: class-string<\Throwable>|null, 1?: string|null, 2?: bool|null}>
+     * }>
+     */
+    private static function terminalStates(): array
+    {
+        return [
             'quarantined' => [
                 'factory' => static function (): array {
                     $connection = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
