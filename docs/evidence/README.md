@@ -36,10 +36,6 @@ Maintained compatibility and migration records:
 
 Current release evidence:
 
-- [`0.5.0` maintainability and performance evidence](0.5-maintainability-and-performance.md).
-
-Active development evidence:
-
 - [`0.6.0` Phase 0 baseline and scope freeze](0.6-phase-0-baseline-and-scope.md).
 - [`0.6.0` Phase 1 attributable performance evidence](0.6-phase-1-attributable-performance.md).
 - [`0.6.0` Phase 2 compiler and binding efficiency evidence](0.6-phase-2-compiler-and-binding-efficiency.md).
@@ -48,8 +44,16 @@ Active development evidence:
 - [`0.6.0` Phase 5 user experience and documentation evidence](0.6-phase-5-user-experience-and-documentation.md).
 - [`0.6.0` Phase 6 release certification evidence](0.6-phase-6-release-certification.md).
 
+Active development evidence:
+
+- No `0.7.0` phase evidence has been accepted yet. Intended work and gates are
+  tracked in the [`0.7.0` development plan](../plans/0.7.md).
+
 Retained decision evidence:
 
+- [`0.5.0` maintainability and performance evidence](0.5-maintainability-and-performance.md),
+  recording the accepted architecture, code-quality, and benchmark baseline
+  inherited by `0.6.0`;
 - [`0.2.0` associative hydration experiment](0.2-associative-hydration-experiment.md),
   including paired source-order and observer-profile decisions;
 - [`0.3.0` transaction and exception ergonomics](0.3-transaction-and-exception-ergonomics.md),

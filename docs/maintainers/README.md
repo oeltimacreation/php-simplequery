@@ -8,7 +8,7 @@ information.
 
 - [Architecture](../reference/architecture.md)
 - [Architecture decisions](../adr/README.md)
-- [Active `0.6` development plan](../plans/0.6.md)
+- [Active `0.7` development plan](../plans/0.7.md)
 - [Testing architecture](testing-architecture.md)
 - [Compatibility evidence records](../evidence/README.md)
 - [Architecture and quality audit](../evidence/0.3-architecture-and-quality-audit.md)

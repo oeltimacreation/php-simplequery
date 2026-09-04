@@ -139,10 +139,10 @@ commonly prevents use of that ordinary index unless the engine and schema have
 a matching functional/expression index. Confirm important cases with the
 engine's query-plan tooling and production-like data.
 
-The current [maintainability and performance evidence](../evidence/0.5-maintainability-and-performance.md)
-records correctness-gated performance and memory results. Query-plan behavior
-remains engine- and schema-specific; the builder does not control application
-indexes.
+The current [`0.6.0` release certification](../evidence/0.6-phase-6-release-certification.md)
+and its linked phase records contain correctness-gated performance and memory
+results. Query-plan behavior remains engine- and schema-specific; the builder
+does not control application indexes.
 
 Trusted raw expression comparisons are available for genuinely required
 vendor functions, but their convenience does not make the resulting query
