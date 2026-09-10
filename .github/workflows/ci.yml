@@ -185,7 +185,7 @@ jobs:
         shell: bash
         run: |
           baseline_dir="${RUNNER_TEMP}/php-simplequery-release-baseline"
-          git worktree add --detach "${baseline_dir}" v0.5.0
+          git worktree add --detach "${baseline_dir}" v0.6.0
           trap 'git worktree remove --force "${baseline_dir}"' EXIT
           composer install --working-dir="${baseline_dir}" --no-interaction --prefer-dist --no-progress
           php benchmarks/noise.php \
