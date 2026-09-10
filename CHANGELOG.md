@@ -23,6 +23,10 @@ with ZeroVer releases before `1.0.0`.
 
 - Reject malformed named raw conditions and joins instead of silently discarding supplied operands.
 
+### Added
+
+- Characterize caller-owned LOB streams in SQLite tests and execution probes, with guidance on position, reuse and structural snapshots.
+
 ## [0.6.0] - 2026-08-24
 
 ### Added
