@@ -30,7 +30,18 @@ final class AssociativeHydrationTest extends TestCase
 
         self::assertSame([['value' => 42]], $connection->query('SELECT 42 AS value')->getAssociative());
         self::assertTrue(ConfigurableStatement::$closed);
+        self::assertSame(1, ConfigurableStatement::$closeCalls);
         $connection->close();
+    }
+
+    public function testFalseOrdinaryCleanupPreservesResultAndConnectionUsability(): void
+    {
+        ConfigurableStatement::returns(['value' => 42], once: true);
+        ConfigurableStatement::closeReturnsFalse();
+        [$connection, $observer] = $this->connection();
+        self::assertSame(['value' => 42], $connection->query('SELECT 42 AS value')->firstAssociative());
+        self::assertSame('sqlite', $connection->pdo()->getAttribute(PDO::ATTR_DRIVER_NAME));
+        $this->assertClosedAndObserved($connection, $observer, successful: true);
     }
 
     #[DataProvider('invalidRows')]
@@ -119,6 +130,7 @@ final class AssociativeHydrationTest extends TestCase
         bool $successful,
     ): void {
         self::assertTrue(ConfigurableStatement::$closed);
+        self::assertSame(1, ConfigurableStatement::$closeCalls);
         self::assertCount(1, $observer->executions());
         self::assertSame($successful, $observer->executions()[0]->successful);
         $connection->close();

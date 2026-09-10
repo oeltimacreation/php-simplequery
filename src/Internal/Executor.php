@@ -224,6 +224,7 @@ final readonly class Executor
         $observer = $this->connection->observer();
         $startedAt = $observer === null ? 0 : hrtime(true);
         $statement = null;
+        $cleanupAttempted = false;
 
         try {
             $prepared = $pdo->prepare($query->sql);
@@ -243,6 +244,7 @@ final readonly class Executor
             $result = $operation($statement, $pdo);
             $affectedRows = $affectedRowsMeaningful ? $statement->rowCount() : null;
             if (!$retainStatement) {
+                $cleanupAttempted = true;
                 $statement->closeCursor();
             }
             $this->notify($query, $startedAt, true, $affectedRows);
@@ -262,7 +264,7 @@ final readonly class Executor
 
             throw $exception;
         } finally {
-            if (!$retainStatement && $statement instanceof PDOStatement) {
+            if (!$retainStatement && !$cleanupAttempted && $statement instanceof PDOStatement) {
                 try {
                     $statement->closeCursor();
                 } catch (PDOException) {

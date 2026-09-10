@@ -36,6 +36,8 @@ final class ConfigurableStatement extends PDOStatement
 
     public static bool $closed = false;
 
+    public static int $closeCalls = 0;
+
     protected function __construct()
     {
     }
@@ -48,6 +50,7 @@ final class ConfigurableStatement extends PDOStatement
         self::$closeThrows = false;
         self::$closeReturnsFalse = false;
         self::$closed = false;
+        self::$closeCalls = 0;
     }
 
     public static function returns(mixed $row, bool $once = false): void
@@ -93,6 +96,7 @@ final class ConfigurableStatement extends PDOStatement
     public function closeCursor(): bool
     {
         self::$closed = true;
+        ++self::$closeCalls;
 
         if (self::$closeThrows) {
             throw new PDOException(self::DEFAULT_CLOSE_FAILURE);

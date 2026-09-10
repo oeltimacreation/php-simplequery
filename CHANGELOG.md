@@ -10,6 +10,8 @@ with ZeroVer releases before `1.0.0`.
 
 ### Changed
 
+- Attempt ordinary statement cleanup once while preserving existing result, exception, observation and quarantine policies.
+
 - Align active benchmark comparisons and changelog links with immutable v0.6.0.
 
 - Bound the next release to correctness, existing resource contracts and retained

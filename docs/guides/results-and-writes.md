@@ -169,3 +169,13 @@ ordered/limited writes, and unions are not supported by the structured API.
 Engine-specific raw SQL remains available when an application deliberately
 accepts those semantics.
 
+
+### Ordinary statement cleanup
+
+Ordinary terminals attempt statement cleanup once. A cleanup PDO exception after
+successful execution is translated to `QueryExecutionException`; the write may
+already have completed, so do not automatically replay it. A prior operation
+failure remains primary if cleanup also throws. Ordinary terminals retain their
+existing false-return handling and do not add quarantine for cleanup failure.
+Cursor cleanup retains its separate false/throw quarantine policy. Observation
+of ordinary success occurs after cleanup; cursor observation ends at handoff.
