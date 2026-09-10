@@ -32,6 +32,10 @@ or join `right` without `operator`, now throw `InvalidQueryException` instead
 of silently dropping the argument. Supply the complete comparison or omit
 both optional operands for a bare raw predicate. Valid calls are unchanged.
 
+Transaction inspection failures during callback recovery now retain the original
+callback in `callbackFailure`; inspect that field alongside `controlFailure`.
+Quarantine and successful-rollback exception identity are unchanged.
+
 ## Installing 0.6.0
 
 ```bash

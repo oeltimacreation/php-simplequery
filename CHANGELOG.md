@@ -17,6 +17,8 @@ with ZeroVer releases before `1.0.0`.
 
 ### Fixed
 
+- Preserve original callback exceptions when transaction-state inspection fails during recovery or rollback verification.
+
 - Reject malformed named raw conditions and joins instead of silently discarding supplied operands.
 
 ## [0.6.0] - 2026-08-24
