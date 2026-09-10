@@ -8,6 +8,11 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+### Changed
+
+- Bound the next release to correctness, existing resource contracts and retained
+  compatibility targets, with independently validated delivery tasks.
+
 ## [0.6.0] - 2026-08-24
 
 ### Added
