@@ -25,6 +25,13 @@ For each upgrade:
 7. review generated SQL for raw or dialect-specific queries;
 8. deploy through the application's normal staged rollout.
 
+## Preparing for 0.7
+
+Malformed named raw conditions that supply `value` without `operatorOrValue`,
+or join `right` without `operator`, now throw `InvalidQueryException` instead
+of silently dropping the argument. Supply the complete comparison or omit
+both optional operands for a bare raw predicate. Valid calls are unchanged.
+
 ## Installing 0.6.0
 
 ```bash

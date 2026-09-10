@@ -15,6 +15,10 @@ with ZeroVer releases before `1.0.0`.
 - Bound the next release to correctness, existing resource contracts and retained
   compatibility targets, with independently validated delivery tasks.
 
+### Fixed
+
+- Reject malformed named raw conditions and joins instead of silently discarding supplied operands.
+
 ## [0.6.0] - 2026-08-24
 
 ### Added
