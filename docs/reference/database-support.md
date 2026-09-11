@@ -104,3 +104,25 @@ independently of this library.
 PostgreSQL, SQL Server, Oracle Database, and every other engine are unsupported.
 The codebase contains no placeholder drivers, dormant compiler branches, or
 third-party dialect mechanism for them.
+
+## Compatibility versus upstream maintenance
+
+The retained floors and fixtures describe package compatibility, not a promise
+of upstream security maintenance. Checked on 2026-09-11: PHP lists security
+support for PHP 8.2 through 2026-12-31 ([PHP support schedule](https://www.php.net/supported-versions.php)).
+Oracle identifies MySQL 8.0.46 as the April 2026 end-of-life release
+([MySQL release notes](https://dev.mysql.com/doc/relnotes/mysql/8.0/en/)).
+Retaining MySQL 8.0 compatibility does not make it an upstream-maintained target.
+MySQL 8.4 qualification and proxy replacements are deferred for this release;
+no new target or vendor-maintenance guarantee is implied. Production builds
+still need upstream or distributor security maintenance as described in the
+[support policy](../../SUPPORT.md).
+
+The Linux minimum-SQLite lane builds the pinned 3.39.2 source with column metadata
+and asserts the runtime reported by PDO before executing the SQLite suite and
+probes. It does not substitute a version-return test double for live execution.
+The service runner captures image digests and proxy binary versions, and runs
+behavior, execution and transaction probes in all native/emulated and
+buffered/unbuffered combinations. See the dated
+[development review](../evidence/0.7-development-review.md) for qualification
+results and limitations.

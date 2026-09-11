@@ -121,3 +121,10 @@ dialect to those IDs or an executable unsupported-feature rejection. The
 validator rejects missing dialects, unknown/duplicate IDs, missing types,
 cardinality mismatches and orphan references. Expected SQL is reviewed fixture
 input and is never regenerated from the compiler being tested.
+
+Run `bash tools/database-probes/run-minimum-sqlite.sh` on Linux to build and
+exercise actual SQLite 3.39.2 with the current PDO extension. It verifies the
+pinned source checksum, enables column metadata required by the PDO build and
+fails if dynamic loading does not select the requested version. Build artifacts
+remain under `build/sqlite-minimum/`; reports remain in ignored probe results.
+This checks database-runtime compatibility independently of the PHP-floor lane.

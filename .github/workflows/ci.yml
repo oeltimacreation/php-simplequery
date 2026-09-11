@@ -149,6 +149,19 @@ jobs:
       - run: composer update --prefer-lowest --prefer-stable --no-interaction --prefer-dist --no-progress
       - run: composer test
 
+  sqlite-minimum:
+    name: Actual SQLite 3.39.2 runtime
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: shivammathur/setup-php@add91f08e1598a0b6ff470f1e389f9d652559bf0
+        with:
+          php-version: "8.2"
+          extensions: pdo, pdo_sqlite
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: bash tools/database-probes/run-minimum-sqlite.sh
+
   no-dev-consumer:
     name: Artifact-installed no-dev consumers
     runs-on: ubuntu-latest
