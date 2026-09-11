@@ -44,6 +44,40 @@ final class AssociativeHydrationTest extends TestCase
         $this->assertClosedAndObserved($connection, $observer, successful: true);
     }
 
+    #[DataProvider('earlyFailures')]
+    public function testEarlyFailureCleanupPreservesPrimaryEvidence(string $stage, bool $closeThrows): void
+    {
+        [$connection, $observer] = $this->connection();
+        ConfigurableStatement::$bindReturnsFalse = $stage === 'bind';
+        ConfigurableStatement::$executeReturnsFalse = $stage === 'execute';
+        ConfigurableStatement::$closeThrows = $closeThrows;
+        ConfigurableStatement::$closeReturnsFalse = !$closeThrows;
+        try {
+            $connection->query('SELECT ? AS value', ['synthetic-private-value'])->firstAssociative();
+            self::fail('A false PDO return was accepted.');
+        } catch (QueryExecutionException $exception) {
+            self::assertSame(
+                $stage === 'bind'
+                    ? 'PDO could not bind a statement parameter.'
+                    : 'PDO could not execute the statement.',
+                $exception->getMessage(),
+            );
+            self::assertNull($exception->getPrevious());
+            self::assertStringNotContainsString('synthetic-private-value', $exception->getMessage());
+        }
+        self::assertSame($stage === 'bind' ? 0 : 1, ConfigurableStatement::$executeCalls);
+        $this->assertClosedAndObserved($connection, $observer, successful: false);
+    }
+
+    /** @return iterable<string, array{string, bool}> */
+    public static function earlyFailures(): iterable
+    {
+        yield 'bind and false cleanup' => ['bind', false];
+        yield 'bind and throwing cleanup' => ['bind', true];
+        yield 'execute and false cleanup' => ['execute', false];
+        yield 'execute and throwing cleanup' => ['execute', true];
+    }
+
     #[DataProvider('invalidRows')]
     public function testOnePassHydrationRejectsInvalidRowsAndRecordsFailure(mixed $row): void
     {

@@ -33,6 +33,8 @@ with ZeroVer releases before `1.0.0`.
 
 ### Added
 
+- Cover combined bind/execute and cleanup failures, and verify eight selected binding, lifecycle and observation faults are detected by regressions.
+
 - Validate complete typed compiler fixtures against executable case registries and per-dialect feature references, including explicit unsupported cases.
 
 - Characterize caller-owned LOB streams in SQLite tests and execution probes, with guidance on position, reuse and structural snapshots.
