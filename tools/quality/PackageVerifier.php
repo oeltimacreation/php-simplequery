@@ -37,6 +37,10 @@ final class PackageVerifier
                 if ($stat === false || !str_starts_with($stat['name'], $prefix)) {
                     throw new RuntimeException('Malformed package entry.');
                 }
+                $zip->getExternalAttributesIndex($index, $system, $attributes);
+                if (($attributes >> 16 & 0170000) === 0120000) {
+                    throw new RuntimeException('Package links are not allowed.');
+                }
                 $name = substr($stat['name'], strlen($prefix));
                 if ($name === '') {
                     continue;
@@ -44,10 +48,6 @@ final class PackageVerifier
                 $this->validateName(rtrim($name, '/'));
                 if (str_ends_with($name, '/')) {
                     continue;
-                }
-                $zip->getExternalAttributesIndex($index, $system, $attributes);
-                if (($attributes >> 16 & 0170000) === 0120000) {
-                    throw new RuntimeException('Package links are not allowed.');
                 }
                 if (isset($files[$name])) {
                     throw new RuntimeException('Duplicate package entry: ' . $name);

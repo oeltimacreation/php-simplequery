@@ -10,6 +10,8 @@ with ZeroVer releases before `1.0.0`.
 
 ### Changed
 
+- Clarify that trusted raw SQL literals and retained exception chains may contain sensitive diagnostics.
+
 - Recertify retained database and proxy fixtures across prepare/buffering modes, and add actual SQLite 3.39.2 execution with explicit upstream-maintenance guidance.
 
 - Reuse required affected-row counts and avoid generated-ID metadata reads when observation is disabled, preserving write and failure semantics.
@@ -27,6 +29,8 @@ with ZeroVer releases before `1.0.0`.
 
 ### Fixed
 
+- Reject symbolic links disguised as ZIP directories during artifact certification.
+
 - Reject missing, malformed and stale release facts, with an explicit published-version input for independent provenance checks.
 
 - Reject failed SQLite busy-timeout reads instead of accepting them as a declared zero timeout.
@@ -36,6 +40,8 @@ with ZeroVer releases before `1.0.0`.
 - Reject malformed named raw conditions and joins instead of silently discarding supplied operands.
 
 ### Added
+
+- Record local candidate quality, coverage, compatibility, artifact and security evidence with remote release gates explicitly pending.
 
 - Certify Composer and Git archives with explicit contents, contamination checks, size budgets and independent no-dev installed consumers in CI.
 

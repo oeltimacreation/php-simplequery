@@ -32,6 +32,7 @@ final class PackageVerifierTest extends TestCase
         self::assertSame(12, $verifier->inspect($path)['files']);
         self::assertSame('{}', $verifier->composerJson($path));
         $zip->open($path);
+        $zip->addEmptyDir('docs');
         match ($fault) {
             'missing toolkit' => $zip->deleteName('src/Testing/CompilerConnection.php'),
             'unknown root' => $zip->addFromString('local-settings.ini', 'synthetic'),
@@ -40,6 +41,7 @@ final class PackageVerifierTest extends TestCase
             'traversal' => $zip->addEmptyDir('../escaped'),
             'oversized' => $zip->addFromString('docs/large.md', str_repeat('a', 786433)),
             'symlink' => $zip->setExternalAttributesName('README.md', ZipArchive::OPSYS_UNIX, 0120777 << 16),
+            'directory symlink' => $zip->setExternalAttributesName('docs/', ZipArchive::OPSYS_UNIX, 0120777 << 16),
             default => throw new RuntimeException('Unknown package fault.'),
         };
         $zip->close();
@@ -54,7 +56,8 @@ final class PackageVerifierTest extends TestCase
     /** @return iterable<string, array{string}> */
     public static function badPackages(): iterable
     {
-        $faults = ['missing toolkit', 'unknown root', 'cache', 'environment', 'traversal', 'oversized', 'symlink'];
+        $faults = ['missing toolkit', 'unknown root', 'cache', 'environment', 'traversal', 'oversized', 'symlink',
+            'directory symlink'];
         foreach ($faults as $fault) {
             yield $fault => [$fault];
         }

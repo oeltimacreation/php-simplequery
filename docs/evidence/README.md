@@ -46,8 +46,10 @@ Current release evidence:
 
 Active development evidence:
 
-- No `0.7.0` phase evidence has been accepted yet. Intended work and gates are
-  tracked in the [`0.7.0` development plan](../plans/0.7.md).
+- [`0.7` development and local candidate review](0.7-development-review.md),
+  including bounded performance decisions, mutation results, retained database
+  qualification and local certification. Pending remote and publication gates
+  remain in the [`0.7` development plan](../plans/0.7.md).
 
 Retained decision evidence:
 

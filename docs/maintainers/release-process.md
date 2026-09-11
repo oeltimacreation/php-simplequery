@@ -34,6 +34,9 @@ composer audit
 composer check
 composer test:coverage
 composer coverage:check
+composer test:coverage:branch
+composer coverage:check:branch
+composer package:check
 
 # After merge and green CI:
 git fetch origin <default-branch> --tags
@@ -74,3 +77,21 @@ When certifying provenance, supply the independently verified immutable tag
 version explicitly, for example `composer release:check -- --published-version=0.6.0`.
 Ordinary source checks need no Git history or network access. Update that input
 when the independently verified published release changes.
+
+## Candidate certification handoff
+
+Before publishing, retain the clean checkout identity and generated reports for
+both local archives and their independent no-dev consumers. Use the
+[distribution checks](distribution.md) for the matching hosted archive, then
+verify the final published dist resolves to the immutable tag after publication.
+A local archive or a green source check does not establish hosted provenance.
+
+Record actual SQLite minimum execution with
+`bash tools/database-probes/run-minimum-sqlite.sh`, and exact minimum/current
+direct/proxy fixtures with the maintained service runner. Run both immutable
+baseline source orders with fresh noise controls and the reference soak, as
+described in [benchmarking](benchmarking.md). Review the full runtime CI matrix,
+lowest-dependency lane and required service jobs for the candidate source.
+An unavailable required environment stays pending rather than inheriting a pass
+from a different PHP, database or source revision. Keep publication-dependent
+version wording and plan retirement pending until those steps occur.
