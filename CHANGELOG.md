@@ -10,6 +10,8 @@ with ZeroVer releases before `1.0.0`.
 
 ### Changed
 
+- Centralize raw binding-list validation while retaining contextual diagnostics and validation order; bounded comparisons showed no repeatable actionable regression.
+
 - Attempt ordinary statement cleanup once while preserving existing result, exception, observation and quarantine policies.
 
 - Align active benchmark comparisons and changelog links with immutable v0.6.0.

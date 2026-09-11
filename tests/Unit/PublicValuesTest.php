@@ -19,9 +19,36 @@ use Oeltima\SimpleQuery\Tests\Fixtures\TestStatus;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use ReflectionMethod;
+use Oeltima\SimpleQuery\Testing\CompilerConnection;
 
 final class PublicValuesTest extends TestCase
 {
+    public function testRawBindingDiagnosticsAndValidationOrderRemainContextual(): void
+    {
+        $db = CompilerConnection::for(Driver::Sqlite);
+        foreach (['raw' => 'Raw bindings', 'query' => 'Raw query bindings'] as $method => $prefix) {
+            try {
+                (new ReflectionMethod($db, $method))->invoke($db, 'SELECT ?', ['named' => new \stdClass()]);
+                self::fail('Keyed raw bindings were accepted.');
+            } catch (InvalidQueryException $exception) {
+                self::assertSame($prefix . ' must be an ordered list.', $exception->getMessage());
+            }
+        }
+        $messages = [
+            'raw' => 'Trusted raw SQL cannot be empty.',
+            'query' => 'Raw query bindings must be an ordered list.',
+        ];
+        foreach ($messages as $method => $message) {
+            try {
+                (new ReflectionMethod($db, $method))->invoke($db, '', ['named' => 1]);
+                self::fail('Mixed invalid raw input was accepted.');
+            } catch (InvalidQueryException $exception) {
+                self::assertSame($message, $exception->getMessage());
+            }
+        }
+    }
+
     public function testDriversDeclareTheirBroadPdoDriver(): void
     {
         self::assertSame('mysql', Driver::MariaDb->pdoDriver());
