@@ -11,44 +11,29 @@ with ZeroVer releases before `1.0.0`.
 ### Changed
 
 - Clarify that trusted raw SQL literals and retained exception chains may contain sensitive diagnostics.
-
 - Recertify retained database and proxy fixtures across prepare/buffering modes, and add actual SQLite 3.39.2 execution with explicit upstream-maintenance guidance.
-
 - Reuse required affected-row counts and avoid generated-ID metadata reads when observation is disabled, preserving write and failure semantics.
-
 - Retain contextual eager and cursor row validation after review, avoiding an additional per-row error-factory interface.
-
 - Centralize raw binding-list validation while retaining contextual diagnostics and validation order; bounded comparisons showed no repeatable actionable regression.
-
 - Attempt ordinary statement cleanup once while preserving existing result, exception, observation and quarantine policies.
-
 - Align active benchmark comparisons and changelog links with immutable v0.6.0.
-
 - Bound the next release to correctness, existing resource contracts and retained
   compatibility targets, with independently validated delivery tasks.
 
 ### Fixed
 
 - Reject symbolic links disguised as ZIP directories during artifact certification.
-
 - Reject missing, malformed and stale release facts, with an explicit published-version input for independent provenance checks.
-
 - Reject failed SQLite busy-timeout reads instead of accepting them as a declared zero timeout.
-
 - Preserve original callback exceptions when transaction-state inspection fails during recovery or rollback verification.
-
 - Reject malformed named raw conditions and joins instead of silently discarding supplied operands.
 
 ### Added
 
 - Record local candidate quality, coverage, compatibility, artifact and security evidence with remote release gates explicitly pending.
-
 - Certify Composer and Git archives with explicit contents, contamination checks, size budgets and independent no-dev installed consumers in CI.
-
 - Cover combined bind/execute and cleanup failures, and verify eight selected binding, lifecycle and observation faults are detected by regressions.
-
 - Validate complete typed compiler fixtures against executable case registries and per-dialect feature references, including explicit unsupported cases.
-
 - Characterize caller-owned LOB streams in SQLite tests and execution probes, with guidance on position, reuse and structural snapshots.
 
 ## [0.6.0] - 2026-08-24
