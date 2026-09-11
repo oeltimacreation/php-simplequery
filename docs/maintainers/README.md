@@ -68,3 +68,5 @@ certification additionally runs `php scripts/verify-repository.php --certify` an
 must link real, non-secret deployment reports. A public Docker fixture version
 must never be copied into the deployment inventory merely to make that gate
 green.
+
+- [Distribution certification](distribution.md) — archive policy and independent installed consumers.

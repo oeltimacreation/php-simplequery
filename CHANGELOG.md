@@ -35,6 +35,8 @@ with ZeroVer releases before `1.0.0`.
 
 ### Added
 
+- Certify Composer and Git archives with explicit contents, contamination checks, size budgets and independent no-dev installed consumers in CI.
+
 - Cover combined bind/execute and cleanup failures, and verify eight selected binding, lifecycle and observation faults are detected by regressions.
 
 - Validate complete typed compiler fixtures against executable case registries and per-dialect feature references, including explicit unsupported cases.

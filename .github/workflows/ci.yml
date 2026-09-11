@@ -150,21 +150,16 @@ jobs:
       - run: composer test
 
   no-dev-consumer:
-    name: No-dev package installation
+    name: Artifact-installed no-dev consumers
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       - uses: shivammathur/setup-php@add91f08e1598a0b6ff470f1e389f9d652559bf0
         with:
           php-version: "8.2"
-          extensions: pdo, pdo_sqlite
+          extensions: pdo, pdo_sqlite, zip
           coverage: none
-      - run: composer install --no-dev --no-interaction --prefer-dist --no-progress
-      - run: php -r 'require "vendor/autoload.php"; echo "autoload-ok", PHP_EOL;'
-      - run: php examples/compiler-assertions.php
-      - run: php examples/sqlite-execution.php
-      - run: php examples/sqlite-transactions.php
-      - run: php examples/sqlite-migration-slice.php
+      - run: php scripts/check-package.php
 
   benchmark-control:
     name: Reproducible SQLite benchmark suite

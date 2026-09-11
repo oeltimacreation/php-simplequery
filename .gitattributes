@@ -1,0 +1,16 @@
+/* export-ignore
+/.* export-ignore
+/src -export-ignore
+/docs -export-ignore
+/examples -export-ignore
+/composer.json -export-ignore
+/LICENSE -export-ignore
+/README.md -export-ignore
+/CHANGELOG.md -export-ignore
+/CONTRIBUTING.md -export-ignore
+/SECURITY.md -export-ignore
+/SUPPORT.md -export-ignore
+**/.env* export-ignore
+**/vendor/** export-ignore
+**/coverage/** export-ignore
+**/.cache/** export-ignore

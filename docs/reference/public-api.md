@@ -4,7 +4,7 @@ This is the signature index for the public surface. The linked topic guides
 define overloads, mutation rules, validation, result shapes, and dialect
 limits. A semantic change requires an ADR and synchronized fixture update.
 The machine-readable
-[`public-api.json`](../../tests/Fixtures/Contracts/public-api.json) freezes exact
+[`public-api.json`](https://github.com/oeltimacreation/php-simplequery/blob/HEAD/tests/Fixtures/Contracts/public-api.json) freezes exact
 reflection signatures and generic annotations; `composer public-api:check`
 rejects unreviewed drift.
 
@@ -47,7 +47,7 @@ binding maps are rejected at runtime.
 final readonly declaration with nullable prepare-emulation, buffering,
 `FOUND_ROWS`, persistence, SQLite busy-timeout, and connection-label fields.
 The executable construction cases are in
-[`connection-construction.json`](../../tests/Fixtures/Contracts/connection-construction.json).
+[`connection-construction.json`](https://github.com/oeltimacreation/php-simplequery/blob/HEAD/tests/Fixtures/Contracts/connection-construction.json).
 
 Construction performs no environment lookup or topology discovery. Broad PDO
 driver mismatch, hard-invariant conflict, invalid/inapplicable options,
@@ -227,7 +227,7 @@ Terminals never mutate clause state.
 | `update()` / `delete()` | Affected rows as `int`. |
 
 The aggregate scalar cases are executable data in
-[`aggregate-scalars.json`](../../tests/Fixtures/Contracts/aggregate-scalars.json).
+[`aggregate-scalars.json`](https://github.com/oeltimacreation/php-simplequery/blob/HEAD/tests/Fixtures/Contracts/aggregate-scalars.json).
 Write shape and result rules are detailed in
 [results and writes](../guides/results-and-writes.md).
 
