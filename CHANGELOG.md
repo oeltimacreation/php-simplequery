@@ -10,6 +10,8 @@ with ZeroVer releases before `1.0.0`.
 
 ### Changed
 
+- Retain contextual eager and cursor row validation after review, avoiding an additional per-row error-factory interface.
+
 - Centralize raw binding-list validation while retaining contextual diagnostics and validation order; bounded comparisons showed no repeatable actionable regression.
 
 - Attempt ordinary statement cleanup once while preserving existing result, exception, observation and quarantine policies.
