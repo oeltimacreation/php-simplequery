@@ -111,3 +111,13 @@ php scripts/verify-repository.php --certify
 
 That command intentionally fails while an engine/proxy deployment version,
 configuration, or probe artifact remains unverified.
+
+## Compiler fixture relationships
+
+`GoldenQueryCases` owns executable case IDs. Every case has a golden fixture
+with exact SQL, ordered binding values and an explicit equal-length type list,
+including empty lists. The feature manifest maps each feature and declared
+dialect to those IDs or an executable unsupported-feature rejection. The
+validator rejects missing dialects, unknown/duplicate IDs, missing types,
+cardinality mismatches and orphan references. Expected SQL is reviewed fixture
+input and is never regenerated from the compiler being tested.

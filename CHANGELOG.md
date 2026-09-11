@@ -33,6 +33,8 @@ with ZeroVer releases before `1.0.0`.
 
 ### Added
 
+- Validate complete typed compiler fixtures against executable case registries and per-dialect feature references, including explicit unsupported cases.
+
 - Characterize caller-owned LOB streams in SQLite tests and execution probes, with guidance on position, reuse and structural snapshots.
 
 ## [0.6.0] - 2026-08-24

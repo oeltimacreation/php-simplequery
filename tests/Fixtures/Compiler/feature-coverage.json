@@ -1,27 +1,247 @@
 {
-  "schema_version": 1,
-  "features": [
-    "aliases",
-    "between",
-    "clone_isolation",
-    "comparison_predicates",
-    "delete",
-    "derived_sources",
-    "distinct",
-    "empty_lists",
-    "grouped_predicates",
-    "grouping_and_having",
-    "identifiers_and_wildcards",
-    "inner_joins",
-    "insert",
-    "insert_many",
-    "left_joins",
-    "list_predicates",
-    "null_predicates",
-    "ordering_and_pagination",
-    "raw_expressions",
-    "row_locks",
-    "subquery_snapshots",
-    "update"
-  ]
+  "schema_version": 2,
+  "features": {
+    "aliases": {
+      "mariadb": [
+        "mariadb-composition"
+      ],
+      "mysql": [
+        "mysql-composition"
+      ],
+      "sqlite": [
+        "sqlite-composition"
+      ]
+    },
+    "between": {
+      "mariadb": [
+        "mariadb-composition"
+      ],
+      "mysql": [
+        "mysql-composition"
+      ],
+      "sqlite": [
+        "sqlite-composition"
+      ]
+    },
+    "clone_isolation": {
+      "mariadb": [
+        "mariadb-composition"
+      ],
+      "mysql": [
+        "mysql-composition"
+      ],
+      "sqlite": [
+        "sqlite-composition"
+      ]
+    },
+    "comparison_predicates": {
+      "mariadb": [
+        "mariadb-composition"
+      ],
+      "mysql": [
+        "mysql-composition"
+      ],
+      "sqlite": [
+        "sqlite-composition"
+      ]
+    },
+    "delete": {
+      "mariadb": [
+        "mariadb-delete"
+      ],
+      "mysql": [
+        "mysql-delete"
+      ],
+      "sqlite": [
+        "sqlite-delete"
+      ]
+    },
+    "derived_sources": {
+      "mariadb": [
+        "mariadb-composition"
+      ],
+      "mysql": [
+        "mysql-composition"
+      ],
+      "sqlite": [
+        "sqlite-composition"
+      ]
+    },
+    "distinct": {
+      "mariadb": [
+        "mariadb-composition"
+      ],
+      "mysql": [
+        "mysql-composition"
+      ],
+      "sqlite": [
+        "sqlite-composition"
+      ]
+    },
+    "empty_lists": {
+      "mariadb": [
+        "mariadb-composition"
+      ],
+      "mysql": [
+        "mysql-composition"
+      ],
+      "sqlite": [
+        "sqlite-composition"
+      ]
+    },
+    "grouped_predicates": {
+      "mariadb": [
+        "mariadb-composition"
+      ],
+      "mysql": [
+        "mysql-composition"
+      ],
+      "sqlite": [
+        "sqlite-composition"
+      ]
+    },
+    "grouping_and_having": {
+      "mariadb": [
+        "mariadb-composition"
+      ],
+      "mysql": [
+        "mysql-composition"
+      ],
+      "sqlite": [
+        "sqlite-composition"
+      ]
+    },
+    "identifiers_and_wildcards": {
+      "mariadb": [
+        "mariadb-list-filter"
+      ],
+      "mysql": [
+        "mysql-list-filter"
+      ],
+      "sqlite": [
+        "sqlite-list-filter"
+      ]
+    },
+    "inner_joins": {
+      "mariadb": [
+        "mariadb-composition"
+      ],
+      "mysql": [
+        "mysql-composition"
+      ],
+      "sqlite": [
+        "sqlite-composition"
+      ]
+    },
+    "insert": {
+      "mariadb": [
+        "mariadb-insert"
+      ],
+      "mysql": [
+        "mysql-insert"
+      ],
+      "sqlite": [
+        "sqlite-insert"
+      ]
+    },
+    "insert_many": {
+      "mariadb": [
+        "mariadb-insert-many"
+      ],
+      "mysql": [
+        "mysql-insert-many"
+      ],
+      "sqlite": [
+        "sqlite-insert-many"
+      ]
+    },
+    "left_joins": {
+      "mariadb": [
+        "mariadb-composition"
+      ],
+      "mysql": [
+        "mysql-composition"
+      ],
+      "sqlite": [
+        "sqlite-composition"
+      ]
+    },
+    "list_predicates": {
+      "mariadb": [
+        "mariadb-list-filter"
+      ],
+      "mysql": [
+        "mysql-list-filter"
+      ],
+      "sqlite": [
+        "sqlite-list-filter"
+      ]
+    },
+    "null_predicates": {
+      "mariadb": [
+        "mariadb-composition"
+      ],
+      "mysql": [
+        "mysql-composition"
+      ],
+      "sqlite": [
+        "sqlite-composition"
+      ]
+    },
+    "ordering_and_pagination": {
+      "mariadb": [
+        "mariadb-composition"
+      ],
+      "mysql": [
+        "mysql-composition"
+      ],
+      "sqlite": [
+        "sqlite-composition"
+      ]
+    },
+    "raw_expressions": {
+      "mariadb": [
+        "mariadb-composition"
+      ],
+      "mysql": [
+        "mysql-composition"
+      ],
+      "sqlite": [
+        "sqlite-composition"
+      ]
+    },
+    "row_locks": {
+      "mariadb": [
+        "mariadb-shared-lock"
+      ],
+      "mysql": [
+        "mysql-shared-lock"
+      ],
+      "sqlite": [
+        "unsupported:sqlite-row-locks"
+      ]
+    },
+    "subquery_snapshots": {
+      "mariadb": [
+        "mariadb-composition"
+      ],
+      "mysql": [
+        "mysql-composition"
+      ],
+      "sqlite": [
+        "sqlite-composition"
+      ]
+    },
+    "update": {
+      "mariadb": [
+        "mariadb-update"
+      ],
+      "mysql": [
+        "mysql-update"
+      ],
+      "sqlite": [
+        "sqlite-update"
+      ]
+    }
+  }
 }
