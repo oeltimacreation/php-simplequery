@@ -36,6 +36,9 @@ Transaction inspection failures during callback recovery now retain the original
 callback in `callbackFailure`; inspect that field alongside `controlFailure`.
 Quarantine and successful-rollback exception identity are unchanged.
 
+SQLite connection construction now rejects failed busy-timeout reads even when
+the declared timeout is zero. Valid integer/string zero values remain accepted.
+
 ## Installing 0.6.0
 
 ```bash

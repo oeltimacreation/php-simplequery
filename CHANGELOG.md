@@ -19,6 +19,8 @@ with ZeroVer releases before `1.0.0`.
 
 ### Fixed
 
+- Reject failed SQLite busy-timeout reads instead of accepting them as a declared zero timeout.
+
 - Preserve original callback exceptions when transaction-state inspection fails during recovery or rollback verification.
 
 - Reject malformed named raw conditions and joins instead of silently discarding supplied operands.

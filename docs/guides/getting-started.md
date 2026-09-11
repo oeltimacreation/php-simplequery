@@ -112,3 +112,17 @@ non-persistent connections, and `utf8mb4`. For an existing PDO connection use
 - Check engine-specific limits in [database support](../reference/database-support.md).
 - Add compile assertions to your application tests with
   [testing applications](testing-applications.md).
+
+## Preserving the validated connection profile
+
+Connection attributes and SQLite PRAGMAs are validated at construction. The
+application must preserve exception mode, buffering/prepare settings, charset,
+foreign-key enforcement and the declared busy timeout when using injected PDO
+or `Connection::pdo()`. Terminals do not repeat profile validation. Changing
+session state can invalidate the supported profile without immediate rejection.
+
+Failed SQLite profile reads are rejected; a failed busy-timeout query or fetch
+is not a valid zero timeout. Integer and string zero remain valid. Controlled
+false-return tests establish defensive handling, not evidence that an ordinary
+exception-mode PDO driver frequently returns false. Initialization PRAGMA writes
+are followed by effective-state validation rather than inferred from row counts.
