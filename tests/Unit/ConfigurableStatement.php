@@ -38,6 +38,10 @@ final class ConfigurableStatement extends PDOStatement
 
     public static int $closeCalls = 0;
 
+    public static int $rowCountCalls = 0;
+
+    public static ?int $rowCountThrowsOnCall = null;
+
     protected function __construct()
     {
     }
@@ -51,6 +55,8 @@ final class ConfigurableStatement extends PDOStatement
         self::$closeReturnsFalse = false;
         self::$closed = false;
         self::$closeCalls = 0;
+        self::$rowCountCalls = 0;
+        self::$rowCountThrowsOnCall = null;
     }
 
     public static function returns(mixed $row, bool $once = false): void
@@ -90,6 +96,17 @@ final class ConfigurableStatement extends PDOStatement
         }
 
         return $row;
+    }
+
+    #[\Override]
+    public function rowCount(): int
+    {
+        ++self::$rowCountCalls;
+        if (self::$rowCountThrowsOnCall === self::$rowCountCalls) {
+            throw new PDOException('Controlled affected-row failure.');
+        }
+
+        return parent::rowCount();
     }
 
     #[\Override]

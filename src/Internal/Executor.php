@@ -242,7 +242,10 @@ final readonly class Executor
             }
 
             $result = $operation($statement, $pdo);
-            $affectedRows = $affectedRowsMeaningful ? $statement->rowCount() : null;
+            $affectedRows = null;
+            if ($observer !== null && $affectedRowsMeaningful) {
+                $affectedRows = is_int($result) ? $result : $statement->rowCount();
+            }
             if (!$retainStatement) {
                 $cleanupAttempted = true;
                 $statement->closeCursor();

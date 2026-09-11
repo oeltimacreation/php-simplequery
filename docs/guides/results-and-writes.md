@@ -179,3 +179,8 @@ failure remains primary if cleanup also throws. Ordinary terminals retain their
 existing false-return handling and do not add quarantine for cleanup failure.
 Cursor cleanup retains its separate false/throw quarantine policy. Observation
 of ordinary success occurs after cleanup; cursor observation ends at handoff.
+
+Affected-row returns and observer metadata reuse the same required PDO count.
+Generated-ID operations acquire an additional count only when an observer is
+present. If required count acquisition fails, a write may already have occurred;
+its failure is not a signal to replay the write.

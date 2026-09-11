@@ -10,6 +10,8 @@ with ZeroVer releases before `1.0.0`.
 
 ### Changed
 
+- Reuse required affected-row counts and avoid generated-ID metadata reads when observation is disabled, preserving write and failure semantics.
+
 - Retain contextual eager and cursor row validation after review, avoiding an additional per-row error-factory interface.
 
 - Centralize raw binding-list validation while retaining contextual diagnostics and validation order; bounded comparisons showed no repeatable actionable regression.
