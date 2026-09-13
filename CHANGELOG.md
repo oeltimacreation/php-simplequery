@@ -30,6 +30,8 @@ with ZeroVer releases before `1.0.0`.
   missing evidence-index release facts, and repeated workflow artifact labels
   still fail.
 - Reject symbolic links disguised as ZIP directories during artifact certification.
+- Pin the CI branch-coverage lane to stable Xdebug 3.5.3 so PHP 8.5 does not
+  install an alpha coverage driver that misreports branch coverage.
 - Reject orphaned typed compiler cases that no feature manifest entry references.
 - Reject missing, malformed and stale release facts, with an explicit published-version input for independent provenance checks.
 - Reject failed SQLite busy-timeout reads instead of accepting them as a declared zero timeout.
