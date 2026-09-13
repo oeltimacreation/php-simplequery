@@ -38,8 +38,8 @@ Current release evidence:
 
 - [`0.7.0` development and candidate review](0.7-development-review.md),
   including bounded performance decisions, mutation results, retained database
-  qualification, required remote CI, code-health review, and local
-  certification. Published-dist verification is appended as it completes.
+  qualification, required remote CI, code-health review, local certification,
+  and published-dist verification.
 
 Historical release evidence:
 
