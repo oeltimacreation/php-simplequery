@@ -8,6 +8,48 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+### Changed
+
+- Clarify that trusted raw SQL literals and retained exception chains may contain sensitive diagnostics.
+- Record hosted candidate source provenance, the required remote CI result, and
+  clarify that soak retained growth is measured per operation across timed
+  samples.
+- Recertify retained database and proxy fixtures across prepare/buffering modes, and add actual SQLite 3.39.2 execution with explicit upstream-maintenance guidance.
+- Reuse required affected-row counts and avoid generated-ID metadata reads when observation is disabled, preserving write and failure semantics.
+- Retain contextual eager and cursor row validation after review, avoiding an additional per-row error-factory interface.
+- Centralize raw binding-list validation while retaining contextual diagnostics and validation order; bounded comparisons showed no repeatable actionable regression.
+- Attempt ordinary statement cleanup once while preserving existing result, exception, observation and quarantine policies.
+- Align active benchmark comparisons and changelog links with immutable v0.6.0.
+- Bound the next release to correctness, existing resource contracts and retained
+  compatibility targets, with independently validated delivery tasks.
+
+### Fixed
+
+- Allow a well-defined plan-free post-release state and a previous-release
+  benchmark baseline at release finalization, while stale development baselines,
+  missing evidence-index release facts, and repeated workflow artifact labels
+  still fail.
+- Reject symbolic links disguised as ZIP directories during artifact certification.
+- Pin the CI branch-coverage lane to stable Xdebug 3.5.3 so PHP 8.5 does not
+  install an alpha coverage driver that misreports branch coverage.
+- Fail benchmark comparisons only on repeatable candidate-operation regressions,
+  retain direct-PDO and component control movement as non-blocking attribution
+  evidence, and upload reports from failed comparison runs.
+- Reject orphaned typed compiler cases that no feature manifest entry references.
+- Reject missing, malformed and stale release facts, with an explicit published-version input for independent provenance checks.
+- Reject failed SQLite busy-timeout reads instead of accepting them as a declared zero timeout.
+- Preserve original callback exceptions when transaction-state inspection fails during recovery or rollback verification.
+- Reject malformed named raw conditions and joins instead of silently discarding supplied operands.
+
+### Added
+
+- Record local candidate quality, coverage, compatibility, artifact, security
+  and required remote CI evidence.
+- Certify Composer and Git archives with explicit contents, contamination checks, size budgets and independent no-dev installed consumers in CI.
+- Cover combined bind/execute and cleanup failures, and verify eight selected binding, lifecycle and observation faults are detected by regressions.
+- Validate complete typed compiler fixtures against executable case registries and per-dialect feature references, including explicit unsupported cases.
+- Characterize caller-owned LOB streams in SQLite tests and execution probes, with guidance on position, reuse and structural snapshots.
+
 ## [0.6.0] - 2026-08-24
 
 ### Added
@@ -251,7 +293,8 @@ with ZeroVer releases before `1.0.0`.
 - A repeatable direct-migration playbook and complete intentional-difference
   checklist without a runtime Pixie dependency or compatibility façade.
 
-[Unreleased]: https://github.com/oeltimacreation/php-simplequery/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/oeltimacreation/php-simplequery/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.2.0...v0.3.0

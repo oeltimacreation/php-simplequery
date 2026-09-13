@@ -37,8 +37,11 @@ final class ReleaseConsistencyChecker
 
     private string $root = '';
 
-    /** @return list<string> */
-    public function check(string $root): array
+    /**
+     * @return list<string>
+     * @phpstan-impure
+     */
+    public function check(string $root, ?string $publishedVersion = null): array
     {
         $this->root = rtrim($root, DIRECTORY_SEPARATOR);
 
@@ -52,11 +55,18 @@ final class ReleaseConsistencyChecker
             return ['Could not read composer.json.'];
         }
 
-        /** @var array{scripts?: array<string, mixed>} $composer */
-        $composer = json_decode($composerContent, true) ?? [];
-        $definedScripts = array_keys($composer['scripts'] ?? []);
+        $composer = json_decode($composerContent, true);
+        if (!is_array($composer) || !is_array($composer['scripts'] ?? null) || $composer['scripts'] === []) {
+            return ['composer.json must contain a non-empty scripts object.'];
+        }
+        $definedScripts = array_keys($composer['scripts']);
+        foreach ($definedScripts as $name) {
+            if (!is_string($name) || $name === '') {
+                return ['composer.json script names must be non-empty strings.'];
+            }
+        }
 
-        $errors = [];
+        $errors = (new ReleaseMetadata())->check($this->root, $publishedVersion);
         array_push($errors, ...$this->checkActivePlans());
         array_push($errors, ...$this->checkSupportAndSecurity());
         array_push($errors, ...$this->checkBenchmarkBaseline());
@@ -119,7 +129,10 @@ final class ReleaseConsistencyChecker
     {
         $planName = $activePlan->getFilename();
         $errors = [];
-        foreach (['docs/README.md', 'docs/maintainers/README.md', 'docs/plans/README.md'] as $indexDoc) {
+        foreach (
+            ['docs/README.md', 'docs/maintainers/README.md', 'docs/plans/README.md',
+            'docs/evidence/README.md'] as $indexDoc
+        ) {
             $indexPath = $this->root . '/' . $indexDoc;
             if (!is_file($indexPath)) {
                 continue;

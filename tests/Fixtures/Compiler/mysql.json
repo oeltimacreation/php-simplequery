@@ -5,44 +5,108 @@
     {
       "id": "mysql-list-filter",
       "sql": "SELECT `u`.* FROM `users` AS `u` WHERE `u`.`status` IN (?, ?)",
-      "bindings": ["active", "pending"],
-      "types": ["string", "string"]
+      "bindings": [
+        "active",
+        "pending"
+      ],
+      "types": [
+        "string",
+        "string"
+      ]
     },
     {
       "id": "mysql-shared-lock",
       "sql": "SELECT * FROM `jobs` FOR SHARE SKIP LOCKED",
-      "bindings": []
+      "bindings": [],
+      "types": []
     },
     {
       "id": "mysql-update",
       "sql": "UPDATE `users` SET `active` = ? WHERE `id` = ?",
-      "bindings": [0, 7]
+      "bindings": [
+        0,
+        7
+      ],
+      "types": [
+        "integer",
+        "integer"
+      ]
     },
     {
       "id": "mysql-golden-select",
       "sql": "SELECT `u`.* FROM `app`.`users` AS `u` INNER JOIN `roles` ON `roles`.`user_id` = `u`.`id` AND `roles`.`active` = ? WHERE `u`.`status` IN (?, ?) AND NOT (`u`.`email` LIKE ?) ORDER BY `u`.`id` DESC LIMIT 10",
-      "bindings": [1, "active", "pending", "%@invalid.test"]
+      "bindings": [
+        1,
+        "active",
+        "pending",
+        "%@invalid.test"
+      ],
+      "types": [
+        "integer",
+        "string",
+        "string",
+        "string"
+      ]
     },
     {
       "id": "mysql-insert",
       "sql": "INSERT INTO `events` (`kind`) VALUES (?)",
-      "bindings": ["login"]
+      "bindings": [
+        "login"
+      ],
+      "types": [
+        "string"
+      ]
     },
     {
       "id": "mysql-insert-many",
       "sql": "INSERT INTO `events` (`kind`, `priority`) VALUES (?, ?), (?, ?)",
-      "bindings": ["login", 1, "logout", 2],
-      "types": ["string", "integer", "string", "integer"]
+      "bindings": [
+        "login",
+        1,
+        "logout",
+        2
+      ],
+      "types": [
+        "string",
+        "integer",
+        "string",
+        "integer"
+      ]
     },
     {
       "id": "mysql-update-events",
       "sql": "UPDATE `events` SET `kind` = ? WHERE `id` = ?",
-      "bindings": ["logout", 4]
+      "bindings": [
+        "logout",
+        4
+      ],
+      "types": [
+        "string",
+        "integer"
+      ]
     },
     {
       "id": "mysql-delete",
       "sql": "DELETE FROM `events`",
-      "bindings": []
+      "bindings": [],
+      "types": []
+    },
+    {
+      "id": "mysql-composition",
+      "sql": "SELECT DISTINCT `snapshot`.`id` FROM (SELECT * FROM `items` WHERE `id` BETWEEN ? AND ?) AS `snapshot` INNER JOIN `owners` ON `owners`.`id` = `snapshot`.`id` LEFT JOIN `profiles` ON `profiles`.`id` = `snapshot`.`id` WHERE (`snapshot`.`id` > ? OR `snapshot`.`id` IS NULL) AND 0 = 1 GROUP BY `snapshot`.`id` HAVING COUNT(*) > ? ORDER BY `snapshot`.`id` ASC LIMIT 3 OFFSET 1",
+      "bindings": [
+        1,
+        9,
+        2,
+        0
+      ],
+      "types": [
+        "integer",
+        "integer",
+        "integer",
+        "integer"
+      ]
     }
   ]
 }

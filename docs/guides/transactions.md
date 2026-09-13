@@ -186,3 +186,13 @@ Before any retry, the application must separately prove bounded attempts,
 idempotent or compensatable effects, safe generated-ID behavior, and a policy
 for ambiguous commit outcomes. SimpleQuery deliberately provides no retry flag
 or automatic callback replay.
+
+### Inspection failure during recovery
+
+If PDO transaction inspection fails while recovering from a callback exception,
+`callbackFailure` retains that exact exception and `controlFailure` retains the
+inspection cause. This also applies to verification after an outer rollback.
+The connection is quarantined; no further transaction control is attempted once
+inspection makes ownership uncertain. Successful rollback still rethrows the
+original callback exception itself. Raw SQL and chained driver diagnostics can
+contain sensitive data; do not assume the complete exception graph is redacted.

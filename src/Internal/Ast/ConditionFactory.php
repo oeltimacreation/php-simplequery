@@ -47,7 +47,7 @@ final class ConditionFactory
         mixed $value,
         array $extra,
     ): Predicate {
-        if ($extra !== []) {
+        if ($extra !== [] || ($operatorOrValue === MissingArgument::Value && $value !== MissingArgument::Value)) {
             throw new InvalidQueryException(
                 'An expression comparison requires an expression/value or expression/operator/value shape.',
             );

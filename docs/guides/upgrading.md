@@ -25,6 +25,20 @@ For each upgrade:
 7. review generated SQL for raw or dialect-specific queries;
 8. deploy through the application's normal staged rollout.
 
+## Preparing for 0.7
+
+Malformed named raw conditions that supply `value` without `operatorOrValue`,
+or join `right` without `operator`, now throw `InvalidQueryException` instead
+of silently dropping the argument. Supply the complete comparison or omit
+both optional operands for a bare raw predicate. Valid calls are unchanged.
+
+Transaction inspection failures during callback recovery now retain the original
+callback in `callbackFailure`; inspect that field alongside `controlFailure`.
+Quarantine and successful-rollback exception identity are unchanged.
+
+SQLite connection construction now rejects failed busy-timeout reads even when
+the declared timeout is zero. Valid integer/string zero values remain accepted.
+
 ## Installing 0.6.0
 
 ```bash
