@@ -19,13 +19,17 @@ final class PackageVerifier
 
     private const MAX_BYTES = 786432;
 
+    private const ALLOWED_ROOTS = ['src', 'docs', 'examples'];
+
+    private const ALLOWED_ROOT_FILES = [
+        'composer.json', 'LICENSE', 'README.md', 'CHANGELOG.md',
+        'CONTRIBUTING.md', 'SECURITY.md', 'SUPPORT.md',
+    ];
+
     /** @return array{files: int, bytes: int, sha256: string} */
     public function inspect(string $path): array
     {
-        $zip = new ZipArchive();
-        if ($zip->open($path) !== true) {
-            throw new RuntimeException('Could not open package archive.');
-        }
+        $zip = $this->openArchive($path, 'Could not open package archive.');
         try {
             $entries = $this->collectEntries($zip, $this->resolvePrefix($zip));
             $this->assertRequiredFiles($entries['files']);
@@ -41,22 +45,41 @@ final class PackageVerifier
         }
     }
 
+    private function openArchive(string $path, string $failure): ZipArchive
+    {
+        $zip = new ZipArchive();
+        if ($zip->open($path) !== true) {
+            throw new RuntimeException($failure);
+        }
+
+        return $zip;
+    }
+
     private function resolvePrefix(ZipArchive $zip): string
     {
         if ($zip->locateName('composer.json') !== false) {
             return '';
         }
+        $prefix = $this->nestedPrefix($zip);
+        if ($prefix === '') {
+            return '';
+        }
+        if (preg_match('~^[a-zA-Z0-9][a-zA-Z0-9._-]*/$~', $prefix) !== 1) {
+            throw new RuntimeException('Invalid archive root prefix.');
+        }
+
+        return $prefix;
+    }
+
+    private function nestedPrefix(ZipArchive $zip): string
+    {
         for ($index = 0; $index < $zip->numFiles; ++$index) {
             $name = $zip->getNameIndex($index);
             if (!is_string($name) || preg_match('~^([^/]+/)composer.json$~', $name, $match) !== 1) {
                 continue;
             }
-            $prefix = $match[1];
-            if (preg_match('~^[a-zA-Z0-9][a-zA-Z0-9._-]*/$~', $prefix) !== 1) {
-                throw new RuntimeException('Invalid archive root prefix.');
-            }
 
-            return $prefix;
+            return $match[1];
         }
 
         return '';
@@ -128,24 +151,38 @@ final class PackageVerifier
 
     public function composerJson(string $path): string
     {
-        $zip = new ZipArchive();
-        if ($zip->open($path) !== true) {
-            throw new RuntimeException('Could not open package metadata.');
-        }
+        $zip = $this->openArchive($path, 'Could not open package metadata.');
         try {
-            for ($index = 0; $index < $zip->numFiles; ++$index) {
-                $name = $zip->getNameIndex($index);
-                if (is_string($name) && preg_match('~^(?:[^/]+/)?composer.json$~', $name) === 1) {
-                    $json = $zip->getFromIndex($index);
-                    if (is_string($json)) {
-                        return $json;
-                    }
-                }
-            }
-            throw new RuntimeException('Package metadata is missing.');
+            return $this->findComposerJson($zip);
         } finally {
             $zip->close();
         }
+    }
+
+    private function findComposerJson(ZipArchive $zip): string
+    {
+        for ($index = 0; $index < $zip->numFiles; ++$index) {
+            $json = $this->composerJsonAt($zip, $index);
+            if (is_string($json)) {
+                return $json;
+            }
+        }
+
+        throw new RuntimeException('Package metadata is missing.');
+    }
+
+    private function composerJsonAt(ZipArchive $zip, int $index): ?string
+    {
+        $name = $zip->getNameIndex($index);
+        if (!is_string($name)) {
+            return null;
+        }
+        if (preg_match('~^(?:[^/]+/)?composer.json$~', $name) !== 1) {
+            return null;
+        }
+        $json = $zip->getFromIndex($index);
+
+        return is_string($json) ? $json : null;
     }
 
     /** @param list<string> $command */
@@ -163,7 +200,10 @@ final class PackageVerifier
         fclose($pipes[0]);
         $output = stream_get_contents($pipes[1]);
         fclose($pipes[1]);
-        if (proc_close($process) !== 0 || !is_string($output)) {
+        if (proc_close($process) !== 0) {
+            throw new RuntimeException('Package check command failed: ' . $command[0]);
+        }
+        if (!is_string($output)) {
             throw new RuntimeException('Package check command failed: ' . $command[0]);
         }
 
@@ -172,15 +212,27 @@ final class PackageVerifier
 
     private function validateName(string $name): void
     {
+        $this->rejectForbiddenName($name);
+        if ($this->isAllowedPackageName($name)) {
+            return;
+        }
+
+        throw new RuntimeException('Unexpected package root: ' . $name);
+    }
+
+    private function rejectForbiddenName(string $name): void
+    {
         if (str_contains($name, '\\') || preg_match('~(^|/)(\.[^/]*|vendor|coverage)(/|$)~', $name) === 1) {
             throw new RuntimeException('Forbidden package path: ' . $name);
         }
-        $root = explode('/', $name)[0];
-        $directories = ['src', 'docs', 'examples'];
-        $rootFiles = ['composer.json', 'LICENSE', 'README.md', 'CHANGELOG.md',
-            'CONTRIBUTING.md', 'SECURITY.md', 'SUPPORT.md'];
-        if (!in_array($root, $directories, true) && !in_array($name, $rootFiles, true)) {
-            throw new RuntimeException('Unexpected package root: ' . $name);
+    }
+
+    private function isAllowedPackageName(string $name): bool
+    {
+        if (in_array(explode('/', $name)[0], self::ALLOWED_ROOTS, true)) {
+            return true;
         }
+
+        return in_array($name, self::ALLOWED_ROOT_FILES, true);
     }
 }

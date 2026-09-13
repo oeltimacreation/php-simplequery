@@ -10,6 +10,15 @@ final class CompilerFixtureValidator
 {
     private const DRIVERS = ['mariadb', 'mysql', 'sqlite'];
 
+    /** @var list<string> */
+    private array $executableIds = [];
+
+    /** @var list<string> */
+    private array $rejectionIds = [];
+
+    /** @var array<string, string> */
+    private array $ids = [];
+
     /**
      * @param array<string, mixed> $fixtures
      * @param list<string> $executableIds
@@ -18,23 +27,22 @@ final class CompilerFixtureValidator
      */
     public function validate(array $fixtures, array $executableIds, array $manifest, array $rejectionIds = []): void
     {
-        $ids = $this->collectFixtureCases($fixtures, $executableIds);
-        $this->assertExecutableCasesMatch($ids, $executableIds);
-        $referenced = $this->validateFeatureManifest($manifest, $ids, $rejectionIds);
-        $this->assertEveryCaseReferenced($ids, $referenced);
+        $this->executableIds = $executableIds;
+        $this->rejectionIds = $rejectionIds;
+        $this->ids = $this->collectFixtureCases($fixtures);
+        $this->assertExecutableCasesMatch();
+        $this->assertEveryCaseReferenced($this->validateFeatureManifest($manifest));
     }
 
-    /**
-     * @param array<string, mixed> $fixtures
-     * @param list<string> $executableIds
+    /** @param array<string, mixed> $fixtures
      * @return array<string, string>
      */
-    private function collectFixtureCases(array $fixtures, array $executableIds): array
+    private function collectFixtureCases(array $fixtures): array
     {
         $ids = [];
         foreach (self::DRIVERS as $driver) {
             $cases = $this->dialectCases($driver, $fixtures[$driver] ?? null);
-            $ids = array_merge($ids, $this->registerCases($cases, $driver, $executableIds));
+            $ids = array_merge($ids, $this->registerCases($cases, $driver));
         }
 
         return $ids;
@@ -43,32 +51,49 @@ final class CompilerFixtureValidator
     /** @return list<mixed> */
     private function dialectCases(string $driver, mixed $fixture): array
     {
-        if (
-            !is_array($fixture) || ($fixture['schema_version'] ?? null) !== 1
-            || ($fixture['driver'] ?? null) !== $driver
-        ) {
-            throw new RuntimeException('Missing or malformed compiler dialect fixture: ' . $driver);
+        if (!is_array($fixture)) {
+            $this->rejectDialect($driver);
+        }
+        if (($fixture['schema_version'] ?? null) !== 1) {
+            $this->rejectDialect($driver);
+        }
+        if (($fixture['driver'] ?? null) !== $driver) {
+            $this->rejectDialect($driver);
         }
         $cases = $fixture['cases'] ?? null;
-        if (!is_array($cases) || !array_is_list($cases) || $cases === []) {
-            throw new RuntimeException('Compiler cases must be a non-empty list: ' . $driver);
+        if (!is_array($cases) || !array_is_list($cases)) {
+            $this->rejectCases($driver);
+        }
+        if ($cases === []) {
+            $this->rejectCases($driver);
         }
 
         return $cases;
     }
 
-    /**
-     * @param list<mixed> $cases
-     * @param list<string> $executableIds
+    private function rejectDialect(string $driver): never
+    {
+        throw new RuntimeException('Missing or malformed compiler dialect fixture: ' . $driver);
+    }
+
+    private function rejectCases(string $driver): never
+    {
+        throw new RuntimeException('Compiler cases must be a non-empty list: ' . $driver);
+    }
+
+    /** @param list<mixed> $cases
      * @return array<string, string>
      */
-    private function registerCases(array $cases, string $driver, array $executableIds): array
+    private function registerCases(array $cases, string $driver): array
     {
         $registered = [];
         foreach ($cases as $case) {
             $id = $this->caseId($case, $driver);
-            if (isset($registered[$id]) || !in_array($id, $executableIds, true)) {
-                throw new RuntimeException('Duplicate or unknown executable compiler case: ' . $id);
+            if (isset($registered[$id])) {
+                $this->rejectExecutableCase($id);
+            }
+            if (!in_array($id, $this->executableIds, true)) {
+                $this->rejectExecutableCase($id);
             }
             $registered[$id] = $driver;
         }
@@ -76,119 +101,128 @@ final class CompilerFixtureValidator
         return $registered;
     }
 
-    /** @param array<string, string> $ids
-     * @param list<string> $executableIds
-     */
-    private function assertExecutableCasesMatch(array $ids, array $executableIds): void
+    private function rejectExecutableCase(string $id): never
     {
-        if (count($ids) !== count($executableIds)) {
+        throw new RuntimeException('Duplicate or unknown executable compiler case: ' . $id);
+    }
+
+    private function assertExecutableCasesMatch(): void
+    {
+        if (count($this->ids) !== count($this->executableIds)) {
             throw new RuntimeException('An executable compiler case has no golden fixture.');
         }
     }
 
-    /**
-     * @param array<string, mixed> $manifest
-     * @param array<string, string> $ids
-     * @param list<string> $rejectionIds
+    /** @param array<string, mixed> $manifest
      * @return array<string, true>
      */
-    private function validateFeatureManifest(array $manifest, array $ids, array $rejectionIds): array
+    private function validateFeatureManifest(array $manifest): array
     {
-        $features = $manifest['features'] ?? null;
-        if (($manifest['schema_version'] ?? null) !== 2 || !is_array($features) || $features === []) {
-            throw new RuntimeException('Malformed compiler feature manifest.');
-        }
         $referenced = [];
-        foreach ($features as $feature => $dialects) {
-            if (!is_string($feature) || $feature === '' || !is_array($dialects)) {
+        foreach ($this->manifestFeatures($manifest) as $feature => $dialects) {
+            if (!is_string($feature) || $feature === '') {
                 throw new RuntimeException('Malformed compiler feature.');
             }
-            $referenced += $this->featureReferences($feature, $dialects, $ids, $rejectionIds);
+            if (!is_array($dialects)) {
+                throw new RuntimeException('Malformed compiler feature.');
+            }
+            $referenced += $this->featureReferences($feature, $dialects);
         }
 
         return $referenced;
     }
 
-    /**
-     * @param array<mixed> $dialects
-     * @param array<string, string> $ids
-     * @param list<string> $rejectionIds
+    /** @param array<string, mixed> $manifest
+     * @return array<mixed>
+     */
+    private function manifestFeatures(array $manifest): array
+    {
+        if (($manifest['schema_version'] ?? null) !== 2) {
+            throw new RuntimeException('Malformed compiler feature manifest.');
+        }
+        $features = $manifest['features'] ?? null;
+        if (!is_array($features) || $features === []) {
+            throw new RuntimeException('Malformed compiler feature manifest.');
+        }
+
+        return $features;
+    }
+
+    /** @param array<mixed> $dialects
      * @return array<string, true>
      */
-    private function featureReferences(
-        string $feature,
-        array $dialects,
-        array $ids,
-        array $rejectionIds,
-    ): array {
+    private function featureReferences(string $feature, array $dialects): array
+    {
         $referenced = [];
         foreach (self::DRIVERS as $driver) {
-            $referenced += $this->dialectReferences($feature, $driver, $dialects[$driver] ?? null, $ids, $rejectionIds);
+            $references = $dialects[$driver] ?? null;
+            if (!is_array($references) || !array_is_list($references)) {
+                $this->rejectFeatureDialect($feature, $driver);
+            }
+            if ($references === []) {
+                $this->rejectFeatureDialect($feature, $driver);
+            }
+            $this->addReferenced($referenced, $references, $driver);
         }
 
         return $referenced;
     }
 
-    /**
-     * @param array<string, string> $ids
-     * @param list<string> $rejectionIds
-     * @return array<string, true>
+    /** @param array<string, true> $referenced
+     * @param list<mixed> $references
      */
-    private function dialectReferences(
-        string $feature,
-        string $driver,
-        mixed $references,
-        array $ids,
-        array $rejectionIds,
-    ): array {
-        if (!is_array($references) || !array_is_list($references) || $references === []) {
-            throw new RuntimeException('Missing feature dialect: ' . $feature . '/' . $driver);
-        }
-        $referenced = [];
+    private function addReferenced(array &$referenced, array $references, string $driver): void
+    {
         foreach ($references as $reference) {
-            $referencedId = $this->referenceId($reference, $driver, $ids, $rejectionIds);
+            $referencedId = $this->referenceId($reference, $driver);
             if ($referencedId !== null) {
                 $referenced[$referencedId] = true;
             }
         }
-
-        return $referenced;
     }
 
-    /**
-     * @param array<string, string> $ids
-     * @param list<string> $rejectionIds
-     */
-    private function referenceId(
-        mixed $reference,
-        string $driver,
-        array $ids,
-        array $rejectionIds,
-    ): ?string {
+    private function rejectFeatureDialect(string $feature, string $driver): never
+    {
+        throw new RuntimeException('Missing feature dialect: ' . $feature . '/' . $driver);
+    }
+
+    private function referenceId(mixed $reference, string $driver): ?string
+    {
         if (!is_string($reference)) {
             throw new RuntimeException('Feature references must be strings.');
         }
         if (!str_starts_with($reference, 'unsupported:')) {
-            if (($ids[$reference] ?? null) === $driver) {
-                return $reference;
-            }
-
-            throw new RuntimeException('Unknown or wrong-dialect feature reference: ' . $reference);
+            return $this->executableReference($reference, $driver);
         }
         $rejection = substr($reference, strlen('unsupported:'));
-        if (str_starts_with($rejection, $driver . '-') && in_array($rejection, $rejectionIds, true)) {
-            return null;
+        if (!str_starts_with($rejection, $driver . '-')) {
+            $this->rejectReference($reference);
+        }
+        if (!in_array($rejection, $this->rejectionIds, true)) {
+            $this->rejectReference($reference);
+        }
+
+        return null;
+    }
+
+    private function executableReference(string $reference, string $driver): string
+    {
+        if (($this->ids[$reference] ?? null) === $driver) {
+            return $reference;
         }
 
         throw new RuntimeException('Unknown or wrong-dialect feature reference: ' . $reference);
     }
 
-    /** @param array<string, string> $ids
-     * @param array<string, true> $referenced
-     */
-    private function assertEveryCaseReferenced(array $ids, array $referenced): void
+    private function rejectReference(string $reference): never
     {
-        foreach (array_keys($ids) as $id) {
+        throw new RuntimeException('Unknown or wrong-dialect feature reference: ' . $reference);
+    }
+
+    /** @param array<string, true> $referenced */
+    private function assertEveryCaseReferenced(array $referenced): void
+    {
+        foreach (array_keys($this->ids) as $id) {
             if (!isset($referenced[$id])) {
                 throw new RuntimeException('Compiler case is not referenced by any feature: ' . $id);
             }
@@ -198,19 +232,24 @@ final class CompilerFixtureValidator
     private function caseId(mixed $case, string $driver): string
     {
         if (!is_array($case)) {
-            throw new RuntimeException('Malformed compiler case identity or SQL.');
+            $this->rejectCase();
         }
         $id = $case['id'] ?? null;
         $sql = $case['sql'] ?? null;
         if (!is_string($id) || !str_starts_with($id, $driver . '-')) {
-            throw new RuntimeException('Malformed compiler case identity or SQL.');
+            $this->rejectCase();
         }
         if (!is_string($sql) || trim($sql) === '') {
-            throw new RuntimeException('Malformed compiler case identity or SQL.');
+            $this->rejectCase();
         }
         $this->assertBindingLists($case);
 
         return $id;
+    }
+
+    private function rejectCase(): never
+    {
+        throw new RuntimeException('Malformed compiler case identity or SQL.');
     }
 
     /** @param array<mixed> $case */
