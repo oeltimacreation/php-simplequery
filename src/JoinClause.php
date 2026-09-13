@@ -97,7 +97,8 @@ final class JoinClause
         mixed $right,
         array $extra = [],
     ): self {
-        if ($operator === self::MISSING && $right === self::MISSING && $extra === []) {
+        $missingOperands = $operator === self::MISSING && $right === self::MISSING;
+        if ($missingOperands && $extra === []) {
             return $this->addRawCondition($or, $left);
         }
         if ($right === self::MISSING || $extra !== []) {

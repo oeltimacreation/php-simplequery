@@ -39,6 +39,23 @@ final class BenchmarkComparisonGate
      */
     private function reviewedOperations(array $report): array
     {
+        $measurements = $this->measurements($report);
+        $operations = [];
+        foreach ($measurements as $scenario => $entries) {
+            if (!is_string($scenario)) {
+                throw new RuntimeException('Benchmark comparison report has a malformed scenario.');
+            }
+            array_push($operations, ...$this->scenarioReviews($scenario, $entries));
+        }
+
+        return $operations;
+    }
+
+    /** @param array<mixed> $report
+     * @return array<mixed>
+     */
+    private function measurements(array $report): array
+    {
         $review = $report['performance_review'] ?? null;
         if (!is_array($review)) {
             throw new RuntimeException('Benchmark comparison report has no performance review.');
@@ -47,26 +64,40 @@ final class BenchmarkComparisonGate
         if (!is_array($measurements)) {
             throw new RuntimeException('Benchmark comparison report has no measurements.');
         }
+
+        return $measurements;
+    }
+
+    /** @return list<string> */
+    private function scenarioReviews(string $scenario, mixed $entries): array
+    {
+        if (!is_array($entries)) {
+            throw new RuntimeException('Benchmark comparison report has a malformed scenario.');
+        }
         $operations = [];
-        foreach ($measurements as $scenario => $entries) {
-            if (!is_string($scenario) || !is_array($entries)) {
-                throw new RuntimeException('Benchmark comparison report has a malformed scenario.');
+        foreach ($entries as $operation => $measurement) {
+            if (!is_string($operation)) {
+                throw new RuntimeException('Benchmark comparison report has a malformed measurement.');
             }
-            foreach ($entries as $operation => $measurement) {
-                if (!is_string($operation) || !is_array($measurement)) {
-                    throw new RuntimeException('Benchmark comparison report has a malformed measurement.');
-                }
-                $reviewRequired = $measurement['review_required'] ?? null;
-                if (!is_bool($reviewRequired)) {
-                    throw new RuntimeException('Benchmark comparison report has a malformed review flag.');
-                }
-                if ($reviewRequired) {
-                    $operations[] = $scenario . '/' . $operation;
-                }
+            if ($this->reviewRequired($measurement)) {
+                $operations[] = $scenario . '/' . $operation;
             }
         }
 
         return $operations;
+    }
+
+    private function reviewRequired(mixed $measurement): bool
+    {
+        if (!is_array($measurement)) {
+            throw new RuntimeException('Benchmark comparison report has a malformed measurement.');
+        }
+        $reviewRequired = $measurement['review_required'] ?? null;
+        if (!is_bool($reviewRequired)) {
+            throw new RuntimeException('Benchmark comparison report has a malformed review flag.');
+        }
+
+        return $reviewRequired;
     }
 
     private function isControl(string $key): bool

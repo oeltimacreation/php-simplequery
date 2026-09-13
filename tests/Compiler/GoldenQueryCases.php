@@ -56,6 +56,12 @@ final class GoldenQueryCases
     /** @return array<string, \Closure(): CompiledQuery> */
     private function mariaDbCases(): array
     {
+        return [...$this->mariaDbReadCases(), ...$this->mariaDbWriteCases()];
+    }
+
+    /** @return array<string, \Closure(): CompiledQuery> */
+    private function mariaDbReadCases(): array
+    {
         return [
             'mariadb-list-filter' => fn (): CompiledQuery => CompilerConnection::for(Driver::MariaDb)
                 ->table('users', 'u')->select('u.*')->whereIn('u.status', ['active', 'pending'])->compile(),
@@ -64,11 +70,18 @@ final class GoldenQueryCases
                 ->compile(),
             'mariadb-shared-lock' => fn (): CompiledQuery => CompilerConnection::for(Driver::MariaDb)
                 ->table('jobs')->forShare()->noWait()->compile(),
+            'mariadb-golden-select' => fn (): CompiledQuery => $this->mariadbGoldenSelect(),
+        ];
+    }
+
+    /** @return array<string, \Closure(): CompiledQuery> */
+    private function mariaDbWriteCases(): array
+    {
+        return [
             'mariadb-insert' => fn (): CompiledQuery => CompiledWriteQuery::insert(
                 CompilerConnection::for(Driver::MariaDb)->table('users'),
                 ['email' => 'fixture@example.test', 'active' => true],
             ),
-            'mariadb-golden-select' => fn (): CompiledQuery => $this->mariadbGoldenSelect(),
             'mariadb-insert-raw' => fn (): CompiledQuery => CompiledWriteQuery::insert(
                 CompilerConnection::for(Driver::MariaDb)->table('users'),
                 [
@@ -97,16 +110,29 @@ final class GoldenQueryCases
     /** @return array<string, \Closure(): CompiledQuery> */
     private function mySqlCases(): array
     {
+        return [...$this->mySqlReadCases(), ...$this->mySqlWriteCases()];
+    }
+
+    /** @return array<string, \Closure(): CompiledQuery> */
+    private function mySqlReadCases(): array
+    {
         return [
             'mysql-list-filter' => fn (): CompiledQuery => CompilerConnection::for(Driver::MySql)
                 ->table('users', 'u')->select('u.*')->whereIn('u.status', ['active', 'pending'])->compile(),
             'mysql-shared-lock' => fn (): CompiledQuery => CompilerConnection::for(Driver::MySql)
                 ->table('jobs')->forShare()->skipLocked()->compile(),
+            'mysql-golden-select' => fn (): CompiledQuery => $this->mysqlGoldenSelect(),
+        ];
+    }
+
+    /** @return array<string, \Closure(): CompiledQuery> */
+    private function mySqlWriteCases(): array
+    {
+        return [
             'mysql-update' => fn (): CompiledQuery => CompiledWriteQuery::update(
                 CompilerConnection::for(Driver::MySql)->table('users')->where('id', 7),
                 ['active' => false],
             ),
-            'mysql-golden-select' => fn (): CompiledQuery => $this->mysqlGoldenSelect(),
             'mysql-insert' => fn (): CompiledQuery => CompiledWriteQuery::insert(
                 CompilerConnection::for(Driver::MySql)->table('events'),
                 ['kind' => 'login'],
@@ -131,16 +157,29 @@ final class GoldenQueryCases
     /** @return array<string, \Closure(): CompiledQuery> */
     private function sqliteCases(): array
     {
+        return [...$this->sqliteReadCases(), ...$this->sqliteWriteCases()];
+    }
+
+    /** @return array<string, \Closure(): CompiledQuery> */
+    private function sqliteReadCases(): array
+    {
         return [
             'sqlite-null-empty-list' => fn (): CompiledQuery => CompilerConnection::for(Driver::Sqlite)
                 ->table('users')->whereNull('deleted_at')->whereIn('id', [])->compile(),
             'sqlite-list-filter' => fn (): CompiledQuery => CompilerConnection::for(Driver::Sqlite)
                 ->table('users', 'u')->select('u.*')->whereIn('u.status', ['active', 'pending'])->compile(),
             'sqlite-subquery' => fn (): CompiledQuery => $this->sqliteSubquery(),
+            'sqlite-golden-select' => fn (): CompiledQuery => $this->sqliteGoldenSelect(),
+        ];
+    }
+
+    /** @return array<string, \Closure(): CompiledQuery> */
+    private function sqliteWriteCases(): array
+    {
+        return [
             'sqlite-delete' => fn (): CompiledQuery => CompiledWriteQuery::delete(
                 CompilerConnection::for(Driver::Sqlite)->table('users')->where('id', 7),
             ),
-            'sqlite-golden-select' => fn (): CompiledQuery => $this->sqliteGoldenSelect(),
             'sqlite-insert' => fn (): CompiledQuery => CompiledWriteQuery::insert(
                 CompilerConnection::for(Driver::Sqlite)->table('users'),
                 ['name' => 'A', 'enabled' => true],

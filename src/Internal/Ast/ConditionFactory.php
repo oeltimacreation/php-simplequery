@@ -47,16 +47,24 @@ final class ConditionFactory
         mixed $value,
         array $extra,
     ): Predicate {
-        if ($extra !== [] || ($operatorOrValue === MissingArgument::Value && $value !== MissingArgument::Value)) {
-            throw new InvalidQueryException(
-                'An expression comparison requires an expression/value or expression/operator/value shape.',
-            );
+        if ($extra !== []) {
+            self::rejectComparisonShape();
+        }
+        if ($operatorOrValue === MissingArgument::Value && $value !== MissingArgument::Value) {
+            self::rejectComparisonShape();
         }
         if ($operatorOrValue === MissingArgument::Value) {
             return new RawPredicate($expression);
         }
 
         return self::comparison($expression, $operatorOrValue, $value);
+    }
+
+    private static function rejectComparisonShape(): never
+    {
+        throw new InvalidQueryException(
+            'An expression comparison requires an expression/value or expression/operator/value shape.',
+        );
     }
 
     /** @param Closure(ConditionGroup): mixed $groupCallback

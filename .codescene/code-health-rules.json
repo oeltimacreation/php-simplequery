@@ -1,5 +1,5 @@
 {
-  "usage": "The SQLite contention probe is a path/process-scanning repository tool whose steps must exchange repository paths, worker modes, and worker arguments as strings. The benchmark harness also has a typed process-boundary environment adapter, and the compiler behavior test intentionally groups independent PHPUnit cases. The rules disabled for those narrow paths add no actionable signal; critical rules stay enforced elsewhere.",
+  "usage": "The SQLite contention probe is a path/process-scanning repository tool whose steps must exchange repository paths, worker modes, and worker arguments as strings. The benchmark harness also has a typed process-boundary environment adapter, and the compiler behavior test intentionally groups independent PHPUnit cases. The negative compiler-fixture test enumerates independent fault mutations in one focused table. The rules disabled for those narrow paths add no actionable signal; critical rules stay enforced elsewhere.",
   "rule_sets": [
     {
       "matching_content_path": "tests/Compiler/QueryBuilderBehaviorTest.php",
@@ -7,6 +7,16 @@
       "rules": [
         {
           "name": "Low Cohesion",
+          "weight": 0.0
+        }
+      ]
+    },
+    {
+      "matching_content_path": "tests/Unit/CompilerFixtureValidatorTest.php",
+      "matching_content_path_doc": "This negative fixture test enumerates independent fault mutations in one table so every broken relationship stays comparable against the same valid base state.",
+      "rules": [
+        {
+          "name": "Complex Method",
           "weight": 0.0
         }
       ]

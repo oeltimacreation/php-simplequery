@@ -242,7 +242,18 @@ final class ReleaseConsistencyCheckerTest extends TestCase
         string $baselineTag,
         ?string $plan,
     ): void {
-        $series = substr($version, 0, (int) strrpos($version, '.'));
+        $this->writeReleaseFacts(
+            $version,
+            $previous,
+            $baselineTag,
+            substr($version, 0, (int) strrpos($version, '.')),
+        );
+        $this->writeReleasePlan($plan);
+        $this->writeEvidenceIndex($version, $plan);
+    }
+
+    private function writeReleaseFacts(string $version, string $previous, string $baselineTag, string $series): void
+    {
         file_put_contents(
             $this->root . '/CHANGELOG.md',
             "## [Unreleased]\n\n## [$version] - 2026-08-24\n\n## [$previous] - 2026-08-18\n"
@@ -266,24 +277,34 @@ final class ReleaseConsistencyCheckerTest extends TestCase
             $this->root . '/docs/maintainers/benchmarking.md',
             "Comparing against immutable `$baselineTag`.\n",
         );
+    }
+
+    private function writeReleasePlan(?string $plan): void
+    {
         $planFiles = glob($this->root . '/docs/plans/[0-9]*.md');
         if (is_array($planFiles)) {
             foreach ($planFiles as $planFile) {
                 unlink($planFile);
             }
         }
-        if ($plan !== null) {
-            file_put_contents($this->root . '/docs/plans/' . $plan, "# $plan\n");
-            foreach (
-                ['docs/README.md' => 'plans/', 'docs/maintainers/README.md' => '../plans/',
-                'docs/plans/README.md' => '', 'docs/evidence/README.md' => '../plans/'] as $index => $prefix
-            ) {
-                file_put_contents($this->root . '/' . $index, "[Active Plan]($prefix$plan)\n");
-            }
+        if ($plan === null) {
+            return;
         }
+        file_put_contents($this->root . '/docs/plans/' . $plan, "# $plan\n");
+        foreach (
+            ['docs/README.md' => 'plans/', 'docs/maintainers/README.md' => '../plans/',
+            'docs/plans/README.md' => ''] as $index => $prefix
+        ) {
+            file_put_contents($this->root . '/' . $index, "[Active Plan]($prefix$plan)\n");
+        }
+    }
+
+    private function writeEvidenceIndex(string $version, ?string $plan): void
+    {
+        $planLink = $plan === null ? '' : "[Active Plan](../plans/$plan)\n\n";
         file_put_contents(
             $this->root . '/docs/evidence/README.md',
-            ($plan === null ? '' : "[Active Plan](../plans/$plan)\n\n") . "`$version` release evidence.\n",
+            $planLink . "`$version` release evidence.\n",
         );
     }
 

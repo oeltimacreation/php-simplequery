@@ -44,35 +44,51 @@ final class ReleaseConsistencyChecker
     public function check(string $root, ?string $publishedVersion = null): array
     {
         $this->root = rtrim($root, DIRECTORY_SEPARATOR);
-
-        $composerJsonPath = $this->root . '/composer.json';
-        if (!is_file($composerJsonPath)) {
-            return ['composer.json is missing.'];
+        $scripts = $this->composerScripts();
+        if ($scripts['errors'] !== []) {
+            return $scripts['errors'];
         }
 
-        $composerContent = file_get_contents($composerJsonPath);
-        if (!is_string($composerContent)) {
-            return ['Could not read composer.json.'];
-        }
+        return $this->repositoryErrors($scripts['names'], $publishedVersion);
+    }
 
-        $composer = json_decode($composerContent, true);
+    /** @return array{names: list<string>, errors: list<string>} */
+    private function composerScripts(): array
+    {
+        $path = $this->root . '/composer.json';
+        if (!is_file($path)) {
+            return ['names' => [], 'errors' => ['composer.json is missing.']];
+        }
+        $contents = file_get_contents($path);
+        if (!is_string($contents)) {
+            return ['names' => [], 'errors' => ['Could not read composer.json.']];
+        }
+        $composer = json_decode($contents, true);
         if (!is_array($composer) || !is_array($composer['scripts'] ?? null) || $composer['scripts'] === []) {
-            return ['composer.json must contain a non-empty scripts object.'];
+            return ['names' => [], 'errors' => ['composer.json must contain a non-empty scripts object.']];
         }
-        $definedScripts = array_keys($composer['scripts']);
-        foreach ($definedScripts as $name) {
+        $names = [];
+        foreach (array_keys($composer['scripts']) as $name) {
             if (!is_string($name) || $name === '') {
-                return ['composer.json script names must be non-empty strings.'];
+                return ['names' => [], 'errors' => ['composer.json script names must be non-empty strings.']];
             }
+            $names[] = $name;
         }
 
+        return ['names' => $names, 'errors' => []];
+    }
+
+    /** @param list<string> $definedScripts
+     * @return list<string>
+     */
+    private function repositoryErrors(array $definedScripts, ?string $publishedVersion): array
+    {
         $errors = (new ReleaseMetadata())->check($this->root, $publishedVersion);
         array_push($errors, ...$this->checkActivePlans());
         array_push($errors, ...$this->checkSupportAndSecurity());
         array_push($errors, ...$this->checkBenchmarkBaseline());
         array_push($errors, ...$this->checkMaintainedCommands($definedScripts));
         array_push($errors, ...$this->checkConfigurationPaths());
-
         sort($errors);
 
         return $errors;

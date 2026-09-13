@@ -29,6 +29,9 @@ with ZeroVer releases before `1.0.0`.
   benchmark baseline at release finalization, while stale development baselines,
   missing evidence-index release facts, and repeated workflow artifact labels
   still fail.
+- Refactor release tooling, fixture registries and three condition guards
+  for code health without behavior changes, with one documented rule exception
+  for the negative compiler-fixture table.
 - Reject symbolic links disguised as ZIP directories during artifact certification.
 - Pin the CI branch-coverage lane to stable Xdebug 3.5.3 so PHP 8.5 does not
   install an alpha coverage driver that misreports branch coverage.

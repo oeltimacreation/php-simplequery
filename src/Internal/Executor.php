@@ -267,13 +267,22 @@ final readonly class Executor
 
             throw $exception;
         } finally {
-            if (!$retainStatement && !$cleanupAttempted && $statement instanceof PDOStatement) {
-                try {
-                    $statement->closeCursor();
-                } catch (PDOException) {
-                    // A prior result or failure remains authoritative.
-                }
+            if (!$retainStatement && !$cleanupAttempted) {
+                $this->closeStatementQuietly($statement);
             }
+        }
+    }
+
+    private function closeStatementQuietly(?PDOStatement $statement): void
+    {
+        if (!$statement instanceof PDOStatement) {
+            return;
+        }
+
+        try {
+            $statement->closeCursor();
+        } catch (PDOException) {
+            // A prior result or failure remains authoritative.
         }
     }
 
