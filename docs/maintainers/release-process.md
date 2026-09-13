@@ -2,8 +2,10 @@
 
 ## Before release
 
-1. Create `release/<version>` from the default branch; never cut a stable
-   release directly from a feature branch.
+1. Merge the reviewed candidate pull request into the default branch, then
+   create `release/<version>` from the default branch for release finalization
+   (dated changelog, support notes, plan retirement). Never tag an unreviewed
+   feature branch directly.
 2. Confirm all required CI and scheduled database/proxy jobs are green.
 3. Review the public database support matrix and tested minimums.
 4. Run the complete test, coverage, static-analysis, style, audit, example, and
@@ -71,6 +73,17 @@ latest dated changelog release with support/security, installation guidance,
 the active development plan and benchmark inputs. Missing or mutually stale
 facts fail rather than silently skipping validation. A malformed latest release
 cannot fall back to an older valid heading.
+
+Release state is explicit. During development zero or one versioned plan is
+valid; a present plan must target a version newer than the latest dated release.
+After publication the completed plan is removed and a plan-free tree remains
+valid, so release finalization does not need a speculative successor plan. The
+benchmark baseline named by CI must be referenced by the benchmarking guide and
+must identify the latest dated release; when no newer plan exists it may still
+identify the previous release until the post-publication baseline bump. The
+evidence index must reference the dated release, maintained index documents
+must reference the active plan, and every workflow artifact upload needs a
+unique name label.
 
 A self-consistent old source snapshot cannot prove what was published elsewhere.
 When certifying provenance, supply the independently verified immutable tag

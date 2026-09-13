@@ -22,6 +22,10 @@ with ZeroVer releases before `1.0.0`.
 
 ### Fixed
 
+- Allow a well-defined plan-free post-release state and a previous-release
+  benchmark baseline at release finalization, while stale development baselines,
+  missing evidence-index release facts, and repeated workflow artifact labels
+  still fail.
 - Reject symbolic links disguised as ZIP directories during artifact certification.
 - Reject missing, malformed and stale release facts, with an explicit published-version input for independent provenance checks.
 - Reject failed SQLite busy-timeout reads instead of accepting them as a declared zero timeout.

@@ -129,7 +129,10 @@ final class ReleaseConsistencyChecker
     {
         $planName = $activePlan->getFilename();
         $errors = [];
-        foreach (['docs/README.md', 'docs/maintainers/README.md', 'docs/plans/README.md'] as $indexDoc) {
+        foreach (
+            ['docs/README.md', 'docs/maintainers/README.md', 'docs/plans/README.md',
+            'docs/evidence/README.md'] as $indexDoc
+        ) {
             $indexPath = $this->root . '/' . $indexDoc;
             if (!is_file($indexPath)) {
                 continue;

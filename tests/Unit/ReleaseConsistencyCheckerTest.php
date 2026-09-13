@@ -21,6 +21,7 @@ final class ReleaseConsistencyCheckerTest extends TestCase
         $root = sys_get_temp_dir() . '/simplequery-release-test-' . bin2hex(random_bytes(8));
         mkdir($root . '/docs/plans', 0777, true);
         mkdir($root . '/docs/maintainers', 0777, true);
+        mkdir($root . '/docs/evidence', 0777, true);
         mkdir($root . '/.codescene', 0777, true);
         mkdir($root . '/.github/workflows', 0777, true);
         $this->root = $root;
@@ -36,6 +37,10 @@ final class ReleaseConsistencyCheckerTest extends TestCase
         file_put_contents($root . '/docs/plans/README.md', '[Active Plan](0.6.md)');
         file_put_contents($root . '/docs/README.md', '[Active Plan](plans/0.6.md)');
         file_put_contents($root . '/docs/maintainers/README.md', '[Active Plan](../plans/0.6.md)');
+        file_put_contents(
+            $root . '/docs/evidence/README.md',
+            "[Active Plan](../plans/0.6.md)\n\n`0.5.0` release evidence.\n",
+        );
 
         file_put_contents($root . '/CHANGELOG.md', "## [Unreleased]\n\n## [0.5.0] - 2026-08-18\n"
             . "[Unreleased]: https://example.test/compare/v0.5.0...HEAD\n");
@@ -92,7 +97,8 @@ final class ReleaseConsistencyCheckerTest extends TestCase
     {
         foreach (
             ['composer.json', 'CHANGELOG.md', 'README.md', 'SECURITY.md', 'SUPPORT.md',
-            '.github/workflows/ci.yml', 'docs/maintainers/benchmarking.md'] as $file
+            '.github/workflows/ci.yml', 'docs/maintainers/benchmarking.md',
+            'docs/evidence/README.md'] as $file
         ) {
             yield $file => [$file];
         }
@@ -125,6 +131,160 @@ final class ReleaseConsistencyCheckerTest extends TestCase
     {
         $checker = new ReleaseConsistencyChecker();
         self::assertSame([], $checker->check($this->root));
+    }
+
+    public function testPlanFreePostReleaseStatePasses(): void
+    {
+        unlink($this->root . '/docs/plans/0.6.md');
+
+        self::assertSame([], (new ReleaseConsistencyChecker())->check($this->root));
+    }
+
+    public function testActivePlanMustTargetNewerThanTheDatedRelease(): void
+    {
+        unlink($this->root . '/docs/plans/0.6.md');
+        file_put_contents($this->root . '/docs/plans/0.5.md', "# Stale plan\n");
+
+        $errors = (new ReleaseConsistencyChecker())->check($this->root);
+
+        self::assertStringContainsString(
+            'The active development plan must target a version newer than the dated release.',
+            implode(' ', $errors),
+        );
+    }
+
+    public function testPreviousReleaseBaselineIsAllowedWhenNoNewerPlanExists(): void
+    {
+        $this->writeReleaseState('0.6.0', '0.5.0', 'v0.5.0', null);
+
+        self::assertSame([], (new ReleaseConsistencyChecker())->check($this->root));
+    }
+
+    public function testStaleBaselineFailsDuringDevelopment(): void
+    {
+        $this->writeReleaseState('0.6.0', '0.5.0', 'v0.4.0', '0.7.md');
+
+        $errors = (new ReleaseConsistencyChecker())->check($this->root);
+
+        self::assertStringContainsString(
+            'The benchmark baseline v0.4.0 must identify v0.6.0.',
+            implode(' ', $errors),
+        );
+    }
+
+    public function testBenchmarkDocumentationMustReferenceTheCiBaseline(): void
+    {
+        file_put_contents(
+            $this->root . '/docs/maintainers/benchmarking.md',
+            "Comparing against immutable `v0.4.0`.\n",
+        );
+
+        $errors = (new ReleaseConsistencyChecker())->check($this->root);
+
+        self::assertStringContainsString(
+            'docs/maintainers/benchmarking.md must reference the CI benchmark baseline v0.5.0 exactly once.',
+            implode(' ', $errors),
+        );
+    }
+
+    public function testEvidenceIndexMustReferenceTheDatedRelease(): void
+    {
+        file_put_contents($this->root . '/docs/evidence/README.md', "[Active Plan](../plans/0.6.md)\n");
+
+        $errors = (new ReleaseConsistencyChecker())->check($this->root);
+
+        self::assertStringContainsString(
+            'docs/evidence/README.md must reference the dated release 0.5.0.',
+            implode(' ', $errors),
+        );
+    }
+
+    public function testArtifactUploadsRequireUniqueNamedLabels(): void
+    {
+        $this->appendWorkflow(
+            "      - uses: actions/upload-artifact@abc\n        with:\n          name: fixture-report\n"
+            . "      - uses: actions/upload-artifact@abc\n        with:\n          name: fixture-report\n",
+        );
+
+        $errors = (new ReleaseConsistencyChecker())->check($this->root);
+
+        self::assertStringContainsString(
+            '.github/workflows/ci.yml repeats the artifact label fixture-report.',
+            implode(' ', $errors),
+        );
+    }
+
+    public function testArtifactUploadWithoutLabelFails(): void
+    {
+        $this->appendWorkflow(
+            "      - uses: actions/upload-artifact@abc\n        with:\n          path: report.json\n",
+        );
+
+        $errors = (new ReleaseConsistencyChecker())->check($this->root);
+
+        self::assertStringContainsString(
+            '.github/workflows/ci.yml must give every artifact upload a name label.',
+            implode(' ', $errors),
+        );
+    }
+
+    private function appendWorkflow(string $block): void
+    {
+        $path = $this->root . '/.github/workflows/ci.yml';
+        $contents = file_get_contents($path);
+        self::assertIsString($contents);
+        file_put_contents($path, $contents . $block);
+    }
+
+    private function writeReleaseState(
+        string $version,
+        string $previous,
+        string $baselineTag,
+        ?string $plan,
+    ): void {
+        $series = substr($version, 0, (int) strrpos($version, '.'));
+        file_put_contents(
+            $this->root . '/CHANGELOG.md',
+            "## [Unreleased]\n\n## [$version] - 2026-08-24\n\n## [$previous] - 2026-08-18\n"
+            . "[Unreleased]: https://example.test/compare/v$version...HEAD\n",
+        );
+        file_put_contents($this->root . '/SECURITY.md', "| $series.x | ✅ Current release line |\n");
+        file_put_contents(
+            $this->root . '/SUPPORT.md',
+            "`$version` is the current minor release.\nPin `~$version`.\n",
+        );
+        file_put_contents(
+            $this->root . '/README.md',
+            "Run `composer check` and `composer install`.\n"
+            . "composer require oeltimacreation/php-simplequery:^$series\n",
+        );
+        file_put_contents(
+            $this->root . '/.github/workflows/ci.yml',
+            "git worktree add --detach \"\${baseline_dir}\" $baselineTag\n",
+        );
+        file_put_contents(
+            $this->root . '/docs/maintainers/benchmarking.md',
+            "Comparing against immutable `$baselineTag`.\n",
+        );
+        $planFiles = glob($this->root . '/docs/plans/[0-9]*.md');
+        if (is_array($planFiles)) {
+            foreach ($planFiles as $planFile) {
+                unlink($planFile);
+            }
+        }
+        if ($plan !== null) {
+            file_put_contents($this->root . '/docs/plans/' . $plan, "# $plan\n");
+            foreach (
+                ['docs/README.md' => 'plans/', 'docs/maintainers/README.md' => '../plans/',
+                'docs/plans/README.md' => '', 'docs/evidence/README.md' => '../plans/'] as $index => $prefix
+            ) {
+                file_put_contents($this->root . '/' . $index, "[Active Plan]($prefix$plan)\n");
+            }
+        }
+        file_put_contents(
+            $this->root . '/docs/evidence/README.md',
+            ($plan === null ? '' : "[Active Plan](../plans/$plan)\n\n") . "`$version` release evidence.\n",
+        );
     }
 
     public function testMultipleActivePlansAreRejected(): void
