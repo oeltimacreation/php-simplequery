@@ -237,8 +237,11 @@ jobs:
           if [ "${baseline_order_status}" -ne 0 ] || [ "${candidate_order_status}" -ne 0 ]; then
             exit 1
           fi
-          php -r '$blocking = static function (string $path): array { $data = json_decode(file_get_contents($path), true, 512, JSON_THROW_ON_ERROR); $result = []; foreach (($data["performance_review"]["measurements"] ?? []) as $scenario => $operations) { foreach ($operations as $operation => $measurement) { if (($measurement["review_required"] ?? false) === true) { $result[] = $scenario . "/" . $operation; } } } return $result; }; $baseline = $blocking("benchmarks/results/release-comparison-baseline-first.json"); $candidate = $blocking("benchmarks/results/release-comparison-candidate-first.json"); $repeatable = array_values(array_intersect($baseline, $candidate)); if ($repeatable !== []) { fwrite(STDERR, "Repeatable benchmark regressions: " . implode(", ", $repeatable) . PHP_EOL); exit(1); } if ($baseline !== [] || $candidate !== []) { fwrite(STDOUT, "Non-repeatable source-order benchmark signals retained in the comparison artifacts." . PHP_EOL); }'
+          php scripts/check-benchmark-comparison.php \
+            benchmarks/results/release-comparison-baseline-first.json \
+            benchmarks/results/release-comparison-candidate-first.json
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        if: always()
         with:
           name: reproducible-benchmark-reports
           path: benchmarks/results/*.json
