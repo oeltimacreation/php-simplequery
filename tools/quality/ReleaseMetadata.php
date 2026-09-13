@@ -263,19 +263,32 @@ final class ReleaseMetadata
     {
         $files = [];
         foreach (['yml', 'yaml'] as $extension) {
-            $found = glob($root . '/.github/workflows/*.' . $extension);
-            if (!is_array($found)) {
-                continue;
-            }
-            foreach ($found as $path) {
-                $contents = file_get_contents($path);
-                if (is_string($contents)) {
-                    $files[$this->relativePath($root, $path)] = $contents;
-                }
+            $files += $this->extensionWorkflowFiles($root, $extension);
+        }
+
+        return $files;
+    }
+
+    /** @return array<string, string> */
+    private function extensionWorkflowFiles(string $root, string $extension): array
+    {
+        $files = [];
+        foreach ($this->workflowPaths($root, $extension) as $path) {
+            $contents = file_get_contents($path);
+            if (is_string($contents)) {
+                $files[$this->relativePath($root, $path)] = $contents;
             }
         }
 
         return $files;
+    }
+
+    /** @return list<string> */
+    private function workflowPaths(string $root, string $extension): array
+    {
+        $found = glob($root . '/.github/workflows/*.' . $extension);
+
+        return is_array($found) ? $found : [];
     }
 
     private function relativePath(string $root, string $path): string

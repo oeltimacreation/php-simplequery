@@ -364,4 +364,31 @@ final class ReleaseConsistencyCheckerTest extends TestCase
             $errors[0],
         );
     }
+
+    public function testCodeSceneGlobPathIsResolved(): void
+    {
+        file_put_contents($this->root . '/.codescene/code-health-rules.json', json_encode([
+            'rule_sets' => [
+                ['matching_content_path' => 'docs/*.md'],
+            ],
+        ], JSON_PRETTY_PRINT));
+
+        self::assertSame([], (new ReleaseConsistencyChecker())->check($this->root));
+    }
+
+    public function testUnmatchedCodeSceneGlobPathIsReported(): void
+    {
+        file_put_contents($this->root . '/.codescene/code-health-rules.json', json_encode([
+            'rule_sets' => [
+                ['matching_content_path' => 'docs/missing/*.md'],
+            ],
+        ], JSON_PRETTY_PRINT));
+
+        $errors = (new ReleaseConsistencyChecker())->check($this->root);
+
+        self::assertStringContainsString(
+            '.codescene/code-health-rules.json configures non-existent path: docs/missing/*.md.',
+            implode(' ', $errors),
+        );
+    }
 }

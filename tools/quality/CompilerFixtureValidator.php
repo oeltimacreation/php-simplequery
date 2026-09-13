@@ -216,14 +216,30 @@ final class CompilerFixtureValidator
     /** @param array<mixed> $case */
     private function assertBindingLists(array $case): void
     {
-        $values = $case['bindings'] ?? null;
-        $types = $case['types'] ?? null;
+        $values = $this->bindingList($case, 'bindings');
+        $types = $this->bindingList($case, 'types');
+        if (count($values) !== count($types)) {
+            throw new RuntimeException('Compiler bindings and types must be matching ordered lists.');
+        }
+        $this->assertBindingTypes($types);
+    }
+
+    /** @param array<mixed> $case
+     * @return list<mixed>
+     */
+    private function bindingList(array $case, string $key): array
+    {
+        $values = $case[$key] ?? null;
         if (!is_array($values) || !array_is_list($values)) {
             throw new RuntimeException('Compiler bindings and types must be matching ordered lists.');
         }
-        if (!is_array($types) || !array_is_list($types) || count($values) !== count($types)) {
-            throw new RuntimeException('Compiler bindings and types must be matching ordered lists.');
-        }
+
+        return $values;
+    }
+
+    /** @param list<mixed> $types */
+    private function assertBindingTypes(array $types): void
+    {
         foreach ($types as $type) {
             if (!in_array($type, ['null', 'integer', 'string', 'binary', 'lob'], true)) {
                 throw new RuntimeException('Unknown compiler binding type.');

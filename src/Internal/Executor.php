@@ -232,14 +232,7 @@ final readonly class Executor
                 throw $this->invalidResult('PDO could not prepare the statement.', $query);
             }
             $statement = $prepared;
-            foreach ($query->bindings as $index => $binding) {
-                if (!$statement->bindValue($index + 1, $binding->value, self::pdoType($binding->type))) {
-                    throw $this->invalidResult('PDO could not bind a statement parameter.', $query);
-                }
-            }
-            if (!$statement->execute()) {
-                throw $this->invalidResult('PDO could not execute the statement.', $query);
-            }
+            $this->bindAndExecute($statement, $query);
 
             $result = $operation($statement, $pdo);
             $affectedRows = null;
@@ -270,6 +263,18 @@ final readonly class Executor
             if (!$retainStatement && !$cleanupAttempted) {
                 $this->closeStatementQuietly($statement);
             }
+        }
+    }
+
+    private function bindAndExecute(PDOStatement $statement, CompiledQuery $query): void
+    {
+        foreach ($query->bindings as $index => $binding) {
+            if (!$statement->bindValue($index + 1, $binding->value, self::pdoType($binding->type))) {
+                throw $this->invalidResult('PDO could not bind a statement parameter.', $query);
+            }
+        }
+        if (!$statement->execute()) {
+            throw $this->invalidResult('PDO could not execute the statement.', $query);
         }
     }
 

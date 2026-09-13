@@ -73,12 +73,8 @@ final class PackageVerifier
                 throw new RuntimeException('Malformed package entry.');
             }
             $this->assertNotLink($zip, $index);
-            $name = substr($stat['name'], strlen($prefix));
-            if ($name === '') {
-                continue;
-            }
-            $this->validateName(rtrim($name, '/'));
-            if (str_ends_with($name, '/')) {
+            $name = $this->entryName($stat['name'], $prefix);
+            if ($name === null) {
                 continue;
             }
             if (isset($files[$name])) {
@@ -89,6 +85,20 @@ final class PackageVerifier
         }
 
         return ['files' => $files, 'bytes' => $bytes];
+    }
+
+    private function entryName(string $entry, string $prefix): ?string
+    {
+        $name = substr($entry, strlen($prefix));
+        if ($name === '') {
+            return null;
+        }
+        $this->validateName(rtrim($name, '/'));
+        if (str_ends_with($name, '/')) {
+            return null;
+        }
+
+        return $name;
     }
 
     private function assertNotLink(ZipArchive $zip, int $index): void

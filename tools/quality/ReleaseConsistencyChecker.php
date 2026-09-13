@@ -55,17 +55,9 @@ final class ReleaseConsistencyChecker
     /** @return array{names: list<string>, errors: list<string>} */
     private function composerScripts(): array
     {
-        $path = $this->root . '/composer.json';
-        if (!is_file($path)) {
-            return ['names' => [], 'errors' => ['composer.json is missing.']];
-        }
-        $contents = file_get_contents($path);
-        if (!is_string($contents)) {
-            return ['names' => [], 'errors' => ['Could not read composer.json.']];
-        }
-        $composer = json_decode($contents, true);
-        if (!is_array($composer) || !is_array($composer['scripts'] ?? null) || $composer['scripts'] === []) {
-            return ['names' => [], 'errors' => ['composer.json must contain a non-empty scripts object.']];
+        $composer = $this->composerData();
+        if (is_string($composer)) {
+            return ['names' => [], 'errors' => [$composer]];
         }
         $names = [];
         foreach (array_keys($composer['scripts']) as $name) {
@@ -76,6 +68,29 @@ final class ReleaseConsistencyChecker
         }
 
         return ['names' => $names, 'errors' => []];
+    }
+
+    /** @return array{scripts: array<mixed>}|string */
+    private function composerData(): array|string
+    {
+        $path = $this->root . '/composer.json';
+        if (!is_file($path)) {
+            return 'composer.json is missing.';
+        }
+        $contents = file_get_contents($path);
+        if (!is_string($contents)) {
+            return 'Could not read composer.json.';
+        }
+        $composer = json_decode($contents, true);
+        if (!is_array($composer)) {
+            return 'composer.json must contain a non-empty scripts object.';
+        }
+        $scripts = $composer['scripts'] ?? null;
+        if (!is_array($scripts) || $scripts === []) {
+            return 'composer.json must contain a non-empty scripts object.';
+        }
+
+        return ['scripts' => $scripts];
     }
 
     /** @param list<string> $definedScripts
@@ -309,15 +324,27 @@ final class ReleaseConsistencyChecker
 
         foreach ($codescene['rule_sets'] ?? [] as $ruleSet) {
             $path = $ruleSet['matching_content_path'] ?? null;
-            if ($path !== null && !file_exists($this->root . '/' . $path)) {
-                $errors[] = sprintf(
-                    '.codescene/code-health-rules.json configures non-existent path: %s.',
-                    $path,
-                );
+            if ($path === null || $this->configurationPathExists($path)) {
+                continue;
             }
+            $errors[] = sprintf(
+                '.codescene/code-health-rules.json configures non-existent path: %s.',
+                $path,
+            );
         }
 
         return $errors;
+    }
+
+    private function configurationPathExists(string $path): bool
+    {
+        if (str_contains($path, '*')) {
+            $matches = glob($this->root . '/' . $path);
+
+            return is_array($matches) && $matches !== [];
+        }
+
+        return file_exists($this->root . '/' . $path);
     }
 
     /** @return list<SplFileInfo> */
