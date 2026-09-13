@@ -11,6 +11,9 @@ with ZeroVer releases before `1.0.0`.
 ### Changed
 
 - Clarify that trusted raw SQL literals and retained exception chains may contain sensitive diagnostics.
+- Record hosted candidate source provenance and the pending remote CI path, and
+  clarify that soak retained growth is measured per operation across timed
+  samples.
 - Recertify retained database and proxy fixtures across prepare/buffering modes, and add actual SQLite 3.39.2 execution with explicit upstream-maintenance guidance.
 - Reuse required affected-row counts and avoid generated-ID metadata reads when observation is disabled, preserving write and failure semantics.
 - Retain contextual eager and cursor row validation after review, avoiding an additional per-row error-factory interface.
