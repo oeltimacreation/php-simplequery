@@ -3,13 +3,16 @@
   "features": {
     "aliases": {
       "mariadb": [
-        "mariadb-composition"
+        "mariadb-composition",
+        "mariadb-golden-select"
       ],
       "mysql": [
-        "mysql-composition"
+        "mysql-composition",
+        "mysql-golden-select"
       ],
       "sqlite": [
-        "sqlite-composition"
+        "sqlite-composition",
+        "sqlite-golden-select"
       ]
     },
     "between": {
@@ -53,7 +56,8 @@
         "mysql-delete"
       ],
       "sqlite": [
-        "sqlite-delete"
+        "sqlite-delete",
+        "sqlite-delete-enabled"
       ]
     },
     "derived_sources": {
@@ -135,7 +139,8 @@
     },
     "insert": {
       "mariadb": [
-        "mariadb-insert"
+        "mariadb-insert",
+        "mariadb-insert-raw"
       ],
       "mysql": [
         "mysql-insert"
@@ -174,7 +179,8 @@
         "mysql-list-filter"
       ],
       "sqlite": [
-        "sqlite-list-filter"
+        "sqlite-list-filter",
+        "sqlite-subquery"
       ]
     },
     "null_predicates": {
@@ -185,12 +191,14 @@
         "mysql-composition"
       ],
       "sqlite": [
-        "sqlite-composition"
+        "sqlite-composition",
+        "sqlite-null-empty-list"
       ]
     },
     "ordering_and_pagination": {
       "mariadb": [
-        "mariadb-composition"
+        "mariadb-composition",
+        "mariadb-filter-order"
       ],
       "mysql": [
         "mysql-composition"
@@ -201,7 +209,8 @@
     },
     "raw_expressions": {
       "mariadb": [
-        "mariadb-composition"
+        "mariadb-composition",
+        "mariadb-insert-raw"
       ],
       "mysql": [
         "mysql-composition"
@@ -237,7 +246,8 @@
         "mariadb-update"
       ],
       "mysql": [
-        "mysql-update"
+        "mysql-update",
+        "mysql-update-events"
       ],
       "sqlite": [
         "sqlite-update"

@@ -63,6 +63,15 @@ final class CompilerFixtureValidatorTest extends TestCase
             case 'keyed bindings':
                 $fixtures['sqlite']['cases'][0]['bindings'] = ['named' => 1];
                 break;
+            case 'unreferenced case':
+                $fixtures['sqlite']['cases'][] = [
+                    'id' => 'sqlite-unreferenced',
+                    'sql' => 'SELECT ?',
+                    'bindings' => [1],
+                    'types' => ['integer'],
+                ];
+                $ids[] = 'sqlite-unreferenced';
+                break;
             case 'missing executable fixture':
                 $ids[] = 'sqlite-unrepresented';
                 break;
@@ -80,7 +89,7 @@ final class CompilerFixtureValidatorTest extends TestCase
             [
             'missing types', 'duplicate id', 'unknown id', 'missing dialect', 'orphan feature',
             'wrong dialect', 'unknown rejection', 'malformed schema', 'cardinality', 'unknown type',
-            'keyed bindings', 'missing executable fixture',
+            'keyed bindings', 'missing executable fixture', 'unreferenced case',
             ] as $fault
         ) {
             yield $fault => [$fault];

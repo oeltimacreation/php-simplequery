@@ -43,6 +43,7 @@ final class CompilerFixtureValidator
         if (($manifest['schema_version'] ?? null) !== 2 || !is_array($features) || $features === []) {
             throw new RuntimeException('Malformed compiler feature manifest.');
         }
+        $referenced = [];
         foreach ($features as $feature => $dialects) {
             if (!is_string($feature) || $feature === '' || !is_array($dialects)) {
                 throw new RuntimeException('Malformed compiler feature.');
@@ -62,10 +63,16 @@ final class CompilerFixtureValidator
                             continue;
                         }
                     } elseif (($ids[$reference] ?? null) === $driver) {
+                        $referenced[$reference] = true;
                         continue;
                     }
                     throw new RuntimeException('Unknown or wrong-dialect feature reference: ' . $reference);
                 }
+            }
+        }
+        foreach (array_keys($ids) as $id) {
+            if (!isset($referenced[$id])) {
+                throw new RuntimeException('Compiler case is not referenced by any feature: ' . $id);
             }
         }
     }
