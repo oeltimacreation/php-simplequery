@@ -12,6 +12,7 @@ use Oeltima\SimpleQuery\JoinClause;
 use Oeltima\SimpleQuery\ParameterType;
 use Oeltima\SimpleQuery\Testing\RecordingQueryObserver;
 use Oeltima\SimpleQuery\Tools\DatabaseProbe\ProbeTarget;
+use Oeltima\SimpleQuery\Tools\DatabaseProbe\LobResourceProbe;
 
 require dirname(__DIR__, 2) . '/vendor/autoload.php';
 
@@ -74,6 +75,12 @@ try {
         : 'SELECT VERSION() AS version';
     $versionRow = $connection->query($versionSql)->firstAssociative();
     $runtime['server_version'] = is_array($versionRow) ? ($versionRow['version'] ?? null) : null;
+
+    $observations[] = [
+        'name' => 'lob_resource_characterization',
+        'status' => 'observed',
+        'details' => (new LobResourceProbe())->run($connection),
+    ];
 
     $connection->query('DROP TABLE IF EXISTS simplequery_phase2_probe')->execute();
     $createSql = $driver === Driver::Sqlite

@@ -224,6 +224,7 @@ final readonly class Executor
         $observer = $this->connection->observer();
         $startedAt = $observer === null ? 0 : hrtime(true);
         $statement = null;
+        $cleanupAttempted = false;
 
         try {
             $prepared = $pdo->prepare($query->sql);
@@ -231,18 +232,15 @@ final readonly class Executor
                 throw $this->invalidResult('PDO could not prepare the statement.', $query);
             }
             $statement = $prepared;
-            foreach ($query->bindings as $index => $binding) {
-                if (!$statement->bindValue($index + 1, $binding->value, self::pdoType($binding->type))) {
-                    throw $this->invalidResult('PDO could not bind a statement parameter.', $query);
-                }
-            }
-            if (!$statement->execute()) {
-                throw $this->invalidResult('PDO could not execute the statement.', $query);
-            }
+            $this->bindAndExecute($statement, $query);
 
             $result = $operation($statement, $pdo);
-            $affectedRows = $affectedRowsMeaningful ? $statement->rowCount() : null;
+            $affectedRows = null;
+            if ($observer !== null && $affectedRowsMeaningful) {
+                $affectedRows = is_int($result) ? $result : $statement->rowCount();
+            }
             if (!$retainStatement) {
+                $cleanupAttempted = true;
                 $statement->closeCursor();
             }
             $this->notify($query, $startedAt, true, $affectedRows);
@@ -262,13 +260,34 @@ final readonly class Executor
 
             throw $exception;
         } finally {
-            if (!$retainStatement && $statement instanceof PDOStatement) {
-                try {
-                    $statement->closeCursor();
-                } catch (PDOException) {
-                    // A prior result or failure remains authoritative.
-                }
+            if (!$retainStatement && !$cleanupAttempted) {
+                $this->closeStatementQuietly($statement);
             }
+        }
+    }
+
+    private function bindAndExecute(PDOStatement $statement, CompiledQuery $query): void
+    {
+        foreach ($query->bindings as $index => $binding) {
+            if (!$statement->bindValue($index + 1, $binding->value, self::pdoType($binding->type))) {
+                throw $this->invalidResult('PDO could not bind a statement parameter.', $query);
+            }
+        }
+        if (!$statement->execute()) {
+            throw $this->invalidResult('PDO could not execute the statement.', $query);
+        }
+    }
+
+    private function closeStatementQuietly(?PDOStatement $statement): void
+    {
+        if (!$statement instanceof PDOStatement) {
+            return;
+        }
+
+        try {
+            $statement->closeCursor();
+        } catch (PDOException) {
+            // A prior result or failure remains authoritative.
         }
     }
 

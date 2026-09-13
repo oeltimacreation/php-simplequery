@@ -9,6 +9,11 @@ use PDOException;
 
 final class ControlledTransactionPdo extends PDO
 {
+    /** @var list<string> */
+    public array $controlCalls = [];
+
+    public bool $failInspectionAfterRollback = false;
+
     public bool $failBegin = false;
 
     public bool $failBeginAfterDispatch = false;
@@ -37,6 +42,7 @@ final class ControlledTransactionPdo extends PDO
     #[\Override]
     public function beginTransaction(): bool
     {
+        $this->controlCalls[] = 'begin';
         if ($this->failBegin) {
             throw new PDOException('Controlled begin failure.');
         }
@@ -52,6 +58,7 @@ final class ControlledTransactionPdo extends PDO
     #[\Override]
     public function commit(): bool
     {
+        $this->controlCalls[] = 'commit';
         if ($this->failCommit) {
             throw new PDOException('Controlled commit failure.');
         }
@@ -65,6 +72,7 @@ final class ControlledTransactionPdo extends PDO
     #[\Override]
     public function rollBack(): bool
     {
+        $this->controlCalls[] = 'rollback';
         if ($this->failRollback) {
             throw new PDOException('Controlled rollback failure.');
         }
@@ -72,7 +80,10 @@ final class ControlledTransactionPdo extends PDO
             return true;
         }
 
-        return parent::rollBack();
+        $result = parent::rollBack();
+        $this->failTransactionInspection = $this->failInspectionAfterRollback;
+
+        return $result;
     }
 
     #[\Override]
@@ -88,6 +99,7 @@ final class ControlledTransactionPdo extends PDO
     #[\Override]
     public function exec(string $statement): int|false
     {
+        $this->controlCalls[] = $statement;
         if ($this->failControlPrefix !== null && str_starts_with($statement, $this->failControlPrefix)) {
             throw new PDOException('Controlled transaction-control SQL failure.');
         }

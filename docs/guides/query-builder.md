@@ -351,3 +351,12 @@ The builder does not prevent a full-table update or delete. Teams should apply
 their own review or wrapper policy when that risk is unacceptable.
 
 See [results and writes](results-and-writes.md) for terminal return contracts.
+
+### Named condition arguments
+
+A bare raw predicate accepts only its subject. Supplying `value` while omitting
+`operatorOrValue` is rejected before attachment, including inside groups and
+having clauses. Raw join `on()`/`orOn()` likewise reject a supplied `right`
+without `operator`. Supply the complete comparison or bind values inside the
+raw expression. Failed multi-column `select()`/`groupBy()` calls still retain
+earlier valid columns; rebuild or clone before attempting such mutations.

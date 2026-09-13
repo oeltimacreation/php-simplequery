@@ -98,7 +98,8 @@
             "@examples:check",
             "@release:check",
             "@verify"
-        ]
+        ],
+        "package:check": "php scripts/check-package.php"
     },
     "config": {
         "allow-plugins": {
@@ -115,10 +116,23 @@
     "prefer-stable": true,
     "archive": {
         "exclude": [
-            "/.github/",
-            "/benchmarks/",
-            "/tests/",
-            "/tools/"
+            "/*",
+            "/.*",
+            "!/src/",
+            "!/docs/",
+            "!/examples/",
+            "!/composer.json",
+            "!/LICENSE",
+            "!/README.md",
+            "!/CHANGELOG.md",
+            "!/CONTRIBUTING.md",
+            "!/SECURITY.md",
+            "!/SUPPORT.md",
+            "**/.env",
+            "**/.env.*",
+            "**/vendor/",
+            "**/.cache/",
+            "**/coverage/"
         ]
     }
 }

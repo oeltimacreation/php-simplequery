@@ -91,14 +91,19 @@ builder operation also clears the development plan's decision rule.
 ## Comparison and noise policy
 
 For the current development plan, CI checks the candidate against a fresh
-worktree at immutable `v0.5.0`. Labels and report filenames remain generic:
+worktree at immutable `v0.6.0`. Labels and report filenames remain generic:
 `release-baseline`, `candidate`,
 `release-comparison-baseline-first.json`, and
 `release-comparison-candidate-first.json`. Both source orders use three warm-
 ups and nine samples per operation. The comparison rejects cross-source digest
 differences and marks any median increase above 5% for review. CI fails only
-when the same actionable regression reproduces in both source orders; a one-
-order signal remains in the reports as host/source-order variance.
+when the same candidate-operation regression reproduces in both source orders.
+Direct-PDO and named `*_control` operations are attribution evidence: a
+repeatable movement there is retained in the reports but never blocks, because
+it cannot be corrected in candidate code. A one-order candidate signal remains
+in the reports as host/source-order variance.
+`scripts/check-benchmark-comparison.php` applies the paired decision and
+rejects malformed reports; comparison reports upload even when it fails.
 
 Before the paired runs, CI performs five repeated identical-candidate runs with
 the same three warm-ups and nine samples. The absolute timing noise floor is

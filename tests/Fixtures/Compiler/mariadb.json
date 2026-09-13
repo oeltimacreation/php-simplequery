@@ -5,50 +5,130 @@
     {
       "id": "mariadb-list-filter",
       "sql": "SELECT `u`.* FROM `users` AS `u` WHERE `u`.`status` IN (?, ?)",
-      "bindings": ["active", "pending"],
-      "types": ["string", "string"]
+      "bindings": [
+        "active",
+        "pending"
+      ],
+      "types": [
+        "string",
+        "string"
+      ]
     },
     {
       "id": "mariadb-filter-order",
       "sql": "SELECT `id`, `email` FROM `users` WHERE `active` = ? ORDER BY `id` DESC LIMIT 5",
-      "bindings": [1]
+      "bindings": [
+        1
+      ],
+      "types": [
+        "integer"
+      ]
     },
     {
       "id": "mariadb-shared-lock",
       "sql": "SELECT * FROM `jobs` LOCK IN SHARE MODE NOWAIT",
-      "bindings": []
+      "bindings": [],
+      "types": []
     },
     {
       "id": "mariadb-insert",
       "sql": "INSERT INTO `users` (`email`, `active`) VALUES (?, ?)",
-      "bindings": ["fixture@example.test", 1]
+      "bindings": [
+        "fixture@example.test",
+        1
+      ],
+      "types": [
+        "string",
+        "integer"
+      ]
     },
     {
       "id": "mariadb-golden-select",
       "sql": "SELECT DISTINCT `u`.`id`, LOWER(?) AS normalized FROM `users` AS `u` LEFT JOIN `profiles` AS `p` ON `p`.`user_id` = `u`.`id` OR `p`.`visible` = ? WHERE (`u`.`status` = ? OR `u`.`deleted_at` IS NULL) AND `u`.`age` BETWEEN ? AND ? GROUP BY `u`.`id`, `u`.`email` HAVING `u`.`id` > ? OR COUNT(*) > ? ORDER BY FIELD(u.status, ?, ?) DESC LIMIT 25 OFFSET 5",
-      "bindings": ["FIRST", 1, "active", 18, 65, 10, 2, "active", "pending"]
+      "bindings": [
+        "FIRST",
+        1,
+        "active",
+        18,
+        65,
+        10,
+        2,
+        "active",
+        "pending"
+      ],
+      "types": [
+        "string",
+        "integer",
+        "string",
+        "integer",
+        "integer",
+        "integer",
+        "integer",
+        "string",
+        "string"
+      ]
     },
     {
       "id": "mariadb-insert-raw",
       "sql": "INSERT INTO `users` (`email`, `active`, `created_at`) VALUES (?, ?, CURRENT_TIMESTAMP)",
-      "bindings": ["a@example.test", 1],
-      "types": ["string", "integer"]
+      "bindings": [
+        "a@example.test",
+        1
+      ],
+      "types": [
+        "string",
+        "integer"
+      ]
     },
     {
       "id": "mariadb-insert-many",
       "sql": "INSERT INTO `users` (`email`, `active`) VALUES (?, ?), (?, ?)",
-      "bindings": ["a@example.test", 1, "b@example.test", 0],
-      "types": ["string", "integer", "string", "integer"]
+      "bindings": [
+        "a@example.test",
+        1,
+        "b@example.test",
+        0
+      ],
+      "types": [
+        "string",
+        "integer",
+        "string",
+        "integer"
+      ]
     },
     {
       "id": "mariadb-update",
       "sql": "UPDATE `users` SET `email` = ? WHERE `id` = ?",
-      "bindings": ["updated@example.test", 7]
+      "bindings": [
+        "updated@example.test",
+        7
+      ],
+      "types": [
+        "string",
+        "integer"
+      ]
     },
     {
       "id": "mariadb-delete",
       "sql": "DELETE FROM `users` WHERE `deleted_at` IS NOT NULL",
-      "bindings": []
+      "bindings": [],
+      "types": []
+    },
+    {
+      "id": "mariadb-composition",
+      "sql": "SELECT DISTINCT `snapshot`.`id` FROM (SELECT * FROM `items` WHERE `id` BETWEEN ? AND ?) AS `snapshot` INNER JOIN `owners` ON `owners`.`id` = `snapshot`.`id` LEFT JOIN `profiles` ON `profiles`.`id` = `snapshot`.`id` WHERE (`snapshot`.`id` > ? OR `snapshot`.`id` IS NULL) AND 0 = 1 GROUP BY `snapshot`.`id` HAVING COUNT(*) > ? ORDER BY `snapshot`.`id` ASC LIMIT 3 OFFSET 1",
+      "bindings": [
+        1,
+        9,
+        2,
+        0
+      ],
+      "types": [
+        "integer",
+        "integer",
+        "integer",
+        "integer"
+      ]
     }
   ]
 }

@@ -5,49 +5,120 @@
     {
       "id": "sqlite-list-filter",
       "sql": "SELECT \"u\".* FROM \"users\" AS \"u\" WHERE \"u\".\"status\" IN (?, ?)",
-      "bindings": ["active", "pending"],
-      "types": ["string", "string"]
+      "bindings": [
+        "active",
+        "pending"
+      ],
+      "types": [
+        "string",
+        "string"
+      ]
     },
     {
       "id": "sqlite-null-empty-list",
       "sql": "SELECT * FROM \"users\" WHERE \"deleted_at\" IS NULL AND 0 = 1",
-      "bindings": []
+      "bindings": [],
+      "types": []
     },
     {
       "id": "sqlite-subquery",
       "sql": "SELECT * FROM \"users\" WHERE \"id\" IN (SELECT \"user_id\" FROM \"roles\" WHERE \"active\" = ?)",
-      "bindings": [1]
+      "bindings": [
+        1
+      ],
+      "types": [
+        "integer"
+      ]
     },
     {
       "id": "sqlite-delete",
       "sql": "DELETE FROM \"users\" WHERE \"id\" = ?",
-      "bindings": [7]
+      "bindings": [
+        7
+      ],
+      "types": [
+        "integer"
+      ]
     },
     {
       "id": "sqlite-golden-select",
       "sql": "SELECT \"u\".\"id\", \"p\".\"display_name\" FROM \"users\" AS \"u\" LEFT JOIN \"profiles\" ON \"profiles\".\"user_id\" = \"u\".\"id\" WHERE \"u\".\"active\" = ? OR (\"u\".\"deleted_at\" IS NULL AND \"u\".\"status\" <> ?) GROUP BY \"u\".\"id\" HAVING \"u\".\"id\" > ? ORDER BY \"u\".\"id\" ASC LIMIT 20 OFFSET 0",
-      "bindings": [1, "blocked", 0]
+      "bindings": [
+        1,
+        "blocked",
+        0
+      ],
+      "types": [
+        "integer",
+        "string",
+        "integer"
+      ]
     },
     {
       "id": "sqlite-insert",
       "sql": "INSERT INTO \"users\" (\"name\", \"enabled\") VALUES (?, ?)",
-      "bindings": ["A", 1]
+      "bindings": [
+        "A",
+        1
+      ],
+      "types": [
+        "string",
+        "integer"
+      ]
     },
     {
       "id": "sqlite-insert-many",
       "sql": "INSERT INTO \"users\" (\"name\", \"enabled\") VALUES (?, ?), (?, ?)",
-      "bindings": ["A", 1, "B", 0],
-      "types": ["string", "integer", "string", "integer"]
+      "bindings": [
+        "A",
+        1,
+        "B",
+        0
+      ],
+      "types": [
+        "string",
+        "integer",
+        "string",
+        "integer"
+      ]
     },
     {
       "id": "sqlite-update",
       "sql": "UPDATE \"users\" SET \"name\" = ? WHERE \"id\" = ?",
-      "bindings": ["Updated", 1]
+      "bindings": [
+        "Updated",
+        1
+      ],
+      "types": [
+        "string",
+        "integer"
+      ]
     },
     {
       "id": "sqlite-delete-enabled",
       "sql": "DELETE FROM \"users\" WHERE \"enabled\" = ?",
-      "bindings": [0]
+      "bindings": [
+        0
+      ],
+      "types": [
+        "integer"
+      ]
+    },
+    {
+      "id": "sqlite-composition",
+      "sql": "SELECT DISTINCT \"snapshot\".\"id\" FROM (SELECT * FROM \"items\" WHERE \"id\" BETWEEN ? AND ?) AS \"snapshot\" INNER JOIN \"owners\" ON \"owners\".\"id\" = \"snapshot\".\"id\" LEFT JOIN \"profiles\" ON \"profiles\".\"id\" = \"snapshot\".\"id\" WHERE (\"snapshot\".\"id\" > ? OR \"snapshot\".\"id\" IS NULL) AND 0 = 1 GROUP BY \"snapshot\".\"id\" HAVING COUNT(*) > ? ORDER BY \"snapshot\".\"id\" ASC LIMIT 3 OFFSET 1",
+      "bindings": [
+        1,
+        9,
+        2,
+        0
+      ],
+      "types": [
+        "integer",
+        "integer",
+        "integer",
+        "integer"
+      ]
     }
   ]
 }

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Oeltima\SimpleQuery\Expression;
 
-use Oeltima\SimpleQuery\Binding;
+use Oeltima\SimpleQuery\Internal\InputNormalizer;
 use Oeltima\SimpleQuery\Exception\InvalidQueryException;
 
 final readonly class RawExpression
 {
     /**
-     * @var list<Binding>
+     * @var list<\Oeltima\SimpleQuery\Binding>
      */
     public array $bindings;
 
@@ -23,19 +23,6 @@ final readonly class RawExpression
             throw new InvalidQueryException('Trusted raw SQL cannot be empty.');
         }
 
-        $this->bindings = self::normalizedBindings($bindings);
-    }
-
-    /**
-     * @param array<mixed> $bindings
-     * @return list<Binding>
-     */
-    private static function normalizedBindings(array $bindings): array
-    {
-        if (!array_is_list($bindings)) {
-            throw new InvalidQueryException('Raw bindings must be an ordered list.');
-        }
-
-        return array_map(Binding::fromValue(...), $bindings);
+        $this->bindings = InputNormalizer::rawBindings($bindings, 'Raw bindings must be an ordered list.');
     }
 }

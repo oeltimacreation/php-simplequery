@@ -28,6 +28,9 @@ silently rewriting the original decision.
 | [020](020-sqlite-immediate-transaction-mode.md) | Reject managed SQLite transaction modes | Accepted |
 | [021](021-conditional-builder-and-pagination.md) | Conditional builder and pagination helpers | Accepted |
 
+| [022](022-malformed-condition-arguments.md) | Reject condition argument holes | Accepted |
+| [023](023-release-consistency-states.md) | Release consistency states and benchmark baselines | Accepted |
+
 ## Format
 
 Each record includes status, date, context, decision, and consequences. New

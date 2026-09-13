@@ -139,10 +139,10 @@ commonly prevents use of that ordinary index unless the engine and schema have
 a matching functional/expression index. Confirm important cases with the
 engine's query-plan tooling and production-like data.
 
-The current [maintainability and performance evidence](../evidence/0.5-maintainability-and-performance.md)
-records correctness-gated performance and memory results. Query-plan behavior
-remains engine- and schema-specific; the builder does not control application
-indexes.
+The current [`0.6.0` release certification](../evidence/0.6-phase-6-release-certification.md)
+and its linked phase records contain correctness-gated performance and memory
+results. Query-plan behavior remains engine- and schema-specific; the builder
+does not control application indexes.
 
 Trusted raw expression comparisons are available for genuinely required
 vendor functions, but their convenience does not make the resulting query
@@ -186,3 +186,21 @@ Scheduled runs add four-process compile/lifecycle soak evidence.
 Release review compares wall time, peak memory, allocation data where
 available, correctness, and complexity growth. Fragile per-commit microsecond
 limits are avoided.
+
+## Caller-owned LOB bindings
+
+`ParameterType::Lob` accepts a resource at construction. The application owns
+its lifetime and position. SimpleQuery does not rewind, copy, buffer or close
+that resource. Reusing a binding, raw query, clone or attached subquery shares
+the same external state: snapshots isolate query structure, not stream bytes.
+Supply fresh resources or explicitly manage their position for repeated work.
+A resource closed before binding construction is rejected. Closing it afterward
+leaves execution handling to PDO; do not depend on a portable exception shape.
+
+The maintained execution probe characterizes current-position, repeated, empty,
+closed, non-stream and non-seekable resource behavior without changing accepted
+types. On local PDO SQLite 3.45.1, `abcdef` at position 2 yields `cdef`, then an
+empty payload on reuse, and `abcdef` after caller rewind. These are observed
+SQLite results, not promises for MySQL/MariaDB. Driver and prepare-mode results
+belong in the live qualification evidence. Synthetic probe output retains
+lengths, hashes and exception classes rather than raw driver messages.

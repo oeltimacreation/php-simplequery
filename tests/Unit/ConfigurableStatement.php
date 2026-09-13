@@ -36,6 +36,18 @@ final class ConfigurableStatement extends PDOStatement
 
     public static bool $closed = false;
 
+    public static int $closeCalls = 0;
+
+    public static int $rowCountCalls = 0;
+
+    public static bool $bindReturnsFalse = false;
+
+    public static bool $executeReturnsFalse = false;
+
+    public static int $executeCalls = 0;
+
+    public static ?int $rowCountThrowsOnCall = null;
+
     protected function __construct()
     {
     }
@@ -48,6 +60,12 @@ final class ConfigurableStatement extends PDOStatement
         self::$closeThrows = false;
         self::$closeReturnsFalse = false;
         self::$closed = false;
+        self::$closeCalls = 0;
+        self::$rowCountCalls = 0;
+        self::$bindReturnsFalse = false;
+        self::$executeReturnsFalse = false;
+        self::$executeCalls = 0;
+        self::$rowCountThrowsOnCall = null;
     }
 
     public static function returns(mixed $row, bool $once = false): void
@@ -90,9 +108,36 @@ final class ConfigurableStatement extends PDOStatement
     }
 
     #[\Override]
+    public function bindValue(string|int $param, mixed $value, int $type = PDO::PARAM_STR): bool
+    {
+        return self::$bindReturnsFalse ? false : parent::bindValue($param, $value, $type);
+    }
+
+    /** @param array<array-key, mixed>|null $params */
+    #[\Override]
+    public function execute(?array $params = null): bool
+    {
+        ++self::$executeCalls;
+
+        return self::$executeReturnsFalse ? false : parent::execute($params);
+    }
+
+    #[\Override]
+    public function rowCount(): int
+    {
+        ++self::$rowCountCalls;
+        if (self::$rowCountThrowsOnCall === self::$rowCountCalls) {
+            throw new PDOException('Controlled affected-row failure.');
+        }
+
+        return parent::rowCount();
+    }
+
+    #[\Override]
     public function closeCursor(): bool
     {
         self::$closed = true;
+        ++self::$closeCalls;
 
         if (self::$closeThrows) {
             throw new PDOException(self::DEFAULT_CLOSE_FAILURE);

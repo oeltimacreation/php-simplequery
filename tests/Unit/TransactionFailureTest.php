@@ -12,6 +12,7 @@ use Oeltima\SimpleQuery\Exception\TransactionException;
 use Oeltima\SimpleQuery\Exception\TransactionStateException;
 use PDOException;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -32,6 +33,81 @@ final class TransactionFailureTest extends TestCase
             self::assertTrue($exception->connectionUnusable);
         }
 
+        $pdo->failTransactionInspection = false;
+        $this->assertQuarantined($connection);
+        $connection->close();
+    }
+
+    #[DataProvider('inspectionCompletions')]
+    public function testCompletionInspectionPreservesEvidence(int $depth, bool $throws): void
+    {
+        [$pdo, $connection] = $this->connection();
+        $original = new RuntimeException('Synthetic callback failure.');
+        $calls = [];
+        $callback = static function () use ($pdo, $original, $throws, &$calls): void {
+            $calls = $pdo->controlCalls;
+            $pdo->failTransactionInspection = true;
+            if ($throws) {
+                throw $original;
+            }
+        };
+        try {
+            $connection->transaction(static function (Connection $db) use ($depth, $callback): void {
+                if ($depth === 2) {
+                    $db->transaction($callback);
+                } else {
+                    $callback();
+                }
+            });
+            self::fail('Inspection unexpectedly succeeded.');
+        } catch (TransactionStateException $exception) {
+            self::assertSame($throws ? $original : null, $exception->callbackFailure);
+            self::assertInstanceOf(PDOException::class, $exception->controlFailure);
+            self::assertSame(
+                'Controlled transaction-state inspection failure.',
+                $exception->controlFailure->getMessage(),
+            );
+            self::assertNull($exception->recoveryFailure);
+            self::assertSame($depth, $exception->managedDepth);
+            self::assertSame(
+                $depth === 2
+                    ? ($throws ? 'rollback_savepoint' : 'release_savepoint')
+                    : ($throws ? 'rollback' : 'commit'),
+                $exception->operation,
+            );
+            self::assertTrue($exception->connectionUnusable);
+        }
+        self::assertSame($calls, $pdo->controlCalls);
+        $pdo->failTransactionInspection = false;
+        $this->assertQuarantined($connection);
+        $pdo->rollBack();
+        $connection->close();
+    }
+
+    /** @return iterable<string, array{int, bool}> */
+    public static function inspectionCompletions(): iterable
+    {
+        yield 'outer success' => [1, false];
+        yield 'outer failure' => [1, true];
+        yield 'nested success' => [2, false];
+        yield 'nested failure' => [2, true];
+    }
+
+    public function testRollbackVerificationRetainsCallbackFailure(): void
+    {
+        [$pdo, $connection] = $this->connection();
+        $original = new RuntimeException('Synthetic rollback callback.');
+        $pdo->failInspectionAfterRollback = true;
+        try {
+            $connection->transaction(static fn () => throw $original);
+        } catch (TransactionStateException $exception) {
+            self::assertSame($original, $exception->callbackFailure);
+            self::assertSame('rollback_verify', $exception->operation);
+            self::assertSame(1, $exception->managedDepth);
+            self::assertInstanceOf(PDOException::class, $exception->controlFailure);
+        }
+        self::assertNotEmpty($pdo->controlCalls);
+        self::assertSame('rollback', $pdo->controlCalls[array_key_last($pdo->controlCalls)]);
         $pdo->failTransactionInspection = false;
         $this->assertQuarantined($connection);
         $connection->close();

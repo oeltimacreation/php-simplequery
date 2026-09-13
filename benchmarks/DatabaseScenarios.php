@@ -87,21 +87,30 @@ final class DatabaseScenarios
                 return ['affected' => $affected, 'count' => $count];
             });
         };
-        $direct = function () use ($pdo, $fixture): array {
+        $direct = function (bool $redundantCount = false) use ($pdo, $fixture): array {
             $pdo->beginTransaction();
             $statement = $pdo->prepare('INSERT INTO batch_rows (id, label) VALUES (?, ?)');
+            $affected = 0;
             foreach ($fixture as $row) {
                 $statement->execute([$row['id'], $row['label']]);
+                $affected += $statement->rowCount();
+                if ($redundantCount) {
+                    $statement->rowCount();
+                }
             }
             $count = (int) $this->rowCount($pdo)->fetchColumn();
             $pdo->exec('DELETE FROM batch_rows');
             $pdo->commit();
 
-            return ['affected' => count($fixture), 'count' => $count];
+            return ['affected' => $affected, 'count' => $count];
         };
 
         return [
-            'operations' => ['simplequery_insert_many' => $simpleQuery, 'pdo_prepared_loop' => $direct],
+            'operations' => [
+                'simplequery_insert_many' => $simpleQuery,
+                'pdo_prepared_loop' => static fn (): array => $direct(),
+                'pdo_redundant_count_loop' => static fn (): array => $direct(true),
+            ],
             'pdo' => $pdo,
             'dimensions' => ['rows' => $rows],
         ];

@@ -36,9 +36,12 @@ Maintained compatibility and migration records:
 
 Current release evidence:
 
-- [`0.5.0` maintainability and performance evidence](0.5-maintainability-and-performance.md).
+- [`0.7.0` development and candidate review](0.7-development-review.md),
+  including bounded performance decisions, mutation results, retained database
+  qualification, required remote CI, code-health review, and local
+  certification. Published-dist verification is appended as it completes.
 
-Active development evidence:
+Historical release evidence:
 
 - [`0.6.0` Phase 0 baseline and scope freeze](0.6-phase-0-baseline-and-scope.md).
 - [`0.6.0` Phase 1 attributable performance evidence](0.6-phase-1-attributable-performance.md).
@@ -50,6 +53,9 @@ Active development evidence:
 
 Retained decision evidence:
 
+- [`0.5.0` maintainability and performance evidence](0.5-maintainability-and-performance.md),
+  recording the accepted architecture, code-quality, and benchmark baseline
+  inherited by `0.6.0`;
 - [`0.2.0` associative hydration experiment](0.2-associative-hydration-experiment.md),
   including paired source-order and observer-profile decisions;
 - [`0.3.0` transaction and exception ergonomics](0.3-transaction-and-exception-ergonomics.md),

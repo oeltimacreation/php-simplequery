@@ -100,7 +100,10 @@ tokenizer is introduced.
 
 Canonical diagnostics are placeholder SQL, ordered binding types/count,
 driver, duration, and success/failure metadata. Binding values are redacted by
-default and are not interpolated into exception messages.
+default and are not interpolated into exception messages. Trusted raw SQL can
+contain literal values, and retained driver or application exceptions can include
+sensitive diagnostics. This is not sanitization of the complete exception chain;
+review or redact it before logging or displaying it.
 
 Any future `toDebugSql()` helper is approximate, sensitive, and never
 executable. Debug interpolation must not participate in subquery composition or

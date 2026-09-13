@@ -8,7 +8,6 @@ information.
 
 - [Architecture](../reference/architecture.md)
 - [Architecture decisions](../adr/README.md)
-- [Active `0.6` development plan](../plans/0.6.md)
 - [Testing architecture](testing-architecture.md)
 - [Compatibility evidence records](../evidence/README.md)
 - [Architecture and quality audit](../evidence/0.3-architecture-and-quality-audit.md)
@@ -68,3 +67,5 @@ certification additionally runs `php scripts/verify-repository.php --certify` an
 must link real, non-secret deployment reports. A public Docker fixture version
 must never be copied into the deployment inventory merely to make that gate
 green.
+
+- [Distribution certification](distribution.md) — archive policy and independent installed consumers.

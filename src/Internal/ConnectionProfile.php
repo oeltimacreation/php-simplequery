@@ -288,7 +288,7 @@ final class ConnectionProfile
     {
         $busyTimeout = $pdo->query('PRAGMA busy_timeout');
         $busyTimeoutValue = $busyTimeout === false ? false : $busyTimeout->fetchColumn();
-        if ((int) $busyTimeoutValue !== $expectedBusyTimeout) {
+        if ($busyTimeoutValue === false || (int) $busyTimeoutValue !== $expectedBusyTimeout) {
             throw new ConfigurationException('SQLite busy timeout does not match its declaration.');
         }
     }

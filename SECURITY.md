@@ -6,7 +6,8 @@ Security support covers the current ZeroVer minor release line.
 
 | Version | Supported |
 | --- | --- |
-| 0.6.x | ✅ Current release line |
+| 0.7.x | ✅ Current release line |
+| 0.6.x | ❌ Superseded by 0.7.0 |
 | 0.5.x | ❌ Superseded by 0.6.0 |
 | 0.4.x | ❌ Superseded by 0.5.0 |
 | 0.3.x | ❌ Superseded by 0.4.0 |

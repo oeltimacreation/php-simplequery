@@ -302,7 +302,7 @@ final class TransactionManager
             );
         }
 
-        if ($this->physicalTransactionActive($pdo, 'rollback_verify')) {
+        if ($this->physicalTransactionActive($pdo, 'rollback_verify', $callbackFailure)) {
             $exception = $this->stateException(
                 'PDO still reports an active transaction after rollback.',
                 'rollback_verify',
@@ -420,7 +420,7 @@ final class TransactionManager
         int $scopeDepth,
         ?Throwable $callbackFailure = null,
     ): void {
-        if ($this->ownsPhysicalTransaction && $this->physicalTransactionActive($pdo, $operation)) {
+        if ($this->ownsPhysicalTransaction && $this->physicalTransactionActive($pdo, $operation, $callbackFailure)) {
             return;
         }
 
@@ -435,8 +435,11 @@ final class TransactionManager
         throw $exception;
     }
 
-    private function physicalTransactionActive(PDO $pdo, string $operation): bool
-    {
+    private function physicalTransactionActive(
+        PDO $pdo,
+        string $operation,
+        ?Throwable $callbackFailure = null,
+    ): bool {
         try {
             return $pdo->inTransaction();
         } catch (Throwable $failure) {
@@ -444,7 +447,7 @@ final class TransactionManager
                 'PDO transaction state could not be inspected.',
                 $operation,
                 $this->depth,
-                null,
+                $callbackFailure,
                 $failure,
             );
             $this->markUnusable();
