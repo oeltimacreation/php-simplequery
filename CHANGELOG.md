@@ -11,9 +11,9 @@ with ZeroVer releases before `1.0.0`.
 ### Changed
 
 - Clarify that trusted raw SQL literals and retained exception chains may contain sensitive diagnostics.
-- Record hosted candidate source provenance, the draft pull request that
-  carries the pending remote CI evidence, and clarify that soak retained growth
-  is measured per operation across timed samples.
+- Record hosted candidate source provenance, the required remote CI result, and
+  clarify that soak retained growth is measured per operation across timed
+  samples.
 - Recertify retained database and proxy fixtures across prepare/buffering modes, and add actual SQLite 3.39.2 execution with explicit upstream-maintenance guidance.
 - Reuse required affected-row counts and avoid generated-ID metadata reads when observation is disabled, preserving write and failure semantics.
 - Retain contextual eager and cursor row validation after review, avoiding an additional per-row error-factory interface.
@@ -43,7 +43,8 @@ with ZeroVer releases before `1.0.0`.
 
 ### Added
 
-- Record local candidate quality, coverage, compatibility, artifact and security evidence with remote release gates explicitly pending.
+- Record local candidate quality, coverage, compatibility, artifact, security
+  and required remote CI evidence.
 - Certify Composer and Git archives with explicit contents, contamination checks, size budgets and independent no-dev installed consumers in CI.
 - Cover combined bind/execute and cleanup failures, and verify eight selected binding, lifecycle and observation faults are detected by regressions.
 - Validate complete typed compiler fixtures against executable case registries and per-dialect feature references, including explicit unsupported cases.
