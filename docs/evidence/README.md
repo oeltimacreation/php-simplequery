@@ -36,6 +36,13 @@ Maintained compatibility and migration records:
 
 Current release evidence:
 
+- [`0.7.0` development and candidate review](0.7-development-review.md),
+  including bounded performance decisions, mutation results, retained database
+  qualification, required remote CI, code-health review, and local
+  certification. Published-dist verification is appended as it completes.
+
+Historical release evidence:
+
 - [`0.6.0` Phase 0 baseline and scope freeze](0.6-phase-0-baseline-and-scope.md).
 - [`0.6.0` Phase 1 attributable performance evidence](0.6-phase-1-attributable-performance.md).
 - [`0.6.0` Phase 2 compiler and binding efficiency evidence](0.6-phase-2-compiler-and-binding-efficiency.md).
@@ -43,13 +50,6 @@ Current release evidence:
 - [`0.6.0` Phase 4 code quality and maintainer efficiency evidence](0.6-phase-4-code-quality-and-maintainer-efficiency.md).
 - [`0.6.0` Phase 5 user experience and documentation evidence](0.6-phase-5-user-experience-and-documentation.md).
 - [`0.6.0` Phase 6 release certification evidence](0.6-phase-6-release-certification.md).
-
-Active development evidence:
-
-- [`0.7` development and local candidate review](0.7-development-review.md),
-  including bounded performance decisions, mutation results, retained database
-  qualification and local certification. Pending remote and publication gates
-  remain in the [`0.7` development plan](../plans/0.7.md).
 
 Retained decision evidence:
 
