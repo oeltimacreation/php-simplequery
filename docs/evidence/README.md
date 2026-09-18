@@ -44,6 +44,12 @@ Current release evidence:
 The [active 0.8.0 release plan](../plans/0.8.md) tracks intended work and
 pending qualification; it is not evidence of released behavior.
 
+Candidate workstream evidence:
+
+- [0.8 connection lifecycle validation](0.8-connection-lifecycle.md) — explicit
+  lifecycle API, local tests/coverage, and direct idle-loss/recovery probes;
+  consumer and FrankenPHP qualification remain pending.
+
 Historical release evidence:
 
 - [`0.6.0` Phase 0 baseline and scope freeze](0.6-phase-0-baseline-and-scope.md).
