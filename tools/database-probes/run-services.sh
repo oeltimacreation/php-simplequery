@@ -68,6 +68,9 @@ for prepare_mode in native emulated; do
             PROBE_EMULATE_PREPARES="${emulate}" PROBE_BUFFERED="${buffered}" \
                 php "${probe_dir}/connection-lifecycle.php" "${target}" \
                 --output="${result_dir}/${target}-lifecycle-${prepare_mode}-${buffering_mode}.json"
+            PROBE_EMULATE_PREPARES="${emulate}" PROBE_BUFFERED="${buffered}" \
+                php "${probe_dir}/session-hygiene.php" "${target}" \
+                --output="${result_dir}/${target}-session-${prepare_mode}-${buffering_mode}.json"
         done
     done
 done
