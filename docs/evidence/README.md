@@ -49,6 +49,9 @@ Candidate workstream evidence:
 - [0.8 connection lifecycle validation](0.8-connection-lifecycle.md) — explicit
   lifecycle API, local tests/coverage, and direct idle-loss/recovery probes;
   consumer and FrankenPHP qualification remain pending.
+- [0.8 connection failure evidence](0.8-connection-failure-evidence.md) —
+  normalized connection construction diagnostics and application-owned
+  eviction/retry separation; consumer logging and adoption remain pending.
 
 Historical release evidence:
 
