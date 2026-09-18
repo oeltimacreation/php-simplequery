@@ -126,6 +126,29 @@ return static function (Connection $database): void {
     new CompiledQuery('SELECT ?', [new Binding(1, ParameterType::Integer)]);
     new QueryExecution('SELECT ?', [ParameterType::Integer], 0.1, true, null, Driver::Sqlite, null, 0);
 
+    assertType('int', $database->table('users')->insert(['email' => 'ada@example.test']));
+    assertType('int', $database->table('users')->insertMany([['email' => 'ada@example.test']]));
+    assertType('int', $database->table('users')->where('id', 1)->update(['active' => true]));
+    assertType('int', $database->table('users')->where('id', 1)->delete());
+    assertType('int', $database->table('users')->count());
+    assertType('float|int|string|null', $database->table('users')->sum('score'));
+    assertType('float|int|string|null', $database->table('users')->average('score'));
+    assertType('mixed', $database->table('users')->min('score'));
+    assertType('mixed', $database->table('users')->max('score'));
+    assertType('list<stdClass>', $database->table('users')->get());
+    assertType('list<array<string, mixed>>', $database->table('users')->getAssociative());
+    assertType('stdClass|null', $database->table('users')->first());
+    assertType('array<string, mixed>|null', $database->table('users')->firstAssociative());
+    assertType(QueryBuilder::class, $database->table('users')->forUpdate()->noWait());
+    assertType(QueryBuilder::class, $database->table('users')->forShare()->skipLocked());
+
+    $rawWrite = $database->query('UPDATE users SET active = ? WHERE id = ?', [true, 1]);
+    assertType('int', $rawWrite->execute());
+    assertType('list<stdClass>', $rawWrite->get());
+    assertType('list<array<string, mixed>>', $rawWrite->getAssociative());
+    assertType('stdClass|null', $rawWrite->first());
+    assertType('array<string, mixed>|null', $rawWrite->firstAssociative());
+
     $transactionResult = $database->transaction(
         static function ($transaction): string {
             assertType(Connection::class, $transaction);
