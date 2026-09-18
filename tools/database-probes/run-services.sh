@@ -71,6 +71,9 @@ for prepare_mode in native emulated; do
             PROBE_EMULATE_PREPARES="${emulate}" PROBE_BUFFERED="${buffered}" \
                 php "${probe_dir}/session-hygiene.php" "${target}" \
                 --output="${result_dir}/${target}-session-${prepare_mode}-${buffering_mode}.json"
+            PROBE_EMULATE_PREPARES="${emulate}" PROBE_BUFFERED="${buffered}" \
+                php "${probe_dir}/vendor-writes.php" "${target}" \
+                --output="${result_dir}/${target}-vendor-writes-${prepare_mode}-${buffering_mode}.json"
         done
         for target in proxysql maxscale; do
             PROBE_EMULATE_PREPARES="${emulate}" PROBE_BUFFERED="${buffered}" \
