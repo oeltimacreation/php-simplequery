@@ -41,6 +41,49 @@ The library does not pool connections, reconnect transparently, or restore
 session state. Runtime, framework, proxy, and infrastructure layers own those
 concerns.
 
+## Explicit lifecycle decisions
+
+Run the [connection lifecycle example](../../examples/connection-lifecycle.php)
+for explicit retirement and replacement using SQLite, without a network server.
+
+`isClosed()` checks wrapper state. `isReusable()` checks whether local state
+permits considering sequential reuse: no tracked cursor, managed transaction,
+PDO-reported physical transaction, quarantine, or closed/compiler-only state.
+It sends no health-check SQL. It cannot detect a dead idle socket, untracked PDO
+statements, dirty session settings, or every manually issued transaction on
+every PDO runtime. If PDO state inspection throws, the wrapper is quarantined
+and a `TransactionStateException` exposes `operation=is_reusable` and
+`connectionUnusable=true`. See [ADR-024](../adr/024-explicit-connection-lifecycle.md).
+
+An application may retain an ordinary non-persistent connection across
+sequential units only after verifying its own session/resource cleanup. Pin
+one connection for the whole unit, including every lazily resolved model.
+Do not resolve a replacement independently for each model or statement.
+Fresh connections per unit remain the default recommendation.
+
+At the boundary before new work, application policy may replace an idle
+connection through its factory. Use monotonic elapsed time and the effective
+server/proxy idle settings; a threshold reduces exposure but cannot guarantee
+liveness. An explicit check can also fail just before the next statement.
+SimpleQuery does not choose a threshold, ping automatically, or retry that
+statement. Query observers do not cover direct PDO work, transaction controls,
+or delayed cursor fetching, so successful-query timestamps are incomplete.
+
+For a known-lost or unusable connection, evict it from the application holder
+and call `discard()`. It irreversibly closes the wrapper without state
+inspection or explicit transaction/cursor cleanup. It accepts abandoned active
+work, but never reports successful transaction completion. Old models,
+builders, and raw queries remain bound to the old wrapper; cursor advancement
+fails before another fetch. Close outstanding cursors explicitly, preserving
+the original failure if cleanup fails, and release all old artifacts.
+
+Discard does not revoke escaped PDO/statement references or prove physical
+disconnection/rollback. Never replace a connection to continue an unfinished
+transaction or replay an uncertain write. Create and initialize a replacement
+for a later unit; construction failure must leave the holder empty and must
+not trigger an unbounded connection loop. HTTP retry decisions and write
+reconciliation remain application-owned.
+
 ## Worker cleanup
 
 At the end of a job/request:
@@ -51,9 +94,10 @@ At the end of a job/request:
 4. discard builders and bounded observer history;
 5. create a replacement after connection or transaction-state uncertainty.
 
-Persistent PDO is outside the default support profile. Applications opting in
-must guarantee transaction, cursor, prepared-statement, and session cleanup
-before reuse.
+Persistent PDO remains outside the supported profile. Sequential reuse of an
+ordinary PDO object does not enable `PDO::ATTR_PERSISTENT`. Reuse additionally
+requires restoring temporary session settings and clearing request-specific
+observation history; `isReusable()` does not perform those tasks.
 
 ## Cursors
 

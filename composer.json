@@ -76,6 +76,7 @@
             "php examples/beginner/filter-and-update.php",
             "php examples/beginner/transaction.php",
             "php examples/compiler-assertions.php",
+            "php examples/connection-lifecycle.php",
             "php examples/query-building.php",
             "php examples/sqlite-compiler-smoke.php",
             "php examples/sqlite-execution.php",
