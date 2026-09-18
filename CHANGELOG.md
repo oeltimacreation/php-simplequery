@@ -8,6 +8,12 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+### Fixed
+
+- Measure soak retained growth from PHP used memory instead of reserved
+  arena chunks, so a normal 2 MiB arena increment no longer fails the soak
+  memory gate as apparent retained growth.
+
 ## [0.8.1] - 2026-09-18
 
 ### Fixed

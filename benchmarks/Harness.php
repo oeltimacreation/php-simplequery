@@ -232,9 +232,9 @@ final class Harness
         }
         $sorted = $timings;
         sort($sorted);
-        $firstAllocation = $allocations[0];
-        $lastAllocation = $allocations[count($allocations) - 1];
-        $peakAllocation = max($allocations);
+        $firstUsed = $used[0];
+        $lastUsed = $used[count($used) - 1];
+        $peakUsedSample = max($used);
 
         return [
             'samples_ms' => array_map(static fn (float $sample): float => round($sample, 6), $timings),
@@ -249,8 +249,8 @@ final class Harness
             'maximum_transient_peak_reserved_bytes' => max($transientReserved),
             'process_rss_after_sample_bytes' => $processRss,
             'maximum_process_rss_after_sample_bytes' => self::maximumNullable($processRss),
-            'retained_growth_bytes' => max(0, $lastAllocation - $firstAllocation),
-            'retained_peak_above_first_bytes' => max(0, $peakAllocation - $firstAllocation),
+            'retained_growth_bytes' => max(0, $lastUsed - $firstUsed),
+            'retained_peak_above_first_bytes' => max(0, $peakUsedSample - $firstUsed),
             'correctness_digest' => $digest,
         ];
     }
