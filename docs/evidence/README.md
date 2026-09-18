@@ -36,13 +36,16 @@ Maintained compatibility and migration records:
 
 Current release evidence:
 
+- [`0.8.1` cursor guard cost correction](0.8.1-cursor-guard-cost.md) —
+  post-release fix for the per-row discarded-connection guard, with local A/B
+  attribution and candidate/tag verification.
+
+0.8 release evidence:
+
 - [`0.8.0` development and candidate review](0.8-development-review.md),
   including the worker lifecycle and interoperability decisions, local
   candidate certification, remote CI and code health, and published-dist
   verification.
-
-0.8 release evidence:
-
 - [0.8 connection lifecycle validation](0.8-connection-lifecycle.md) — explicit
   lifecycle API, local tests/coverage, and direct idle-loss/recovery probes;
   consumer and FrankenPHP qualification followed in the candidate rehearsal.

@@ -8,7 +8,7 @@ lines. The first public release is `0.1.0`.
 - `0.y.0` may contain documented breaking changes.
 - `0.y.z` patch releases should remain compatible within that minor line,
   except for urgent security or data-integrity fixes.
-- Consumers should pin a tested minor line such as `~0.8.0`.
+- Consumers should pin a tested minor line such as `~0.8.1`.
 - Changelog entries are not a substitute for migration instructions; every
   breaking change must be documented here.
 
