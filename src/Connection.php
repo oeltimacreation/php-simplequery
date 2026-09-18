@@ -209,7 +209,13 @@ final class Connection
     /** Local lifecycle inspection only; this does not check transport liveness or reset session state. */
     public function isReusable(): bool
     {
-        if ($this->closed || $this->pdoInstance === null || $this->hasActiveWork()) {
+        if ($this->closed) {
+            return false;
+        }
+        if ($this->pdoInstance === null) {
+            return false;
+        }
+        if ($this->hasActiveWork()) {
             return false;
         }
 
