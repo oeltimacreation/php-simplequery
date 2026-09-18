@@ -169,6 +169,26 @@ ordered/limited writes, and unions are not supported by the structured API.
 Engine-specific raw SQL remains available when an application deliberately
 accepts those semantics.
 
+### Raw vendor upserts and generated IDs
+
+When raw vendor SQL upserts or ignores duplicates, the write returns are
+engine-specific and deliberately not wrapped:
+
+- `INSERT IGNORE` on a duplicate reports `0` affected rows; `lastInsertId()` is
+  not a new ID;
+- `INSERT ... ON DUPLICATE KEY UPDATE` reports `2` affected rows when it updates
+  an existing row and `1` when it inserts; `lastInsertId()` is unreliable for
+  the updated row unless the statement assigns `id = LAST_INSERT_ID(id)`;
+- failed or ignored writes can consume auto-increment values, so generated IDs
+  are not necessarily contiguous;
+- write and read an ID on the same connection; never split them across requests.
+
+The direct [vendor-writes probe](../../tools/database-probes/vendor-writes.php)
+records the observed MariaDB/MySQL behavior. Reconcile uncertain writes by an
+application idempotency key instead of replaying raw SQL. See
+[migrating from Pixie](migrating-from-pixie.md#demonstrated-write-pitfalls) for
+the duplicate-submission and chunk-atomicity patterns.
+
 
 ### Ordinary statement cleanup
 

@@ -60,6 +60,10 @@ Candidate workstream evidence:
   synthetic FrankenPHP classic/worker rehearsal, one-hour soak, proxy session
   observations, and the consumer static-analysis/migration-slice checks;
   final release certification remains pending.
+- [0.8 write interoperability validation](0.8-write-interoperability.md) —
+  consumer-shaped lazy injection, write-return, shape, and race fixtures, the
+  direct vendor-writes probe, and the `min()`/`max()` typing fix; private
+  consumer endpoint adoption remains pending.
 
 Historical release evidence:
 

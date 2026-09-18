@@ -35,6 +35,13 @@ with ZeroVer releases before `1.0.0`.
   per-role eviction, and application-owned lifecycle counters.
 - Record the 0.8 lifecycle observation decision: lifecycle counters remain
   application-owned and no lifecycle observer is added.
+- Validate `min()`/`max()` scalar returns and declare `int|float|string|null`,
+  aligning them with `sum()`/`average()`; an unsupported driver scalar now
+  throws `QueryExecutionException` and ADR-006 records the amendment.
+- Document demonstrated write-interoperability pitfalls with executable
+  fixtures and a direct-engine probe: raw vendor upsert and ignored-duplicate
+  generated-ID behavior, boolean adapter ambiguity, chunk atomicity, and
+  duplicate-submission reconciliation.
 
 ## [0.7.0] - 2026-09-13
 

@@ -129,6 +129,50 @@ Every migration must explicitly resolve these differences:
 | Cross-dialect best effort | MariaDB, MySQL, and SQLite are explicit independent targets. |
 | Hidden reconnect/replay | Connection loss and ambiguous writes are never replayed automatically. |
 
+## Demonstrated write pitfalls
+
+These behaviors are characterized by executable tests and direct-engine probes;
+see the
+[0.8 write interoperability evidence](../evidence/0.8-write-interoperability.md).
+
+### Generated IDs after raw vendor writes
+
+`insertGetId()` captures the ID immediately on the same connection. Raw vendor
+statements have their own behavior:
+
+- `INSERT IGNORE` on a duplicate reports zero affected rows and
+  `lastInsertId()` was observed as `0`;
+- `INSERT ... ON DUPLICATE KEY UPDATE` reports two affected rows for an existing
+  row, and `lastInsertId()` is not a reliable existing-row identifier unless the
+  statement explicitly assigns `id = LAST_INSERT_ID(id)`;
+- failed or ignored inserts can still consume auto-increment values, so IDs may
+  have gaps even without deletes;
+- never split a write and its generated-ID read across requests or connections.
+
+### Boolean write adapters
+
+Legacy adapters that map affected rows to booleans cannot distinguish a missing
+row from a no-op update, and the default MariaDB/MySQL profile reports changed
+rows rather than matched rows. Use state guards (for example
+`WHERE state = 'ready'`) when a boolean return must mean "this call completed
+the transition".
+
+### Batch chunks and partial failure
+
+`insertMany()` compiles one statement. Applications that chunk rows own
+atomicity: an earlier chunk is committed when a later chunk fails unless the
+whole loop runs inside one transaction. Test both paths and do not promise
+cross-chunk atomicity.
+
+### Duplicate submissions and failure after dispatch
+
+A unique key plus reconciliation is the reliable duplicate-submission pattern:
+handle the constraint failure by reading the existing row instead of retrying
+blindly. Completion updates need a state guard to be idempotent. An upsert alone
+is not idempotency because it still mutates the row on every call. When a write
+fails after dispatch, the outcome is unknown; reconcile by key and never replay
+the statement automatically.
+
 ## Repeatable migration playbook
 
 1. Pin the current Pixie and database/proxy versions. Add characterization

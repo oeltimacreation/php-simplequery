@@ -20,6 +20,7 @@ composer probe:execution -- sqlite    # public executor smoke
 composer probe:transaction -- sqlite  # managed transaction state matrix
 bash tools/database-probes/run-services.sh  # complete direct/proxy behavior and execution matrix
 php tools/database-probes/ambiguous-write.php proxysql  # operator-controlled failure window
+php tools/database-probes/vendor-writes.php mariadb  # immediate IDs, upserts, lock ownership
 bash tools/worker-rehearsal/run.sh  # FrankenPHP classic/worker rehearsal with a short soak
 REHEARSAL_SOAK_SECONDS=3600 bash tools/worker-rehearsal/run.sh  # one-hour gate soak
 composer benchmark             # complete deterministic SQLite benchmark suite
@@ -66,7 +67,9 @@ direct-engine session scope and proxy session policy respectively.
 - `tests/Fixtures/Migration` is synthetic migration characterization data;
 - `tools/database-probes` owns probe commands, fixtures, and their private
   support classes, including the maintained engine, proxy, SQLite, execution,
-  transaction, session, and contention probes.
+  transaction, session, vendor-write, and contention probes.
+- `tests/Fixtures/Consumer` is analyzed at level 9 by the external consumer
+  lane, including the standalone compiler-smoke and no-dev artifact fixtures.
 - `tools/worker-rehearsal` owns the pinned FrankenPHP rehearsal app, driver,
   Caddy configs, and orchestration; its output is generated and ignored.
 
