@@ -64,6 +64,10 @@ Candidate workstream evidence:
   consumer-shaped lazy injection, write-return, shape, and race fixtures, the
   direct vendor-writes probe, and the `min()`/`max()` typing fix; private
   consumer endpoint adoption remains pending.
+- [0.8 consumer adoption analysis](0.8-consumer-adoption.md) — read-only source
+  audit, unchanged PHPStan against the candidate, database-free classic and
+  single-worker endpoint comparisons, and the recorded application-owned
+  adoption actions.
 
 Historical release evidence:
 
