@@ -41,6 +41,9 @@ Current release evidence:
   qualification, required remote CI, code-health review, local certification,
   and published-dist verification.
 
+The [active 0.8.0 release plan](../plans/0.8.md) tracks intended work and
+pending qualification; it is not evidence of released behavior.
+
 Historical release evidence:
 
 - [`0.6.0` Phase 0 baseline and scope freeze](0.6-phase-0-baseline-and-scope.md).

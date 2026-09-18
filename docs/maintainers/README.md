@@ -6,6 +6,7 @@ information.
 
 ## Core references
 
+- [Active 0.8.0 release plan](../plans/0.8.md)
 - [Architecture](../reference/architecture.md)
 - [Architecture decisions](../adr/README.md)
 - [Testing architecture](testing-architecture.md)

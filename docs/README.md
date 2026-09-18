@@ -36,6 +36,7 @@ plan, not in reference documentation.
 
 ## Project records
 
+- [Active 0.8.0 release plan](plans/0.8.md)
 - [Maintainer documentation](maintainers/README.md)
 - [Architecture decisions](adr/README.md)
 - [Compatibility and release evidence](evidence/README.md)
