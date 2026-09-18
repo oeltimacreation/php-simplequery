@@ -69,6 +69,24 @@ first-party PSR-3 bridge.
 immutable executions for application assertions. Values are absent from the
 records, and `clear()` provides an explicit lifecycle boundary.
 
+## Connection lifecycle is application-owned
+
+The observer contract covers executor-owned statements only. Opening, reusing,
+retiring, or discarding a connection emits no event, and statements executed
+through `Connection::pdo()`, transaction controls, and delayed cursor fetches
+are outside observation. An observer must not compensate by connecting,
+reconnecting, or issuing a health check; observation is post-attempt and must
+not change lifecycle decisions.
+
+The 0.8 lifecycle decision keeps connection lifecycle counters in the
+application. The
+[worker request recipe](concurrency-and-workers.md#framework-free-request-recipe)
+records bounded creation, replacement, eviction, cleanup-failure, cursor-leak,
+and recovery counters with role and reason labels, without credentials,
+bindings, SQL history, or automatic logging. Add a lifecycle observer only if
+application counters cannot meet a demonstrated need; that requires amending
+[ADR-010](../adr/010-non-interfering-observation.md) first.
+
 ## No last-query state
 
 The core does not retain mutable per-connection `lastQuery()` state. Use

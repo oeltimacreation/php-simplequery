@@ -84,6 +84,162 @@ for a later unit; construction failure must leave the holder empty and must
 not trigger an unbounded connection loop. HTTP retry decisions and write
 reconciliation remain application-owned.
 
+## Framework-free request recipe
+
+The runnable [worker request lifecycle example](../../examples/worker-request-lifecycle.php)
+implements an application-owned holder and request scope without a framework,
+container, or new library API:
+
+- handlers acquire connections lazily, so a cache-only request opens none;
+- one role resolves to one pinned owner for the whole unit, including every
+  lazily resolved model, nested transaction, and builder;
+- the idle threshold is evaluated only when a new unit first acquires a role,
+  using monotonic elapsed time, so a long-running unit never swaps its owner;
+- the boundary closes tracked cursors, reuses a connection only when
+  `isReusable()` still reports local eligibility, and discards everything else;
+- bounded counters and an explicit `finally` path make recovery observable.
+
+The holder owns connections per role; the unit owns its models, builders, and
+cursors. A request may read through a `read` role and write through `primary`,
+but neither role may be replaced while the unit is active.
+
+```php
+$database = new WorkerDatabase(
+    factory: static fn (): Connection => Connection::connect(/* ... */),
+    initialize: static function (Connection $connection): void {
+        // Runs before a new connection is published to a unit.
+        $connection->query('SET SESSION ...')->execute();
+    },
+    clock: static fn (): float => hrtime(true) / 1_000_000_000,
+    idleThresholdSeconds: 60.0,
+);
+
+$response = $database->request(static function (RequestScope $scope): array {
+    try {
+        $job = (new JobModel($scope))->find($jobId);
+        $scope->connection('primary')->transaction(/* ... */);
+
+        return ['status' => 200, 'job' => $job];
+    } catch (QueryExecutionException $failure) {
+        $scope->evict($failure);
+
+        return ['status' => 503, 'body' => 'database unavailable'];
+    }
+});
+```
+
+Do not store a `Connection`, builder, or cursor in a controller property,
+model, static, or container singleton that survives the unit. Resolving a
+replacement inside a unit would move old models and unfinished transactions to
+a new owner; the recipe refuses it. New requests must construct their own
+models and builders.
+
+## Session initialization and restoration
+
+Every replacement must be initialized and verified before it is published. A
+factory does not inherit session settings from the retired connection, and a
+half-initialized connection must not be cached as ready. Run the required
+initialization again after any creation or restart failure.
+
+Temporary settings, such as a raised report statement limit, belong in a
+`finally` that restores the initialized value. If restoration fails, evict the
+role and preserve the original failure:
+
+```php
+$scope->withTemporarySessionChange(
+    change: static function (Connection $connection): void {
+        $connection->query('SET SESSION max_statement_time = 5')->execute();
+    },
+    restore: static function (Connection $connection): void {
+        $connection->query('SET SESSION max_statement_time = 0.1')->execute();
+    },
+    work: static function (Connection $connection): array {
+        return (new ReportService($connection))->run();
+    },
+);
+```
+
+Test the sequence explicitly on one worker: a report request that changes
+session state, then an ordinary request that observes the initialized value;
+repeat with the report failing before and after restoration. The direct
+[session-hygiene probe](../../tools/database-probes/session-hygiene.php)
+verifies the same boundaries on disposable MariaDB and MySQL sessions.
+
+Session commands are trusted SQL. Executed through `Connection::query()` they
+are observed and validated by the normal executor path; executed through
+`Connection::pdo()` they bypass compiler, observer, and error translation.
+Prefer the builder path when the application wants session commands visible in
+observation.
+
+## Timeout and deadline distinctions
+
+These boundaries fail differently and none of them is a portable deadline:
+
+| Boundary | Typical input | Limit and caveat |
+| --- | --- | --- |
+| Connect or read timeout | PDO driver options, DSN, network/proxy settings | Construction failure is `ConnectionException` with `operation=connect`; no wrapper exists. |
+| Server idle timeout | `wait_timeout` and `interactive_timeout` (session and global) | The server closes an idle socket; local wrapper state can still look reusable, and the code differs by engine (`2006`, `2013`, `4031`). |
+| Statement limit | MariaDB `max_statement_time` (seconds, broad statement scope) or MySQL `max_execution_time` (milliseconds, read-only `SELECT`) | A `SELECT` limit does not bound writes, transaction control, or commit, and the timeout code differs (`1969` vs `3024`). |
+| Transaction or lock timeout | `innodb_lock_wait_timeout`, engine lock-wait settings | Produces its own conflict evidence (`1205`, `1213`, SQLite `5`/`6`) and does not establish that replay is safe. |
+| Transport or read timeout | Driver, proxy, and OS settings | May surface as connection loss or an interrupted read, not as a query-level limit. |
+
+An idle threshold is a policy, not a liveness guarantee: the next statement can
+still fail, and a preflight check can fail just before that statement. Do not
+add a ping per query. Measure acquisition and initialization cost explicitly
+when tuning an idle policy, and verify effective session values in the
+deployment rather than assuming a documented default.
+
+## Lifecycle counters and observation
+
+Record bounded counters for connection creation, replacement, eviction,
+failure, cleanup, cursor leaks, and recovery outcomes, with low-cardinality
+role and reason labels. Keep credentials, bindings, SQL, and unbounded query
+history out of the counters, and let the application decide whether and how to
+log or export them.
+
+The query observer does not report connection lifecycle events, direct PDO
+statements, transaction controls, or delayed cursor fetches; successful-query
+timestamps are incomplete session-activity evidence. The 0.8 lifecycle
+decision (OBS-1) keeps these counters application-owned and adds no lifecycle
+observer. See [observability](observability.md#connection-lifecycle-is-application-owned);
+adding an observer later requires amending
+[ADR-010](../adr/010-non-interfering-observation.md).
+
+## FrankenPHP worker loop
+
+The recipe maps onto a FrankenPHP worker script without a framework:
+
+```php
+<?php
+// worker.php
+require __DIR__ . '/vendor/autoload.php';
+
+$database = new WorkerDatabase(/* ... */); // Boot once per worker.
+
+$handler = static function () use ($database): void {
+    $database->request(static function (RequestScope $scope): void {
+        // Route and dispatch; resolve connections through $scope.
+    });
+};
+
+$maxRequests = (int) ($_SERVER['MAX_REQUESTS'] ?? 0);
+for ($handled = 0; !$maxRequests || $handled < $maxRequests; ++$handled) {
+    if (!frankenphp_handle_request($handler)) {
+        break;
+    }
+
+    gc_collect_cycles();
+}
+
+$database->shutdown();
+```
+
+FrankenPHP resets superglobals between requests; it does not reset services,
+models, builders, cursors, or connection holders. Garbage collection is not
+database cleanup. Classic request mode remains the control when qualifying
+worker behavior, and any worker claim pins the PHP, PDO, FrankenPHP, and engine
+versions with the tested source.
+
 ## Failure inspection and eviction
 
 `ConnectionException` construction failures expose `operation=connect`,
@@ -155,6 +311,11 @@ Persistent PDO remains outside the supported profile. Sequential reuse of an
 ordinary PDO object does not enable `PDO::ATTR_PERSISTENT`. Reuse additionally
 requires restoring temporary session settings and clearing request-specific
 observation history; `isReusable()` does not perform those tasks.
+
+The [worker request recipe](#framework-free-request-recipe) makes these steps
+executable, including cursor close before reuse and a shutdown path that never
+opens a new connection. Worker recycling is an operational fallback for memory
+growth, not a substitute for boundary cleanup.
 
 ## Cursors
 

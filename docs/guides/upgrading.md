@@ -60,6 +60,18 @@ retry classification, and ambiguous-write reconciliation remain
 application-owned; see
 [connection lifecycle and failure guidance](concurrency-and-workers.md).
 
+Worker-mode applications should also adopt the framework-free request recipe:
+lazily acquire and pin one connection per role and unit; initialize every
+replacement before publishing it; restore temporary session settings in
+`finally`; evict the affected role on uncertain failure without reconnecting
+it; and keep bounded lifecycle counters in the application. The recipe adds no
+library API. It is executable in the
+[worker request lifecycle example](../../examples/worker-request-lifecycle.php),
+and the maintained direct probe verifies session initialization, restoration,
+and statement-limit scope against disposable MariaDB and MySQL sessions. See
+[session hygiene](concurrency-and-workers.md#session-initialization-and-restoration)
+and [timeout and deadline distinctions](concurrency-and-workers.md#timeout-and-deadline-distinctions).
+
 ## Installing 0.7.0
 
 ```bash

@@ -67,6 +67,24 @@ try {
 
 That scope is entirely application-owned; SimpleQuery will not complete it.
 
+### Pinned owner and session settings
+
+Resolve one connection for the entire transaction, including every lazily
+resolved model. Replacement during an active transaction is a lifecycle bug,
+not recovery; the owner must not change until the transaction and its cursors
+are complete.
+
+An application that reuses connections across units must initialize every
+replacement before publishing it and restore temporary session changes in
+`finally`. A failed restoration is a session-hygiene failure: evict the
+connection, preserve the original callback or statement failure, and continue
+in a new unit.
+
+Engine statement limits are not transaction or commit deadlines. MariaDB
+`max_statement_time` and MySQL `max_execution_time` differ in units and scope,
+and neither establishes that a write, commit, or rollback completed. See
+[timeout and deadline distinctions](concurrency-and-workers.md#timeout-and-deadline-distinctions).
+
 ## Direct PDO use
 
 `Connection::pdo()` shares physical transaction and session state. Calling
