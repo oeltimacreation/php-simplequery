@@ -19,6 +19,33 @@ use RuntimeException;
 #[RequiresPhpExtension('pdo_sqlite')]
 final class TransactionFailureTest extends TestCase
 {
+    public function testDiscardAfterCommitAndRecoveryFailurePreservesEvidenceWithoutMoreCommands(): void
+    {
+        [$pdo, $connection] = $this->connection();
+        $pdo->failCommit = true;
+        $pdo->failRollback = true;
+
+        try {
+            $connection->transaction(static fn (): string => 'not-committed');
+            self::fail('The controlled commit failure must be reported.');
+        } catch (TransactionException $failure) {
+            $controlFailure = $failure->controlFailure;
+            $recoveryFailure = $failure->recoveryFailure;
+            self::assertInstanceOf(PDOException::class, $controlFailure);
+            self::assertInstanceOf(PDOException::class, $recoveryFailure);
+            self::assertFalse($connection->isReusable());
+            $calls = $pdo->controlCalls;
+            $connection->discard();
+            self::assertSame($calls, $pdo->controlCalls);
+            self::assertSame($controlFailure, $failure->controlFailure);
+            self::assertSame($recoveryFailure, $failure->recoveryFailure);
+            self::assertTrue($connection->isClosed());
+        } finally {
+            $pdo->failRollback = false;
+            $pdo->rollBack();
+        }
+    }
+
     public function testTransactionStateInspectionFailureQuarantinesConnection(): void
     {
         [$pdo, $connection] = $this->connection();

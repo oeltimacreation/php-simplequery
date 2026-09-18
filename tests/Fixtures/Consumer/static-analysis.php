@@ -20,6 +20,8 @@ use stdClass;
 use function PHPStan\Testing\assertType;
 
 return static function (Connection $database): void {
+    assertType('bool', $database->isClosed());
+    assertType('bool', $database->isReusable());
     $repository = new class ($database) {
         public function __construct(private readonly Connection $database)
         {
@@ -139,4 +141,6 @@ return static function (Connection $database): void {
         assertType('int|string|null', $exception->driverCode);
         assertType(Driver::class, $exception->driver);
     }
+
+    $database->discard();
 };

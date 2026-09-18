@@ -34,11 +34,35 @@ Connection::query(string $trustedSql, array $bindings = []): RawQuery
 Connection::transaction(Closure $callback): mixed
 Connection::pdo(): PDO
 Connection::close(): void
+Connection::isClosed(): bool
+Connection::isReusable(): bool
+Connection::discard(): void
 ```
 
 Everything above is implemented. `close()` is idempotent after success and
 rejects active physical transactions or tracked cursors rather than silently
 completing or truncating them.
+
+`isClosed()` reads wrapper state. `isReusable()` is a local check: it returns
+false for closed/compiler-only/quarantined connections, managed transactions,
+tracked cursors, or a PDO-reported physical transaction. It sends no ping and
+does not verify transport liveness, reset session settings, or inspect escaped
+PDO statements. PDO inspection failure throws `TransactionStateException`
+(`operation=is_reusable`, `connectionUnusable=true`, retained `controlFailure`)
+and quarantines the wrapper. Manual transaction SQL remains subject to PDO's
+state-tracking limitations.
+
+`discard()` is idempotent terminal invalidation, including abandoned active
+work. It marks the wrapper closed and drops its PDO reference without state
+inspection, explicit rollback, or cursor cleanup. Old builders can compile but
+cannot execute; they never follow a replacement. Managed callback completion
+after discard fails without further transaction-control SQL. Advancing a live
+cursor after discard throws `ConnectionException` before fetching another row
+and attempts normal cursor cleanup; explicit cursor close remains available.
+Existing quarantine evidence may still determine the transaction exception.
+Escaped PDO/statement references cannot be revoked, and discard proves neither
+rollback nor physical disconnection. See [ADR-024](../adr/024-explicit-connection-lifecycle.md)
+and the [worker guide](../guides/concurrency-and-workers.md).
 
 The two raw-SQL binding parameters are PHPDoc `list<mixed>` contracts; keyed
 binding maps are rejected at runtime.
@@ -304,4 +328,3 @@ driver/deployment policy and must treat ambiguous commits separately.
 SQLite immediate begin is not a managed mode because PDO transaction-state
 tracking differs across supported PHP versions. It remains a deliberate,
 application-owned direct-PDO escape path.
-

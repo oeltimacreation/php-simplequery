@@ -7,6 +7,7 @@ namespace Oeltima\SimpleQuery;
 use Closure;
 use Generator;
 use IteratorAggregate;
+use Oeltima\SimpleQuery\Exception\ConnectionException;
 use Oeltima\SimpleQuery\Exception\InvalidQueryException;
 use Oeltima\SimpleQuery\Exception\QueryExecutionException;
 use PDO;
@@ -175,6 +176,10 @@ final class Cursor implements IteratorAggregate
 
         try {
             while (!$this->closed) {
+                if ($this->connection->isClosed()) {
+                    throw new ConnectionException('The database connection is closed.');
+                }
+
                 try {
                     $row = $fetch();
                 } catch (PDOException $exception) {

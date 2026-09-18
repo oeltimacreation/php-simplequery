@@ -19,6 +19,23 @@ use PHPUnit\Framework\TestCase;
 #[RequiresPhpExtension('pdo_sqlite')]
 final class ConnectionStateMatrixTest extends TestCase
 {
+    public function testPublicLifecycleInspectionAcrossStates(): void
+    {
+        foreach (self::stateConfigurations() as $name => $configuration) {
+            [$connection, $retained, $cleanup] = ($configuration['factory'])();
+            try {
+                self::assertSame($name === 'closed', $connection->isClosed(), $name);
+                self::assertSame($name === 'clean', $connection->isReusable(), $name);
+            } finally {
+                unset($retained);
+                $cleanup();
+            }
+            $connection->discard();
+            self::assertTrue($connection->isClosed(), $name);
+            self::assertFalse($connection->isReusable(), $name);
+        }
+    }
+
     #[DataProvider('stateMatrix')]
     public function testConnectionStateTransitions(StateTransitionCase $case): void
     {

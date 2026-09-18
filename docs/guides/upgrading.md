@@ -25,6 +25,27 @@ For each upgrade:
 7. review generated SQL for raw or dialect-specific queries;
 8. deploy through the application's normal staged rollout.
 
+## Preparing for 0.8.0 (unreleased)
+
+The additive `Connection::isClosed()`, `isReusable()`, and `discard()` methods
+support explicit lifecycle decisions. Existing `close()` remains strict.
+Replace reliance on internal transaction/cursor methods with `isReusable()`
+only at an application-controlled unit boundary; it is not a ping or proof of
+session cleanliness. A known-lost connection must be discarded even if that
+local check returns true.
+
+Discard permanently retires the wrapper. Do not reuse old models, builders,
+raw queries, or cursors against its replacement. Do not use discard to complete
+a transaction: callback completion fails, escaped PDO can retain physical
+work, and outstanding cursors still need cleanup. A cursor advanced after
+discard fails before another fetch. Applications own initialization of the
+replacement, session reset, and reconciliation of uncertain writes. See
+[connection lifecycle guidance](concurrency-and-workers.md).
+
+The new surface does not implement idle policy or change connection-construction
+diagnostics. Adopt the package and holder changes together; do not remove the
+application's recovery policy simply because these methods exist.
+
 ## Installing 0.7.0
 
 ```bash

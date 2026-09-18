@@ -8,6 +8,12 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+### Added
+
+- Add explicit connection lifecycle inspection (`isClosed()`, `isReusable()`)
+  and terminal `discard()` for application-owned recovery, with stale-query,
+  cursor, and managed-transaction safeguards and no automatic reconnect or replay.
+
 ## [0.7.0] - 2026-09-13
 
 ### Changed

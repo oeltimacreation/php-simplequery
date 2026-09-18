@@ -841,6 +841,16 @@
                     "parameters": []
                 },
                 {
+                    "name": "discard",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "void",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
                     "name": "driver",
                     "compatibility": "public",
                     "static": false,
@@ -927,6 +937,26 @@
                 {
                     "name": "hasActiveCursors",
                     "compatibility": "internal",
+                    "static": false,
+                    "final": false,
+                    "return_type": "bool",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "isClosed",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "bool",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "isReusable",
+                    "compatibility": "public",
                     "static": false,
                     "final": false,
                     "return_type": "bool",
