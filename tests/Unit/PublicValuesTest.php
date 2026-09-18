@@ -105,15 +105,20 @@ final class PublicValuesTest extends TestCase
 
     public function testUnsupportedAndNonFiniteAutomaticValuesAreRejected(): void
     {
-        try {
-            Binding::fromValue(new \stdClass());
-            self::fail('Object binding should fail.');
-        } catch (InvalidQueryException) {
-            self::addToAssertionCount(1);
+        $invalid = [
+            'object' => new \stdClass(),
+            'date time' => new \DateTimeImmutable(),
+            'positive infinity' => INF,
+            'not a number' => NAN,
+        ];
+        foreach ($invalid as $label => $value) {
+            try {
+                Binding::fromValue($value);
+                self::fail(sprintf('The %s binding unexpectedly succeeded.', $label));
+            } catch (InvalidQueryException) {
+                self::addToAssertionCount(1);
+            }
         }
-
-        $this->expectException(InvalidQueryException::class);
-        Binding::fromValue(INF);
     }
 
     public function testIdentifiersAreExplicitImmutableValues(): void

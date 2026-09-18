@@ -215,6 +215,24 @@ final class ExecutionTest extends TestCase
         self::assertNull($this->connection->table('users')->where('id', '<', 0)->average('score'));
     }
 
+    public function testZeroRowWritesAndEmptyResultTerminals(): void
+    {
+        $this->seedUsers();
+
+        self::assertSame(
+            0,
+            $this->connection->table('users')->where('name', 'missing')->update(['score' => 1]),
+        );
+        self::assertSame(0, $this->connection->table('users')->where('name', 'missing')->delete());
+        self::assertSame([], $this->connection->table('users')->where('name', 'missing')->get());
+        self::assertSame([], $this->connection->table('users')->where('name', 'missing')->getAssociative());
+        self::assertSame(0, $this->connection->table('users')->where('name', 'missing')->count());
+        self::assertNull($this->connection->table('users')->where('name', 'missing')->sum('score'));
+        self::assertNull($this->connection->table('users')->where('name', 'missing')->average('score'));
+        self::assertNull($this->connection->table('users')->where('name', 'missing')->min('score'));
+        self::assertNull($this->connection->table('users')->where('name', 'missing')->max('score'));
+    }
+
     public function testExpressionAndColumnComparisonsExecuteEndToEnd(): void
     {
         $this->seedUsers();
