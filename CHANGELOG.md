@@ -17,12 +17,24 @@ with ZeroVer releases before `1.0.0`.
   `driverCode`, `driver`, `connectionLabel`) for connection construction
   failures and closed/compiler-only misuse, without retaining the raw
   `PDOException`, driver message, or trace.
+- Add an executable framework-free worker request lifecycle example with
+  lazy per-role acquisition, pinned owners, monotonic idle boundaries, session
+  initialization and restoration, eviction isolation, bounded counters, and
+  `finally` cleanup.
+- Add a direct MariaDB/MySQL session-hygiene probe covering session-scoped
+  statement limits, functional restoration, replacement reinitialization, idle
+  and lock inputs, observation boundaries, and acquisition cost.
 
 ### Changed
 
 - Normalize missing or malformed PDO `errorInfo` and integer exception codes
   consistently for connection construction and query execution failures, and
   mark the `Connection::connect()` DSN parameter `#[SensitiveParameter]`.
+- Document the framework-free worker recipe and FrankenPHP worker-loop mapping,
+  session initialization and restoration, engine-specific timeout boundaries,
+  per-role eviction, and application-owned lifecycle counters.
+- Record the 0.8 lifecycle observation decision: lifecycle counters remain
+  application-owned and no lifecycle observer is added.
 
 ## [0.7.0] - 2026-09-13
 

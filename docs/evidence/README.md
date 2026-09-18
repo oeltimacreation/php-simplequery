@@ -52,6 +52,10 @@ Candidate workstream evidence:
 - [0.8 connection failure evidence](0.8-connection-failure-evidence.md) —
   normalized connection construction diagnostics and application-owned
   eviction/retry separation; consumer logging and adoption remain pending.
+- [0.8 worker lifecycle and session hygiene validation](0.8-worker-lifecycle.md) —
+  executable framework-free request recipe, direct session-hygiene probes, and
+  the OBS-1 decision; consumer adoption and the real worker rehearsal remain
+  pending.
 
 Historical release evidence:
 
