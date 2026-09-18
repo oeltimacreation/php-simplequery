@@ -36,34 +36,32 @@ Maintained compatibility and migration records:
 
 Current release evidence:
 
-- [`0.7.0` development and candidate review](0.7-development-review.md),
-  including bounded performance decisions, mutation results, retained database
-  qualification, required remote CI, code-health review, local certification,
-  and published-dist verification.
+- [`0.8.0` development and candidate review](0.8-development-review.md),
+  including the worker lifecycle and interoperability decisions, local
+  candidate certification, remote CI and code health, and published-dist
+  verification.
 
-The [active 0.8.0 release plan](../plans/0.8.md) tracks intended work and
-pending qualification; it is not evidence of released behavior.
-
-Candidate workstream evidence:
+0.8 release evidence:
 
 - [0.8 connection lifecycle validation](0.8-connection-lifecycle.md) — explicit
   lifecycle API, local tests/coverage, and direct idle-loss/recovery probes;
-  consumer and FrankenPHP qualification remain pending.
+  consumer and FrankenPHP qualification followed in the candidate rehearsal.
 - [0.8 connection failure evidence](0.8-connection-failure-evidence.md) —
   normalized connection construction diagnostics and application-owned
-  eviction/retry separation; consumer logging and adoption remain pending.
+  eviction/retry separation; consumer logging and adoption remain
+  application-owned.
 - [0.8 worker lifecycle and session hygiene validation](0.8-worker-lifecycle.md) —
   executable framework-free request recipe, direct session-hygiene probes, and
-  the OBS-1 decision; consumer adoption and the real worker rehearsal remain
-  pending.
+  the OBS-1 decision; the real worker rehearsal followed in the candidate
+  rehearsal.
 - [0.8 candidate rehearsal and adoption evidence](0.8-worker-rehearsal.md) —
   synthetic FrankenPHP classic/worker rehearsal, one-hour soak, proxy session
-  observations, and the consumer static-analysis/migration-slice checks;
-  final release certification remains pending.
+  observations, and the consumer static-analysis/migration-slice checks; final
+  release certification is recorded in the `0.8.0` development review.
 - [0.8 write interoperability validation](0.8-write-interoperability.md) —
   consumer-shaped lazy injection, write-return, shape, and race fixtures, the
   direct vendor-writes probe, and the `min()`/`max()` typing fix; private
-  consumer endpoint adoption remains pending.
+  consumer endpoint adoption remains application-owned.
 - [0.8 consumer adoption analysis](0.8-consumer-adoption.md) — read-only source
   audit, unchanged PHPStan against the candidate, database-free classic and
   single-worker endpoint comparisons, and the recorded application-owned
@@ -74,6 +72,10 @@ Candidate workstream evidence:
 
 Historical release evidence:
 
+- [`0.7.0` development and candidate review](0.7-development-review.md),
+  including bounded performance decisions, mutation results, retained database
+  qualification, required remote CI, code-health review, local certification,
+  and published-dist verification.
 - [`0.6.0` Phase 0 baseline and scope freeze](0.6-phase-0-baseline-and-scope.md).
 - [`0.6.0` Phase 1 attributable performance evidence](0.6-phase-1-attributable-performance.md).
 - [`0.6.0` Phase 2 compiler and binding efficiency evidence](0.6-phase-2-compiler-and-binding-efficiency.md).

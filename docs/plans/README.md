@@ -1,10 +1,7 @@
 # Development plans
 
-This directory contains only active release planning. The active
-[0.8.0 release plan](0.8.md) prioritizes worker lifecycle reliability and
-interoperability with the first internal FrankenPHP worker-mode consumer.
-It consolidates the improvement backlog, including deferred scope and decisions
-that must be accepted before implementation.
+This directory contains only active release planning. No release plan is
+currently active.
 
 A plan describes intended work, acceptance gates, and explicit non-goals. It
 is not part of the released public API contract. When a release is complete,
@@ -16,3 +13,7 @@ changelog section, the upgrade guide, and the
 The completed `0.7.0` plan was retired at release finalization; its outcome is
 recorded in the `0.7.0` changelog section, the upgrade guide, ADR-023, and the
 [`0.7.0` release review](../evidence/0.7-development-review.md).
+The completed `0.8.0` plan was retired at release finalization; its outcome is
+recorded in the `0.8.0` changelog section, the upgrade guide, ADR-006, ADR-008,
+ADR-009, ADR-024, and the
+[`0.8.0` development review](../evidence/0.8-development-review.md).
