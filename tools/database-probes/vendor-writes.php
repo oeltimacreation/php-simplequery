@@ -187,6 +187,28 @@ try {
         ['affected_rows' => $batchAffected, 'next_id' => $afterBatchId],
     );
 
+    // Bind-count and payload limits are engine-specific; record the boundary
+    // instead of advertising a portable ceiling.
+    $withinLimitValues = range(1, 5000);
+    $withinLimit = $connection->table($table)->whereIn('id', $withinLimitValues)->count();
+    $require('bind_count_within_limit', $withinLimit >= 0, [
+        'values' => count($withinLimitValues),
+    ]);
+    $overLimitOutcome = 'completed';
+    $overLimitCode = null;
+    try {
+        $connection->table($table)->whereIn('id', range(1, 65536))->count();
+    } catch (QueryExecutionException $failure) {
+        $overLimitOutcome = 'failed';
+        $overLimitCode = $failure->driverCode;
+    }
+    $report->observed('bind_count_limit', [
+        'values_within' => count($withinLimitValues),
+        'values_over' => 65536,
+        'over_limit_outcome' => $overLimitOutcome,
+        'over_limit_driver_code' => $overLimitCode,
+    ]);
+
     $packetRow = $connection->query('SELECT @@max_allowed_packet AS bytes')->firstAssociative();
     $largePayload = str_repeat('simplequery-', 32768);
     $connection->table($table)->insert([
