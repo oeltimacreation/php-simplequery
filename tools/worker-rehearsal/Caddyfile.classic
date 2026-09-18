@@ -1,0 +1,4 @@
+:8080 {
+	root * /app/tools/worker-rehearsal/public
+	php_server
+}
