@@ -207,11 +207,11 @@ final class RehearsalApp
         try {
             $connection->query($this->config->reportLimitSql)->execute();
             $raised = $this->statementLimit($connection);
-            $row = $connection->query(
-                'SELECT COUNT(*) AS rows_seen FROM ' . $this->config->table . ' WHERE SLEEP(0.3) = 0',
-            )->firstAssociative();
+            // Evaluate SLEEP once; sleeping per table row would exceed even the
+            // raised limit as the synthetic table grows.
+            $row = $connection->query('SELECT SLEEP(0.3) AS slept')->firstAssociative();
 
-            return ['ok' => true, 'raised_limit' => $raised, 'rows_seen' => $row['rows_seen'] ?? null];
+            return ['ok' => true, 'raised_limit' => $raised, 'slept' => $row['slept'] ?? null];
         } catch (Throwable $failure) {
             $primary = $failure;
 

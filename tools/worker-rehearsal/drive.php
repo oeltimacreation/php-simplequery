@@ -276,6 +276,8 @@ try {
         $latencies = [];
         /** @var list<int> $memorySamples */
         $memorySamples = [];
+        /** @var list<array<string, mixed>> $errorDetails */
+        $errorDetails = [];
 
         while (microtime(true) < $deadline) {
             $path = $weights[$iteration % count($weights)];
@@ -283,6 +285,15 @@ try {
             $latencies[$path][] = $response['elapsed_ms'];
             if ($response['status'] !== 200) {
                 ++$requestErrors;
+                if (count($errorDetails) < 10) {
+                    $errorDetails[] = [
+                        'iteration' => $iteration,
+                        'endpoint' => $path,
+                        'status' => $response['status'],
+                        'error' => $response['body']['error'] ?? null,
+                        'driver_code' => $response['body']['driver_code'] ?? null,
+                    ];
+                }
             }
             if ($iteration % 25 === 24) {
                 sleep((int) ceil($idleSeconds + 0.5));
@@ -314,6 +325,8 @@ try {
             'memory_growth_bytes' => $growth,
             'connection_creations' => $counter($final['body'], 'created'),
             'memory_samples' => count($memorySamples),
+            'final_counters' => $final['body']['counters'] ?? null,
+            'error_details' => $errorDetails,
         ]);
         $require('soak_no_request_errors', $requestErrors === 0, ['errors' => $requestErrors]);
         $require('soak_no_cleanup_failures', $counter($final['body'], 'cleanup_failed') === 0);
