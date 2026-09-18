@@ -777,7 +777,9 @@
                             "by_reference": false,
                             "variadic": false,
                             "optional": false,
-                            "attributes": []
+                            "attributes": [
+                                "SensitiveParameter"
+                            ]
                         },
                         {
                             "name": "username",
@@ -1564,8 +1566,205 @@
             ],
             "annotations": [],
             "constants": [],
-            "properties": [],
-            "methods": []
+            "properties": [
+                {
+                    "name": "connectionLabel",
+                    "static": false,
+                    "readonly": true,
+                    "type": "?string"
+                },
+                {
+                    "name": "driver",
+                    "static": false,
+                    "readonly": true,
+                    "type": "?Oeltima\\SimpleQuery\\Driver"
+                },
+                {
+                    "name": "driverCode",
+                    "static": false,
+                    "readonly": true,
+                    "type": "string|int|null"
+                },
+                {
+                    "name": "operation",
+                    "static": false,
+                    "readonly": true,
+                    "type": "string"
+                },
+                {
+                    "name": "sqlState",
+                    "static": false,
+                    "readonly": true,
+                    "type": "?string"
+                }
+            ],
+            "methods": [
+                {
+                    "name": "__construct",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": null,
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "message",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "operation",
+                            "type": "string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": "connection"
+                        },
+                        {
+                            "name": "sqlState",
+                            "type": "?string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "driverCode",
+                            "type": "string|int|null",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "driver",
+                            "type": "?Oeltima\\SimpleQuery\\Driver",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "connectionLabel",
+                            "type": "?string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        },
+                        {
+                            "name": "previous",
+                            "type": "?Throwable",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                },
+                {
+                    "name": "closed",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "driver",
+                            "type": "Oeltima\\SimpleQuery\\Driver",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "connectionLabel",
+                            "type": "?string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                },
+                {
+                    "name": "compilerOnly",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "driver",
+                            "type": "Oeltima\\SimpleQuery\\Driver",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "connectionLabel",
+                            "type": "?string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                },
+                {
+                    "name": "fromConstructionFailure",
+                    "compatibility": "public",
+                    "static": true,
+                    "final": false,
+                    "return_type": "self",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "failure",
+                            "type": "PDOException",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "driver",
+                            "type": "Oeltima\\SimpleQuery\\Driver",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        },
+                        {
+                            "name": "connectionLabel",
+                            "type": "?string",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": null
+                        }
+                    ]
+                }
+            ]
         },
         {
             "name": "Oeltima\\SimpleQuery\\Exception\\ExternalTransactionException",

@@ -9,6 +9,7 @@ use Oeltima\SimpleQuery\Connection;
 use Oeltima\SimpleQuery\Cursor;
 use Oeltima\SimpleQuery\Driver;
 use Oeltima\SimpleQuery\Expression\Identifier;
+use Oeltima\SimpleQuery\Exception\ConnectionException;
 use Oeltima\SimpleQuery\Exception\QueryExecutionException;
 use Oeltima\SimpleQuery\JoinClause;
 use Oeltima\SimpleQuery\Observability\QueryExecution;
@@ -140,6 +141,16 @@ return static function (Connection $database): void {
         assertType('string|null', $exception->sqlState);
         assertType('int|string|null', $exception->driverCode);
         assertType(Driver::class, $exception->driver);
+    }
+
+    try {
+        $database->pdo();
+    } catch (ConnectionException $exception) {
+        assertType('string', $exception->operation);
+        assertType('string|null', $exception->sqlState);
+        assertType('int|string|null', $exception->driverCode);
+        assertType(Driver::class . '|null', $exception->driver);
+        assertType('string|null', $exception->connectionLabel);
     }
 
     $database->discard();

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Oeltima\SimpleQuery\Exception;
 
 use Oeltima\SimpleQuery\Driver;
+use Oeltima\SimpleQuery\Internal\PdoErrorEvidence;
 use PDOException;
 
 final class QueryExecutionException extends SimpleQueryException
@@ -27,20 +28,12 @@ final class QueryExecutionException extends SimpleQueryException
         Driver $driver,
         ?string $connectionLabel,
     ): self {
-        $errorInfo = $exception->errorInfo;
-        $sqlState = is_array($errorInfo) && isset($errorInfo[0]) && is_string($errorInfo[0])
-            ? $errorInfo[0]
-            : (is_string($exception->getCode()) && $exception->getCode() !== '' ? $exception->getCode() : null);
-        $driverCode = is_array($errorInfo)
-            && isset($errorInfo[1])
-            && (is_int($errorInfo[1]) || is_string($errorInfo[1]))
-            ? $errorInfo[1]
-            : null;
+        $evidence = PdoErrorEvidence::from($exception);
 
         return new self(
-            self::safeMessage($sqlState),
-            $sqlState,
-            $driverCode,
+            self::safeMessage($evidence->sqlState),
+            $evidence->sqlState,
+            $evidence->driverCode,
             $sql,
             $driver,
             $connectionLabel,

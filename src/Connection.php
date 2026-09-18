@@ -58,7 +58,7 @@ final class Connection
     /** @param array<int, mixed> $pdoOptions */
     public static function connect(
         Driver $driver,
-        string $dsn,
+        #[\SensitiveParameter] string $dsn,
         #[\SensitiveParameter] ?string $username = null,
         #[\SensitiveParameter] ?string $password = null,
         array $pdoOptions = [],
@@ -84,8 +84,12 @@ final class Connection
             return self::fromPdo($pdo, $driver, $declaredOptions, $observer);
         } catch (ConfigurationException $exception) {
             throw $exception;
-        } catch (PDOException) {
-            throw new ConnectionException('Could not establish the database connection.');
+        } catch (PDOException $failure) {
+            throw ConnectionException::fromConstructionFailure(
+                $failure,
+                $driver,
+                $declaredOptions->label,
+            );
         }
     }
 
@@ -281,10 +285,10 @@ final class Connection
     public function pdoForExecution(): PDO
     {
         if ($this->closed) {
-            throw new ConnectionException('The database connection is closed.');
+            throw ConnectionException::closed($this->selectedDriver, $this->options->label);
         }
         if ($this->pdoInstance === null) {
-            throw new ConnectionException('A compiler-only connection has no PDO instance.');
+            throw ConnectionException::compilerOnly($this->selectedDriver, $this->options->label);
         }
         $this->transactionManager->assertUsable();
 
@@ -345,7 +349,7 @@ final class Connection
     private function assertCanCreateQuery(): void
     {
         if ($this->closed) {
-            throw new ConnectionException('The database connection is closed.');
+            throw ConnectionException::closed($this->selectedDriver, $this->options->label);
         }
     }
 }

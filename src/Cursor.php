@@ -177,7 +177,10 @@ final class Cursor implements IteratorAggregate
         try {
             while (!$this->closed) {
                 if ($this->connection->isClosed()) {
-                    throw new ConnectionException('The database connection is closed.');
+                    throw ConnectionException::closed(
+                        $this->connection->driver(),
+                        $this->connection->connectionOptions()->label,
+                    );
                 }
 
                 try {

@@ -124,6 +124,11 @@ final class ConnectionLifecycleTest extends TestCase
         } catch (ConnectionException $exception) {
             self::assertSame('Could not establish the database connection.', $exception->getMessage());
             self::assertStringNotContainsString('simplequery-secret', $exception->getMessage());
+            self::assertStringNotContainsString('database.sqlite', $exception->getMessage());
+            self::assertSame('connect', $exception->operation);
+            self::assertSame(Driver::Sqlite, $exception->driver);
+            self::assertSame('HY000', $exception->sqlState);
+            self::assertSame(14, $exception->driverCode);
             self::assertNull($exception->getPrevious());
         }
     }
@@ -239,7 +244,7 @@ final class ConnectionLifecycleTest extends TestCase
         ];
     }
 
-    public function testCredentialParametersAreMarkedSensitive(): void
+    public function testConnectionParametersAreMarkedSensitive(): void
     {
         $parameters = (new ReflectionMethod(Connection::class, 'connect'))->getParameters();
         $byName = [];
@@ -247,6 +252,7 @@ final class ConnectionLifecycleTest extends TestCase
             $byName[$parameter->getName()] = $parameter;
         }
 
+        self::assertCount(1, $byName['dsn']->getAttributes(SensitiveParameter::class));
         self::assertCount(1, $byName['username']->getAttributes(SensitiveParameter::class));
         self::assertCount(1, $byName['password']->getAttributes(SensitiveParameter::class));
     }

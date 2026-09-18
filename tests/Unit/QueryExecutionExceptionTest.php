@@ -28,6 +28,52 @@ final class QueryExecutionExceptionTest extends TestCase
         self::assertSame($pdoException, $exception->getPrevious());
     }
 
+    public function testIntegerExceptionCodeBecomesDriverEvidenceWithoutInventingASqlState(): void
+    {
+        $pdoException = new PDOException('synthetic transport failure', 2006);
+        $exception = QueryExecutionException::fromPdo(
+            $pdoException,
+            'SELECT ?',
+            Driver::MySql,
+            'synthetic',
+        );
+
+        self::assertNull($exception->sqlState);
+        self::assertSame(2006, $exception->driverCode);
+    }
+
+    /** @param array<mixed> $errorInfo */
+    #[DataProvider('malformedErrorInfo')]
+    public function testMalformedPdoErrorInfoDoesNotInventPortableEvidence(
+        array $errorInfo,
+        ?string $expectedSqlState,
+        int|string|null $expectedDriverCode,
+    ): void {
+        $pdoException = new PDOException('synthetic driver detail');
+        $pdoException->errorInfo = $errorInfo;
+
+        $exception = QueryExecutionException::fromPdo(
+            $pdoException,
+            'SELECT ?',
+            Driver::Sqlite,
+            'synthetic',
+        );
+
+        self::assertSame($expectedSqlState, $exception->sqlState);
+        self::assertSame($expectedDriverCode, $exception->driverCode);
+    }
+
+    /** @return iterable<string, array{array<mixed>, ?string, int|string|null}> */
+    public static function malformedErrorInfo(): iterable
+    {
+        yield 'non-string state' => [[123, 19], null, 19];
+        yield 'empty state' => [['', 19], null, 19];
+        yield 'non-scalar code' => [['HY000', 1.5], 'HY000', null];
+        yield 'empty code' => [['HY000', ''], 'HY000', null];
+        yield 'truncated entry' => [['HY000'], 'HY000', null];
+        yield 'empty array' => [[], null, null];
+    }
+
     #[DataProvider('driverEvidence')]
     public function testPdoEvidenceRemainsAccessibleWithoutAssigningPortableSemantics(
         Driver $driver,
