@@ -42,6 +42,9 @@ with ZeroVer releases before `1.0.0`.
   fixtures and a direct-engine probe: raw vendor upsert and ignored-duplicate
   generated-ID behavior, boolean adapter ambiguity, chunk atomicity, and
   duplicate-submission reconciliation.
+- Record the D5 decision to retain the transaction ownership guard and
+  inspection cost, with controlled control-count tests, direct-engine component
+  timings, and a paired `v0.7.0` comparison (ADR-008 amended).
 
 ## [0.7.0] - 2026-09-13
 

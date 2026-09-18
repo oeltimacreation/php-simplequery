@@ -68,6 +68,9 @@ Candidate workstream evidence:
   audit, unchanged PHPStan against the candidate, database-free classic and
   single-worker endpoint comparisons, and the recorded application-owned
   adoption actions.
+- [0.8 transaction cost validation](0.8-transaction-cost.md) — exact control
+  sequences, direct-engine component timings, proxy pass-through, the paired
+  `v0.7.0` comparison, and the D5 retain decision.
 
 Historical release evidence:
 
