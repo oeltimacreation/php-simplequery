@@ -176,12 +176,7 @@ final class Cursor implements IteratorAggregate
 
         try {
             while (!$this->closed) {
-                if ($this->connection->isClosed()) {
-                    throw ConnectionException::closed(
-                        $this->connection->driver(),
-                        $this->connection->connectionOptions()->label,
-                    );
-                }
+                $this->assertConnectionOpen();
 
                 try {
                     $row = $fetch();
@@ -209,6 +204,18 @@ final class Cursor implements IteratorAggregate
                 }
             }
         }
+    }
+
+    private function assertConnectionOpen(): void
+    {
+        if (!$this->connection->isClosed()) {
+            return;
+        }
+
+        throw ConnectionException::closed(
+            $this->connection->driver(),
+            $this->connection->connectionOptions()->label,
+        );
     }
 
     private function finalize(): void

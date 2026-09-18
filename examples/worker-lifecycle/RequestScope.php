@@ -133,8 +133,17 @@ final class RequestScope
     public function finish(?Throwable $primary): void
     {
         $this->finished = true;
-        $cleanupFailure = null;
+        $cleanupFailure = $this->closeCursors();
+        $cleanupFailure = $this->releaseConnections($primary, $cleanupFailure);
 
+        if ($primary === null && $cleanupFailure !== null) {
+            throw $cleanupFailure;
+        }
+    }
+
+    private function closeCursors(): ?Throwable
+    {
+        $cleanupFailure = null;
         foreach ($this->cursors as $cursor) {
             if ($cursor->isClosed()) {
                 continue;
@@ -148,6 +157,11 @@ final class RequestScope
         }
         $this->cursors = [];
 
+        return $cleanupFailure;
+    }
+
+    private function releaseConnections(?Throwable $primary, ?Throwable $cleanupFailure): ?Throwable
+    {
         foreach ($this->connections as $role => $connection) {
             unset($this->connections[$role]);
             try {
@@ -158,9 +172,7 @@ final class RequestScope
         }
         $this->connections = [];
 
-        if ($primary === null && $cleanupFailure !== null) {
-            throw $cleanupFailure;
-        }
+        return $cleanupFailure;
     }
 
     private function assertOpen(): void

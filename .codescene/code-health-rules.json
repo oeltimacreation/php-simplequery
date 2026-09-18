@@ -1,5 +1,5 @@
 {
-  "usage": "The SQLite contention probe is a path/process-scanning repository tool whose steps must exchange repository paths, worker modes, and worker arguments as strings. The benchmark harness also has a typed process-boundary environment adapter, and the compiler behavior test intentionally groups independent PHPUnit cases. The negative compiler-fixture test enumerates independent fault mutations in one focused table. The rules disabled for those narrow paths add no actionable signal; critical rules stay enforced elsewhere.",
+  "usage": "The SQLite contention probe is a path/process-scanning repository tool whose steps must exchange repository paths, worker modes, and worker arguments as strings. The benchmark harness also has a typed process-boundary environment adapter, and the compiler behavior test intentionally groups independent PHPUnit cases. The negative compiler-fixture test enumerates independent fault mutations in one focused table. The public connection-evidence exception, the framework-free holder example, and the disposable worker rehearsal harness keep documented narrow exceptions for the same reason. The rules disabled for those narrow paths add no actionable signal; critical rules stay enforced elsewhere.",
   "rule_sets": [
     {
       "matching_content_path": "tests/Compiler/QueryBuilderBehaviorTest.php",
@@ -89,6 +89,46 @@
       "rules": [
         {
           "name": "String Heavy Function Arguments",
+          "weight": 0.0
+        }
+      ]
+    },
+    {
+      "matching_content_path": "src/Exception/ConnectionException.php",
+      "matching_content_path_doc": "This public exception mirrors the normalized connection evidence fields one-for-one as readonly constructor properties; grouping them into a parameter object would change the released evidence contract.",
+      "rules": [
+        {
+          "name": "Excess Number of Function Arguments",
+          "weight": 0.0
+        }
+      ]
+    },
+    {
+      "matching_content_path": "examples/worker-lifecycle/WorkerDatabase.php",
+      "matching_content_path_doc": "The application-owned holder recipe keeps role and lifecycle reason as validated string labels so the example stays framework-free and matches the library's public surface.",
+      "rules": [
+        {
+          "name": "String Heavy Function Arguments",
+          "weight": 0.0
+        }
+      ]
+    },
+    {
+      "matching_content_path": "tools/worker-rehearsal/src/RehearsalConfig.php",
+      "matching_content_path_doc": "The disposable rehearsal tool reads one bounded environment contract into one typed configuration object; splitting it adds indirection without a behavior or safety benefit.",
+      "rules": [
+        {
+          "name": "Excess Number of Function Arguments",
+          "weight": 0.0
+        }
+      ]
+    },
+    {
+      "matching_content_path": "tools/worker-rehearsal/src/RehearsalApp.php",
+      "matching_content_path_doc": "Rehearsal scenarios intentionally repeat response envelopes and acquisition shapes so each endpoint path stays independently readable and fails in isolation.",
+      "rules": [
+        {
+          "name": "Code Duplication",
           "weight": 0.0
         }
       ]

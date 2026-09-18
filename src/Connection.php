@@ -209,13 +209,7 @@ final class Connection
     /** Local lifecycle inspection only; this does not check transport liveness or reset session state. */
     public function isReusable(): bool
     {
-        if (
-            $this->closed
-            || $this->pdoInstance === null
-            || $this->activeCursors > 0
-            || $this->transactionManager->depth() > 0
-            || $this->transactionManager->isUnusable()
-        ) {
+        if ($this->closed || $this->pdoInstance === null || $this->hasActiveWork()) {
             return false;
         }
 
@@ -233,6 +227,13 @@ final class Connection
                 connectionUnusable: true,
             );
         }
+    }
+
+    private function hasActiveWork(): bool
+    {
+        return $this->activeCursors > 0
+            || $this->transactionManager->depth() > 0
+            || $this->transactionManager->isUnusable();
     }
 
     /** Invalidate this wrapper without SQL; escaped PDO/statement references remain application-owned. */

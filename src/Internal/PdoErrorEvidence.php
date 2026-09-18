@@ -25,36 +25,36 @@ final readonly class PdoErrorEvidence
     public static function from(PDOException $failure): self
     {
         $errorInfo = $failure->errorInfo;
-        $sqlState = self::sqlStateEntry($errorInfo);
-        $driverCode = self::driverCodeEntry($errorInfo);
         $code = $failure->getCode();
 
-        if ($sqlState === null && is_string($code) && $code !== '') {
-            $sqlState = $code;
-        }
-        if ($driverCode === null && is_int($code) && $code !== 0) {
-            $driverCode = $code;
-        }
-
-        return new self($sqlState, $driverCode);
+        return new self(
+            self::sqlState($errorInfo, $code),
+            self::driverCode($errorInfo, $code),
+        );
     }
 
     /** @param array<mixed>|null $errorInfo */
-    private static function sqlStateEntry(?array $errorInfo): ?string
+    private static function sqlState(?array $errorInfo, int|string $code): ?string
     {
         $value = $errorInfo[0] ?? null;
+        if (is_string($value) && $value !== '') {
+            return $value;
+        }
 
-        return is_string($value) && $value !== '' ? $value : null;
+        return is_string($code) && $code !== '' ? $code : null;
     }
 
     /** @param array<mixed>|null $errorInfo */
-    private static function driverCodeEntry(?array $errorInfo): int|string|null
+    private static function driverCode(?array $errorInfo, int|string $code): int|string|null
     {
         $value = $errorInfo[1] ?? null;
         if (is_int($value)) {
             return $value;
         }
+        if (is_string($value) && $value !== '') {
+            return $value;
+        }
 
-        return is_string($value) && $value !== '' ? $value : null;
+        return is_int($code) && $code !== 0 ? $code : null;
     }
 }
