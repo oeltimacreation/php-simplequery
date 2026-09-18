@@ -56,6 +56,10 @@ Candidate workstream evidence:
   executable framework-free request recipe, direct session-hygiene probes, and
   the OBS-1 decision; consumer adoption and the real worker rehearsal remain
   pending.
+- [0.8 candidate rehearsal and adoption evidence](0.8-worker-rehearsal.md) —
+  synthetic FrankenPHP classic/worker rehearsal, one-hour soak, proxy session
+  observations, and the consumer static-analysis/migration-slice checks;
+  final release certification remains pending.
 
 Historical release evidence:
 

@@ -240,6 +240,12 @@ database cleanup. Classic request mode remains the control when qualifying
 worker behavior, and any worker claim pins the PHP, PDO, FrankenPHP, and engine
 versions with the tested source.
 
+The library repository maintains a synthetic, pinned
+[FrankenPHP rehearsal](../../tools/worker-rehearsal/README.md) with a
+classic-mode control, a single-worker request loop, and a bounded soak against
+disposable MariaDB/MySQL fixtures. It is maintainer tooling, not a deployment
+qualification.
+
 ## Failure inspection and eviction
 
 `ConnectionException` construction failures expose `operation=connect`,
@@ -337,5 +343,9 @@ connection.
 ProxySQL and MaxScale may pin, multiplex, replay, or reroute sessions according
 to their configuration. Applications and operators must align transaction
 stickiness, read-after-write, session-command, and retry settings with the
-published compatibility fixture. The library never treats proxy routing as an
-application-level transaction guarantee.
+published compatibility fixture. The maintained
+[proxy session probe](../../tools/database-probes/proxy-session.php) records
+backend session identity, transaction visibility, session-variable handling,
+and idle evidence per fixture; the configuration decides the result. The
+library never treats proxy routing as an application-level transaction
+guarantee.

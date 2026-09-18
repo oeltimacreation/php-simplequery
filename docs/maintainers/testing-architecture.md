@@ -20,6 +20,8 @@ composer probe:execution -- sqlite    # public executor smoke
 composer probe:transaction -- sqlite  # managed transaction state matrix
 bash tools/database-probes/run-services.sh  # complete direct/proxy behavior and execution matrix
 php tools/database-probes/ambiguous-write.php proxysql  # operator-controlled failure window
+bash tools/worker-rehearsal/run.sh  # FrankenPHP classic/worker rehearsal with a short soak
+REHEARSAL_SOAK_SECONDS=3600 bash tools/worker-rehearsal/run.sh  # one-hour gate soak
 composer benchmark             # complete deterministic SQLite benchmark suite
 composer benchmark:soak        # repeated compile/lifecycle stress
 ```
@@ -41,6 +43,15 @@ validation scans maintained root and `docs/` Markdown only, so external URLs
 and generated benchmark, probe, coverage, vendor, and analysis output are not
 treated as local targets.
 
+The worker rehearsal is a disposable Docker run with a pinned FrankenPHP/PHP
+ZTS image and `pdo_mysql`. It starts MariaDB/MySQL, compares a classic-mode
+control against a single worker thread matched to every request, and records
+scenario and soak reports under the ignored
+`tools/worker-rehearsal/results/` directory. It is the maintained executable
+worker rehearsal; it does not qualify a deployment, proxy, or the private
+consumer by itself. The `session-hygiene` and `proxy-session` probes cover
+direct-engine session scope and proxy session policy respectively.
+
 ## Naming and placement
 
 - tests use `testMethodScenarioExpectedBehavior` or a sentence-style method
@@ -54,9 +65,10 @@ treated as local targets.
 - `tests/Fixtures/Contracts` is versioned executable contract data;
 - `tests/Fixtures/Migration` is synthetic migration characterization data;
 - `tools/database-probes` owns probe commands, fixtures, and their private
-  support classes.
-- `tools/database-probes` owns the maintained engine, proxy, SQLite, execution,
-  transaction, and contention probes.
+  support classes, including the maintained engine, proxy, SQLite, execution,
+  transaction, session, and contention probes.
+- `tools/worker-rehearsal` owns the pinned FrankenPHP rehearsal app, driver,
+  Caddy configs, and orchestration; its output is generated and ignored.
 
 The suite uses synthetic tables prefixed `sq_probe_`. Every fixture creates its
 own random table name and removes it in `finally`. File-backed SQLite fixtures
