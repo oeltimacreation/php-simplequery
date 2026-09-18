@@ -42,9 +42,23 @@ discard fails before another fetch. Applications own initialization of the
 replacement, session reset, and reconciliation of uncertain writes. See
 [connection lifecycle guidance](concurrency-and-workers.md).
 
-The new surface does not implement idle policy or change connection-construction
-diagnostics. Adopt the package and holder changes together; do not remove the
-application's recovery policy simply because these methods exist.
+Connection failures now expose normalized `ConnectionException` evidence.
+`operation` is `connect` for a construction or SQLite-bootstrap failure,
+`closed` for a retired wrapper, and `compiler_only` for a PDO-free compiler
+connection; `sqlState`, `driverCode`, `driver`, and `connectionLabel` describe
+the connection context. The raw PDO exception, driver message, and trace are
+not retained, so `getPrevious()` remains null; branch on `operation` and
+normalized codes instead of exception messages. The `$dsn` parameter is marked
+`#[SensitiveParameter]`. Missing or malformed PDO `errorInfo` is normalized
+consistently for construction and query execution, so read `$driverCode`
+without assuming a particular shape.
+
+The new surface does not implement idle policy and adds no retry classifier.
+Adopt the package and holder/error-handler changes together; do not remove the
+application's recovery policy simply because these methods exist. Eviction,
+retry classification, and ambiguous-write reconciliation remain
+application-owned; see
+[connection lifecycle and failure guidance](concurrency-and-workers.md).
 
 ## Installing 0.7.0
 

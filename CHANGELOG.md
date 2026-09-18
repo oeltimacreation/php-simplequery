@@ -13,6 +13,16 @@ with ZeroVer releases before `1.0.0`.
 - Add explicit connection lifecycle inspection (`isClosed()`, `isReusable()`)
   and terminal `discard()` for application-owned recovery, with stale-query,
   cursor, and managed-transaction safeguards and no automatic reconnect or replay.
+- Add normalized `ConnectionException` evidence (`operation`, `sqlState`,
+  `driverCode`, `driver`, `connectionLabel`) for connection construction
+  failures and closed/compiler-only misuse, without retaining the raw
+  `PDOException`, driver message, or trace.
+
+### Changed
+
+- Normalize missing or malformed PDO `errorInfo` and integer exception codes
+  consistently for connection construction and query execution failures, and
+  mark the `Connection::connect()` DSN parameter `#[SensitiveParameter]`.
 
 ## [0.7.0] - 2026-09-13
 

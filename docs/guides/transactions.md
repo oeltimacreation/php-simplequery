@@ -122,6 +122,14 @@ transaction attempt fails. Discard the wrapper and its PDO.
 recovery, control, or callback failure, while the named fields preserve all
 available evidence without including bindings or credentials.
 
+`connectionUnusable` is an eviction signal, not a retry signal. It is also set
+when cursor cleanup or transaction-state inspection fails without a
+recognizable connection-loss code. Discard a quarantined wrapper and keep old
+models, builders, and cursors bound to it. Connection construction failures use
+`ConnectionException` with `operation=connect` and normalized driver evidence;
+they carry no callback or control evidence and are classified separately. See
+the [application failure inspection recipe](concurrency-and-workers.md#failure-inspection-and-eviction).
+
 ## DDL
 
 Schema-changing SQL is unsupported inside managed transactions. MariaDB and
@@ -181,6 +189,16 @@ and `1213`, or SQLite SQLSTATE `HY000` with codes `5` and `6`. Those values are
 diagnostic inputs, not proof that a callback is safe to replay. See the
 [transaction and exception evidence](../evidence/0.3-transaction-and-exception-ergonomics.md)
 for the complete recipe and limits.
+
+Eviction is not retry eligibility. Authentication/configuration rejection,
+capacity exhaustion, transport loss, lock timeout/deadlock, and ambiguous
+write/commit outcomes are different decisions. `HY000` alone is insufficient;
+an HTTP `503` or `Retry-After` response does not establish that replay is safe,
+and capacity exhaustion is not categorically permanent or automatically
+retryable. Connection construction failures (`ConnectionException`,
+`operation=connect`) expose normalized driver evidence but no statement
+evidence. See the
+[failure inspection recipe](concurrency-and-workers.md#failure-inspection-and-eviction).
 
 Before any retry, the application must separately prove bounded attempts,
 idempotent or compensatable effects, safe generated-ID behavior, and a policy

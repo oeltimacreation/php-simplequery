@@ -84,6 +84,63 @@ for a later unit; construction failure must leave the holder empty and must
 not trigger an unbounded connection loop. HTTP retry decisions and write
 reconciliation remain application-owned.
 
+## Failure inspection and eviction
+
+`ConnectionException` construction failures expose `operation=connect`,
+`sqlState`, `driverCode`, `driver`, and `connectionLabel`. The raw
+`PDOException`, driver message, and trace are not retained, so diagnose from
+normalized evidence and application policy, never message text. `operation` is
+`closed` for calls on a retired wrapper and `compiler_only` for a PDO-free
+compiler connection, so lifecycle bugs do not look like a down database.
+
+Query loss and unusable transaction state stay distinct decisions:
+
+```php
+use Oeltima\SimpleQuery\Exception\ConnectionException;
+use Oeltima\SimpleQuery\Exception\QueryExecutionException;
+use Oeltima\SimpleQuery\Exception\TransactionException;
+
+try {
+    $connection = $factory->create();
+} catch (ConnectionException $failure) {
+    // operation=connect: no wrapper exists. Log normalized evidence and let
+    // application policy decide whether a later unit may try again.
+}
+
+try {
+    $connection->table('jobs')->where('id', $jobId)->update(['state' => 'claimed']);
+} catch (QueryExecutionException $failure) {
+    // sqlState/driverCode/driver; the statement may have been dispatched.
+    $holder->evict($role);
+    $connection->discard();
+} catch (TransactionException $failure) {
+    if ($failure->connectionUnusable) {
+        $holder->evict($role);
+        $connection->discard();
+    }
+    // callbackFailure, controlFailure, recoveryFailure, and getPrevious()
+    // retain the available evidence; cursor cleanup quarantine sets the same
+    // flag even without a recognizable connection-loss code.
+}
+```
+
+`connectionUnusable` is a lifecycle signal, not a retry signal. A quarantined
+wrapper must be discarded even when the code does not match a known idle-loss
+value. This recipe classifies evidence; the library provides no portable
+classifier.
+
+Eviction and retry eligibility are separate decisions:
+
+| Evidence (engine-specific inputs) | Eviction | Replay eligibility |
+| --- | --- | --- |
+| Construction failure (`operation=connect`), any code | Keep the holder empty; no wrapper exists | No statement was dispatched; a later unit may retry through bounded application policy. |
+| Authentication/configuration rejection (`1045`, `ConfigurationException`) | Discard; correct configuration first | Never replay the same rejected configuration. |
+| Capacity exhaustion (`1040`) | Discard any wrapper | Not categorically permanent and not automatically retryable; apply a bounded application backoff without assuming work ran. |
+| Transport loss or idle expiry (`2002`, `2003`, `2006`, `2013`, `4031`) | Discard and quarantine | The statement may have been dispatched; treat writes and commits as ambiguous and reconcile. |
+| Lock timeout/deadlock (`1205`, `1213`; SQLite `5`, `6`) | Verify transaction state before reuse | Callback side effects need independent proof; a conflict code does not establish idempotency. |
+| `TransactionException::connectionUnusable` (with or without a code) | Discard | Never replay the callback or statements; inspect the named failure fields. |
+| Cursor cleanup quarantine | Discard | Do not continue advancing the cursor or reuse the session. |
+
 ## Worker cleanup
 
 At the end of a job/request:
