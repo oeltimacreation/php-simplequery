@@ -25,6 +25,11 @@ final class ConfigurableStatement extends PDOStatement
     /** @var mixed */
     public static mixed $row = false;
 
+    /** @var mixed */
+    public static mixed $column = null;
+
+    public static bool $columnConfigured = false;
+
     /** When true, fetch() returns $row exactly once and then false. */
     public static bool $rowOnce = false;
 
@@ -55,6 +60,8 @@ final class ConfigurableStatement extends PDOStatement
     public static function reset(): void
     {
         self::$row = false;
+        self::$column = null;
+        self::$columnConfigured = false;
         self::$rowOnce = false;
         self::$fetchThrows = false;
         self::$closeThrows = false;
@@ -71,6 +78,14 @@ final class ConfigurableStatement extends PDOStatement
     public static function returns(mixed $row, bool $once = false): void
     {
         self::$row = $row;
+        self::$rowOnce = $once;
+    }
+
+    /** Controls fetchColumn() until it is reset or consumed once. */
+    public static function returnsColumn(mixed $value, bool $once = false): void
+    {
+        self::$column = $value;
+        self::$columnConfigured = true;
         self::$rowOnce = $once;
     }
 
@@ -105,6 +120,24 @@ final class ConfigurableStatement extends PDOStatement
         }
 
         return $row;
+    }
+
+    #[\Override]
+    public function fetchColumn(int $column = 0): mixed
+    {
+        if (!self::$columnConfigured) {
+            return parent::fetchColumn($column);
+        }
+        if (self::$fetchThrows) {
+            throw new PDOException(self::DEFAULT_FETCH_FAILURE);
+        }
+
+        $value = self::$column;
+        if (self::$rowOnce) {
+            self::$columnConfigured = false;
+        }
+
+        return $value;
     }
 
     #[\Override]

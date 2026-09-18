@@ -279,22 +279,22 @@ final class QueryBuilder
 
     public function sum(string|Identifier|RawExpression $column): int|float|string|null
     {
-        return $this->numericAggregate('SUM', $column);
+        return $this->validatedScalarAggregate('SUM', $column);
     }
 
     public function average(string|Identifier|RawExpression $column): int|float|string|null
     {
-        return $this->numericAggregate('AVG', $column);
+        return $this->validatedScalarAggregate('AVG', $column);
     }
 
-    public function min(string|Identifier|RawExpression $column): mixed
+    public function min(string|Identifier|RawExpression $column): int|float|string|null
     {
-        return $this->aggregate('MIN', $column);
+        return $this->validatedScalarAggregate('MIN', $column);
     }
 
-    public function max(string|Identifier|RawExpression $column): mixed
+    public function max(string|Identifier|RawExpression $column): int|float|string|null
     {
-        return $this->aggregate('MAX', $column);
+        return $this->validatedScalarAggregate('MAX', $column);
     }
 
     /** @param array<string, mixed> $row */
@@ -474,23 +474,14 @@ final class QueryBuilder
         return $query;
     }
 
-    private function aggregate(
-        string $function,
-        string|Identifier|RawExpression $column,
-    ): mixed {
-        $query = $this->aggregateCompiled($function, $column);
-
-        return $this->executor()->scalar($query);
-    }
-
-    private function numericAggregate(
+    private function validatedScalarAggregate(
         string $function,
         string|Identifier|RawExpression $column,
     ): int|float|string|null {
         $query = $this->aggregateCompiled($function, $column);
         $value = $this->executor()->scalar($query);
         if ($value !== null && !is_int($value) && !is_float($value) && !is_string($value)) {
-            throw $this->invalidAggregate('A numeric aggregate returned an unsupported scalar type.', $query);
+            throw $this->invalidAggregate('An aggregate returned an unsupported scalar type.', $query);
         }
 
         return $value;

@@ -21,3 +21,5 @@ phpstan.neon.local
 *~
 .DS_Store
 Thumbs.db
+
+/tools/worker-rehearsal/results/

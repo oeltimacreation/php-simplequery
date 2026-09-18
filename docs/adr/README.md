@@ -30,6 +30,7 @@ silently rewriting the original decision.
 
 | [022](022-malformed-condition-arguments.md) | Reject condition argument holes | Accepted |
 | [023](023-release-consistency-states.md) | Release consistency states and benchmark baselines | Accepted |
+| [024](024-explicit-connection-lifecycle.md) | Explicit lifecycle inspection and terminal connection discard | Accepted |
 
 ## Format
 

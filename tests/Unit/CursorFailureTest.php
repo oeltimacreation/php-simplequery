@@ -8,6 +8,7 @@ use Oeltima\SimpleQuery\CompiledQuery;
 use Oeltima\SimpleQuery\Connection;
 use Oeltima\SimpleQuery\Cursor;
 use Oeltima\SimpleQuery\Driver;
+use Oeltima\SimpleQuery\Exception\ConnectionException;
 use Oeltima\SimpleQuery\Exception\InvalidQueryException;
 use Oeltima\SimpleQuery\Exception\QueryExecutionException;
 use Oeltima\SimpleQuery\Exception\TransactionStateException;
@@ -34,6 +35,66 @@ final class CursorFailureTest extends TestCase
 
         $this->expectException(InvalidQueryException::class);
         $cursor->getIterator();
+    }
+
+    #[DataProvider('discardCases')]
+    public function testDiscardBlocksFurtherFetches(bool $partial, bool $associative): void
+    {
+        $connection = Connection::connect(Driver::Sqlite, 'sqlite::memory:');
+        $query = $connection->query('SELECT 1 AS value UNION ALL SELECT 2 AS value');
+        $cursor = $associative ? $query->iterateAssociative() : $query->iterate();
+        $rows = 0;
+        if (!$partial) {
+            $connection->discard();
+        }
+
+        try {
+            foreach ($cursor as $_row) {
+                ++$rows;
+                $connection->discard();
+            }
+            self::fail('Discard must prevent the next fetch.');
+        } catch (ConnectionException) {
+            self::assertSame($partial ? 1 : 0, $rows);
+        }
+
+        self::assertTrue($cursor->isClosed());
+        self::assertFalse($connection->hasActiveCursors());
+        $cursor->close();
+        $connection->discard();
+    }
+
+    /** @return iterable<string, array{bool, bool}> */
+    public static function discardCases(): iterable
+    {
+        yield 'unstarted object' => [false, false];
+        yield 'unstarted associative' => [false, true];
+        yield 'partial object' => [true, false];
+        yield 'partial associative' => [true, true];
+    }
+
+    public function testDiscardFailureStaysPrimaryWhenCursorCleanupFails(): void
+    {
+        ConfigurableStatement::closeThrows();
+        ConfigurableStatement::fetchThrows();
+        [$connection, $statement] = $this->statement();
+        $cursor = Cursor::objects($statement, $connection, new CompiledQuery('SELECT 1 AS value'));
+        $connection->discard();
+        self::assertSame(0, ConfigurableStatement::$closeCalls);
+
+        try {
+            foreach ($cursor as $_row) {
+            }
+            self::fail('The discarded connection cannot fetch.');
+        } catch (ConnectionException $failure) {
+            self::assertNull($failure->getPrevious());
+        }
+
+        self::assertTrue($cursor->isClosed());
+        self::assertSame(1, ConfigurableStatement::$closeCalls);
+        self::assertFalse($connection->hasActiveCursors());
+        $cursor->close();
+        self::assertSame(1, ConfigurableStatement::$closeCalls);
     }
 
     public function testCursorCannotCreateASecondIterator(): void

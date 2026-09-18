@@ -1,0 +1,10 @@
+:8080 {
+	root * /app/tools/worker-rehearsal/public
+	php_server {
+		worker {
+			file /app/tools/worker-rehearsal/worker.php
+			num 1
+			match *
+		}
+	}
+}

@@ -13,3 +13,7 @@ changelog section, the upgrade guide, and the
 The completed `0.7.0` plan was retired at release finalization; its outcome is
 recorded in the `0.7.0` changelog section, the upgrade guide, ADR-023, and the
 [`0.7.0` release review](../evidence/0.7-development-review.md).
+The completed `0.8.0` plan was retired at release finalization; its outcome is
+recorded in the `0.8.0` changelog section, the upgrade guide, ADR-006, ADR-008,
+ADR-009, ADR-024, and the
+[`0.8.0` development review](../evidence/0.8-development-review.md).

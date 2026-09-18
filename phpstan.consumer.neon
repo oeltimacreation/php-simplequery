@@ -2,6 +2,8 @@ parameters:
     level: 9
     paths:
         - tests/Fixtures/Consumer/static-analysis.php
+        - tests/Fixtures/Consumer/compiler-smoke.php
+        - tests/Fixtures/Consumer/artifact-lifecycle.php
     bootstrapFiles:
         - vendor/autoload.php
     tmpDir: .phpstan.consumer.cache

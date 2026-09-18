@@ -58,7 +58,7 @@ final class Connection
     /** @param array<int, mixed> $pdoOptions */
     public static function connect(
         Driver $driver,
-        string $dsn,
+        #[\SensitiveParameter] string $dsn,
         #[\SensitiveParameter] ?string $username = null,
         #[\SensitiveParameter] ?string $password = null,
         array $pdoOptions = [],
@@ -84,8 +84,12 @@ final class Connection
             return self::fromPdo($pdo, $driver, $declaredOptions, $observer);
         } catch (ConfigurationException $exception) {
             throw $exception;
-        } catch (PDOException) {
-            throw new ConnectionException('Could not establish the database connection.');
+        } catch (PDOException $failure) {
+            throw ConnectionException::fromConstructionFailure(
+                $failure,
+                $driver,
+                $declaredOptions->label,
+            );
         }
     }
 
@@ -197,6 +201,54 @@ final class Connection
         $this->closed = true;
     }
 
+    public function isClosed(): bool
+    {
+        return $this->closed;
+    }
+
+    /** Local lifecycle inspection only; this does not check transport liveness or reset session state. */
+    public function isReusable(): bool
+    {
+        if ($this->closed) {
+            return false;
+        }
+        if ($this->pdoInstance === null) {
+            return false;
+        }
+        if ($this->hasActiveWork()) {
+            return false;
+        }
+
+        try {
+            return !$this->pdoInstance->inTransaction();
+        } catch (\Throwable $failure) {
+            $this->transactionManager->quarantine();
+
+            throw new TransactionStateException(
+                'PDO transaction state could not be inspected.',
+                operation: 'is_reusable',
+                driver: $this->selectedDriver,
+                connectionLabel: $this->options->label,
+                controlFailure: $failure,
+                connectionUnusable: true,
+            );
+        }
+    }
+
+    private function hasActiveWork(): bool
+    {
+        return $this->activeCursors > 0
+            || $this->transactionManager->depth() > 0
+            || $this->transactionManager->isUnusable();
+    }
+
+    /** Invalidate this wrapper without SQL; escaped PDO/statement references remain application-owned. */
+    public function discard(): void
+    {
+        $this->closed = true;
+        $this->pdoInstance = null;
+    }
+
     public function driver(): Driver
     {
         return $this->selectedDriver;
@@ -240,10 +292,10 @@ final class Connection
     public function pdoForExecution(): PDO
     {
         if ($this->closed) {
-            throw new ConnectionException('The database connection is closed.');
+            throw ConnectionException::closed($this->selectedDriver, $this->options->label);
         }
         if ($this->pdoInstance === null) {
-            throw new ConnectionException('A compiler-only connection has no PDO instance.');
+            throw ConnectionException::compilerOnly($this->selectedDriver, $this->options->label);
         }
         $this->transactionManager->assertUsable();
 
@@ -304,7 +356,7 @@ final class Connection
     private function assertCanCreateQuery(): void
     {
         if ($this->closed) {
-            throw new ConnectionException('The database connection is closed.');
+            throw ConnectionException::closed($this->selectedDriver, $this->options->label);
         }
     }
 }

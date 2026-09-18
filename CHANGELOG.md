@@ -8,6 +8,46 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-18
+
+### Added
+
+- Add explicit connection lifecycle inspection (`isClosed()`, `isReusable()`)
+  and terminal `discard()` for application-owned recovery, with stale-query,
+  cursor, and managed-transaction safeguards and no automatic reconnect or replay.
+- Add normalized `ConnectionException` evidence (`operation`, `sqlState`,
+  `driverCode`, `driver`, `connectionLabel`) for connection construction
+  failures and closed/compiler-only misuse, without retaining the raw
+  `PDOException`, driver message, or trace.
+- Add an executable framework-free worker request lifecycle example with
+  lazy per-role acquisition, pinned owners, monotonic idle boundaries, session
+  initialization and restoration, eviction isolation, bounded counters, and
+  `finally` cleanup.
+- Add a direct MariaDB/MySQL session-hygiene probe covering session-scoped
+  statement limits, functional restoration, replacement reinitialization, idle
+  and lock inputs, observation boundaries, and acquisition cost.
+
+### Changed
+
+- Normalize missing or malformed PDO `errorInfo` and integer exception codes
+  consistently for connection construction and query execution failures, and
+  mark the `Connection::connect()` DSN parameter `#[SensitiveParameter]`.
+- Document the framework-free worker recipe and FrankenPHP worker-loop mapping,
+  session initialization and restoration, engine-specific timeout boundaries,
+  per-role eviction, and application-owned lifecycle counters.
+- Record the 0.8 lifecycle observation decision: lifecycle counters remain
+  application-owned and no lifecycle observer is added.
+- Validate `min()`/`max()` scalar returns and declare `int|float|string|null`,
+  aligning them with `sum()`/`average()`; an unsupported driver scalar now
+  throws `QueryExecutionException` and ADR-006 records the amendment.
+- Document demonstrated write-interoperability pitfalls with executable
+  fixtures and a direct-engine probe: raw vendor upsert and ignored-duplicate
+  generated-ID behavior, boolean adapter ambiguity, chunk atomicity, and
+  duplicate-submission reconciliation.
+- Record the D5 decision to retain the transaction ownership guard and
+  inspection cost, with controlled control-count tests, direct-engine component
+  timings, and a paired `v0.7.0` comparison (ADR-008 amended).
+
 ## [0.7.0] - 2026-09-13
 
 ### Changed
@@ -298,7 +338,8 @@ with ZeroVer releases before `1.0.0`.
 - A repeatable direct-migration playbook and complete intentional-difference
   checklist without a runtime Pixie dependency or compatibility façade.
 
-[Unreleased]: https://github.com/oeltimacreation/php-simplequery/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/oeltimacreation/php-simplequery/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.4.0...v0.5.0

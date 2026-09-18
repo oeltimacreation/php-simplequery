@@ -10,6 +10,8 @@ or require a server.
 | [beginner/filter-and-update.php](beginner/filter-and-update.php) | Filter, order, update, and count rows | `php examples/beginner/filter-and-update.php` |
 | [beginner/transaction.php](beginner/transaction.php) | Atomic related writes and rollback | `php examples/beginner/transaction.php` |
 | [compiler-assertions.php](compiler-assertions.php) | Test SQL without a database | `php examples/compiler-assertions.php` |
+| [connection-lifecycle.php](connection-lifecycle.php) | Explicit retirement, stale-query rejection, and a fresh owner | `php examples/connection-lifecycle.php` |
+| [worker-request-lifecycle.php](worker-request-lifecycle.php) | Framework-free worker holder with lazy acquisition, pinning, session restore, counters, and cleanup | `php examples/worker-request-lifecycle.php` |
 | [sqlite-execution.php](sqlite-execution.php) | PDO execution and generated IDs | `php examples/sqlite-execution.php` |
 | [sqlite-compiler-smoke.php](sqlite-compiler-smoke.php) | Compile, bind, and execute with direct PDO | `php examples/sqlite-compiler-smoke.php` |
 | [sqlite-streaming-report.php](sqlite-streaming-report.php) | Early report termination with explicit cursor cleanup | `php examples/sqlite-streaming-report.php` |

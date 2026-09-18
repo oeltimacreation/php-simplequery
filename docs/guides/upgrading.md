@@ -8,7 +8,7 @@ lines. The first public release is `0.1.0`.
 - `0.y.0` may contain documented breaking changes.
 - `0.y.z` patch releases should remain compatible within that minor line,
   except for urgent security or data-integrity fixes.
-- Consumers should pin a tested minor line such as `~0.7.0`.
+- Consumers should pin a tested minor line such as `~0.8.0`.
 - Changelog entries are not a substitute for migration instructions; every
   breaking change must be documented here.
 
@@ -25,16 +25,73 @@ For each upgrade:
 7. review generated SQL for raw or dialect-specific queries;
 8. deploy through the application's normal staged rollout.
 
-## Installing 0.7.0
+## Installing 0.8.0
 
 ```bash
-composer require oeltimacreation/php-simplequery:^0.7
+composer require oeltimacreation/php-simplequery:^0.8
 ```
 
-`0.7.0` requires PHP 8.2+, `ext-pdo`, and either `pdo_sqlite` or `pdo_mysql`.
+`0.8.0` requires PHP 8.2+, `ext-pdo`, and either `pdo_sqlite` or `pdo_mysql`.
 Select `Driver::MariaDb`, `Driver::MySql`, or `Driver::Sqlite` explicitly. See
 [getting started](getting-started.md) for connection examples and
 [database support](../reference/database-support.md) for engine floors.
+
+## Upgrading from 0.7 to 0.8
+
+`0.8.0` adds explicit connection lifecycle and recovery APIs, normalizes
+connection-construction diagnostics, and records worker-mode guidance. Public
+signatures and supported floors are unchanged except for the documented
+`min()`/`max()` return validation below.
+
+The additive `Connection::isClosed()`, `isReusable()`, and `discard()` methods
+support explicit lifecycle decisions. Existing `close()` remains strict.
+Replace reliance on internal transaction/cursor methods with `isReusable()`
+only at an application-controlled unit boundary; it is not a ping or proof of
+session cleanliness. A known-lost connection must be discarded even if that
+local check returns true.
+
+Discard permanently retires the wrapper. Do not reuse old models, builders,
+raw queries, or cursors against its replacement. Do not use discard to complete
+a transaction: callback completion fails, escaped PDO can retain physical
+work, and outstanding cursors still need cleanup. A cursor advanced after
+discard fails before another fetch. Applications own initialization of the
+replacement, session reset, and reconciliation of uncertain writes. See
+[connection lifecycle guidance](concurrency-and-workers.md).
+
+Connection failures now expose normalized `ConnectionException` evidence.
+`operation` is `connect` for a construction or SQLite-bootstrap failure,
+`closed` for a retired wrapper, and `compiler_only` for a PDO-free compiler
+connection; `sqlState`, `driverCode`, `driver`, and `connectionLabel` describe
+the connection context. The raw PDO exception, driver message, and trace are
+not retained, so `getPrevious()` remains null; branch on `operation` and
+normalized codes instead of exception messages. The `$dsn` parameter is marked
+`#[SensitiveParameter]`. Missing or malformed PDO `errorInfo` is normalized
+consistently for construction and query execution, so read `$driverCode`
+without assuming a particular shape.
+
+The new surface does not implement idle policy and adds no retry classifier.
+Adopt the package and holder/error-handler changes together; do not remove the
+application's recovery policy simply because these methods exist. Eviction,
+retry classification, and ambiguous-write reconciliation remain
+application-owned; see
+[connection lifecycle and failure guidance](concurrency-and-workers.md).
+
+`min()` and `max()` now describe and validate the same `int|float|string|null`
+scalar union as `sum()` and `average()`. Supported driver values are unchanged;
+an unsupported driver scalar now throws `QueryExecutionException` instead of
+being returned. See [ADR-006](../adr/006-results-and-write-returns.md).
+
+Worker-mode applications should also adopt the framework-free request recipe:
+lazily acquire and pin one connection per role and unit; initialize every
+replacement before publishing it; restore temporary session settings in
+`finally`; evict the affected role on uncertain failure without reconnecting
+it; and keep bounded lifecycle counters in the application. The recipe adds no
+library API. It is executable in the
+[worker request lifecycle example](../../examples/worker-request-lifecycle.php),
+and the maintained direct probe verifies session initialization, restoration,
+and statement-limit scope against disposable MariaDB and MySQL sessions. See
+[session hygiene](concurrency-and-workers.md#session-initialization-and-restoration)
+and [timeout and deadline distinctions](concurrency-and-workers.md#timeout-and-deadline-distinctions).
 
 ## Upgrading from 0.6 to 0.7
 

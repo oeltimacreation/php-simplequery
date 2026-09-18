@@ -87,7 +87,7 @@ unique name label.
 
 A self-consistent old source snapshot cannot prove what was published elsewhere.
 When certifying provenance, supply the independently verified immutable tag
-version explicitly, for example `composer release:check -- --published-version=0.7.0`.
+version explicitly, for example `composer release:check -- --published-version=0.8.0`.
 Ordinary source checks need no Git history or network access. Update that input
 when the independently verified published release changes.
 

@@ -76,13 +76,15 @@
             "php examples/beginner/filter-and-update.php",
             "php examples/beginner/transaction.php",
             "php examples/compiler-assertions.php",
+            "php examples/connection-lifecycle.php",
             "php examples/query-building.php",
             "php examples/sqlite-compiler-smoke.php",
             "php examples/sqlite-execution.php",
             "php examples/sqlite-streaming-report.php",
             "php examples/sqlite-batch-write.php",
             "php examples/sqlite-transactions.php",
-            "php examples/sqlite-migration-slice.php"
+            "php examples/sqlite-migration-slice.php",
+            "php examples/worker-request-lifecycle.php"
         ],
         "release:check": "php scripts/check-release-consistency.php",
         "verify": "php scripts/verify-repository.php",

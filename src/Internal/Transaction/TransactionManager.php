@@ -48,6 +48,11 @@ final class TransactionManager
         return $this->depth;
     }
 
+    public function isUnusable(): bool
+    {
+        return $this->unusable;
+    }
+
     public function assertUsable(): void
     {
         if ($this->unusable) {
@@ -420,6 +425,18 @@ final class TransactionManager
         int $scopeDepth,
         ?Throwable $callbackFailure = null,
     ): void {
+        if ($this->connection->isClosed()) {
+            $exception = $this->stateException(
+                'The connection was closed or discarded during the managed transaction.',
+                $operation,
+                $scopeDepth,
+                $callbackFailure,
+            );
+            $this->markUnusable();
+
+            throw $exception;
+        }
+
         if ($this->ownsPhysicalTransaction && $this->physicalTransactionActive($pdo, $operation, $callbackFailure)) {
             return;
         }

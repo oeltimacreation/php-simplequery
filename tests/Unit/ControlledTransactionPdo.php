@@ -12,6 +12,8 @@ final class ControlledTransactionPdo extends PDO
     /** @var list<string> */
     public array $controlCalls = [];
 
+    public int $inspectionCalls = 0;
+
     public bool $failInspectionAfterRollback = false;
 
     public bool $failBegin = false;
@@ -89,6 +91,7 @@ final class ControlledTransactionPdo extends PDO
     #[\Override]
     public function inTransaction(): bool
     {
+        ++$this->inspectionCalls;
         if ($this->failTransactionInspection) {
             throw new PDOException('Controlled transaction-state inspection failure.');
         }

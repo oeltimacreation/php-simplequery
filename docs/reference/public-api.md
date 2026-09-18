@@ -20,7 +20,7 @@ Connection::fromPdo(
 
 Connection::connect(
     Driver $driver,
-    string $dsn,
+    #[SensitiveParameter] string $dsn,
     #[SensitiveParameter] ?string $username = null,
     #[SensitiveParameter] ?string $password = null,
     array $pdoOptions = [],
@@ -34,11 +34,35 @@ Connection::query(string $trustedSql, array $bindings = []): RawQuery
 Connection::transaction(Closure $callback): mixed
 Connection::pdo(): PDO
 Connection::close(): void
+Connection::isClosed(): bool
+Connection::isReusable(): bool
+Connection::discard(): void
 ```
 
 Everything above is implemented. `close()` is idempotent after success and
 rejects active physical transactions or tracked cursors rather than silently
 completing or truncating them.
+
+`isClosed()` reads wrapper state. `isReusable()` is a local check: it returns
+false for closed/compiler-only/quarantined connections, managed transactions,
+tracked cursors, or a PDO-reported physical transaction. It sends no ping and
+does not verify transport liveness, reset session settings, or inspect escaped
+PDO statements. PDO inspection failure throws `TransactionStateException`
+(`operation=is_reusable`, `connectionUnusable=true`, retained `controlFailure`)
+and quarantines the wrapper. Manual transaction SQL remains subject to PDO's
+state-tracking limitations.
+
+`discard()` is idempotent terminal invalidation, including abandoned active
+work. It marks the wrapper closed and drops its PDO reference without state
+inspection, explicit rollback, or cursor cleanup. Old builders can compile but
+cannot execute; they never follow a replacement. Managed callback completion
+after discard fails without further transaction-control SQL. Advancing a live
+cursor after discard throws `ConnectionException` before fetching another row
+and attempts normal cursor cleanup; explicit cursor close remains available.
+Existing quarantine evidence may still determine the transaction exception.
+Escaped PDO/statement references cannot be revoked, and discard proves neither
+rollback nor physical disconnection. See [ADR-024](../adr/024-explicit-connection-lifecycle.md)
+and the [worker guide](../guides/concurrency-and-workers.md).
 
 The two raw-SQL binding parameters are PHPDoc `list<mixed>` contracts; keyed
 binding maps are rejected at runtime.
@@ -53,8 +77,12 @@ Construction performs no environment lookup or topology discovery. Broad PDO
 driver mismatch, hard-invariant conflict, invalid/inapplicable options,
 missing MySQL-family `utf8mb4`, failed SQLite foreign-key verification, or an
 unsupported runtime throws `ConfigurationException`. Connection establishment
-failure throws `ConnectionException`. Credentials are never included in
-diagnostics.
+or SQLite bootstrap failure throws `ConnectionException` with
+`operation=connect` and normalized `sqlState`, `driverCode`, `driver`, and
+`connectionLabel` evidence. The DSN, username, and password parameters are
+marked `#[SensitiveParameter]`; the raw `PDOException`, its driver message, and
+its trace are not retained, and `getPrevious()` stays null. Credentials, DSNs,
+and host/path details are never included in diagnostics.
 
 ## Immutable public values
 
@@ -221,7 +249,7 @@ Terminals never mutate clause state.
 | `iterateAssociative()` | One-shot final `Cursor<array<string, mixed>>`. |
 | `count()` | Range-checked non-negative `int`. |
 | `sum()` / `average()` | Preserved `int|float|string|null`; rejects distinct/grouped/HAVING shapes. |
-| `min()` / `max()` | Preserved driver scalar or `null`; rejects distinct/grouped/HAVING shapes. |
+| `min()` / `max()` | Preserved `int|float|string|null`; rejects distinct/grouped/HAVING shapes and unsupported driver scalars. |
 | `insert()` / `insertMany()` | Affected rows as `int`. |
 | `insertGetId()` | Immediately captured generated ID as `string`. |
 | `update()` / `delete()` | Affected rows as `int`. |
@@ -275,11 +303,16 @@ SimpleQueryException
 
 Execution failures expose SQLSTATE, driver code when available, placeholder
 SQL, driver/connection identity, and the previous `PDOException`, without
-interpolated binding values. Transaction failures expose the attempted control
-operation, managed depth, driver/connection label, callback/control/recovery
-failures, and whether the connection is unusable. Domain exceptions retain
-identity when rollback succeeds. Pixie's broad vendor-normalized constraint
-subclass family is not part of the public contract.
+interpolated binding values. Connection construction failures expose
+`operation=connect` plus normalized SQLSTATE, driver code, driver, and optional
+connection label, but deliberately retain no raw PDO exception or driver text.
+Closed and compiler-only misuse expose `operation=closed` or
+`operation=compiler_only` so lifecycle bugs are distinguishable without message
+matching. Transaction failures expose the attempted control operation, managed
+depth, driver/connection label, callback/control/recovery failures, and whether
+the connection is unusable. Domain exceptions retain identity when rollback
+succeeds. Pixie's broad vendor-normalized constraint subclass family is not
+part of the public contract.
 
 ### Exception troubleshooting matrix
 
@@ -288,7 +321,7 @@ Use this matrix to diagnose failures and choose safe application-layer remediati
 | Exception class | Common trigger scenarios | Diagnostic properties | Safe remediation action | Redaction & safety guarantee |
 | --- | --- | --- | --- | --- |
 | `ConfigurationException` | Unsupported driver/options combination, invalid SQLite busy timeout, missing `utf8mb4`, or driver option mismatch. | `$message` | Correct the connection options or driver choice in application configuration before connecting. | Sensitive DSN credentials and passwords are never included in exception messages. |
-| `ConnectionException` | Database server unreachable, authentication rejected, or operations attempted on a closed connection (`close()`). | `$message` | Verify database availability, credentials, or lifecycle handling. Discard closed connection instances. | Passwords and connection DSNs are omitted from diagnostic output. |
+| `ConnectionException` | Database server unreachable or refusing the connection, authentication rejection, capacity refusal, SQLite bootstrap failure, or operations attempted on a closed/compiler-only connection. | `$operation`, `$sqlState`, `$driverCode`, `$driver`, `$connectionLabel` | Branch on `$operation`: `connect` means construction failed and should be classified from normalized driver evidence; `closed`/`compiler_only` mean lifecycle misuse and require discarding the wrapper and fixing ownership. Never match messages. Eviction, retry classification, and ambiguous-write reconciliation stay application-owned. | DSNs, credentials, host/path details, the raw driver message, and the raw `PDOException`/trace are not retained; `$previous` is null. |
 | `InvalidQueryException` | Malformed clauses (e.g. empty selection, null ordering comparison, non-list bindings, conflicting aliases, or missing join operands). | `$message` | Fix builder clause arguments in application code. Discard or recreate the builder instance rather than retrying mutated state. | Runtime query bindings and domain values are never interpolated into the query error message. |
 | `UnsupportedFeatureException` | Valid SQL concept unsupported by target engine dialect or structured API (e.g., SQLite row locks, aggregates on `distinct`/`groupBy`). | `$message` | Use supported structured clauses for the engine, or switch to an explicit trusted raw query (`Connection::query()`). | Dialect messages identify the unsupported feature without exposing application data. |
 | `QueryExecutionException` | SQL syntax error, constraint violation, foreign key failure, deadlock, lock wait timeout, or cursor close failure. | `$sqlState`, `$driverCode`, `$sql`, `$driver`, `$connectionLabel`, `$previous` | Inspect `$sqlState` and normalized `$driverCode` within your engine's documented error codes. Never retry blind writes. | Binding values are never interpolated. Raw SQL literals and chained driver/application exceptions may contain sensitive data. |
@@ -299,9 +332,14 @@ Use this matrix to diagnose failures and choose safe application-layer remediati
 
 No public exception classifier labels a statement or transaction retryable.
 Applications may interpret SQLSTATE and driver codes only within their known
-driver/deployment policy and must treat ambiguous commits separately.
+driver/deployment policy and must treat ambiguous commits separately. Eviction
+is not retry eligibility: authentication/configuration rejection, capacity
+exhaustion, transport loss, lock timeout/deadlock, and ambiguous write/commit
+outcomes are different decisions. `HY000` alone is insufficient, neither HTTP
+`503` nor `Retry-After` establishes that replay is safe, and capacity
+exhaustion is not categorically permanent or automatically retryable. See the
+[application failure inspection recipe](../guides/concurrency-and-workers.md#failure-inspection-and-eviction).
 
 SQLite immediate begin is not a managed mode because PDO transaction-state
 tracking differs across supported PHP versions. It remains a deliberate,
 application-owned direct-PDO escape path.
-
