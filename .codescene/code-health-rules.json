@@ -1,5 +1,5 @@
 {
-  "usage": "The SQLite contention probe is a path/process-scanning repository tool whose steps must exchange repository paths, worker modes, and worker arguments as strings. The benchmark harness also has a typed process-boundary environment adapter, and the compiler behavior test intentionally groups independent PHPUnit cases. The negative compiler-fixture test enumerates independent fault mutations in one focused table. The public connection-evidence exception, the framework-free holder example, and the disposable worker rehearsal harness keep documented narrow exceptions for the same reason. The rules disabled for those narrow paths add no actionable signal; critical rules stay enforced elsewhere.",
+  "usage": "The SQLite contention probe is a path/process-scanning repository tool whose steps must exchange repository paths, worker modes, and worker arguments as strings. The benchmark harness also has a typed process-boundary environment adapter, and the compiler behavior test intentionally groups independent PHPUnit cases. The negative compiler-fixture test enumerates independent fault mutations in one focused table. The public connection-evidence exception, the framework-free holder example, the disposable worker rehearsal harness, and the cursor discarded-connection guard keep documented narrow exceptions for the same reason. The rules disabled for those narrow paths add no actionable signal; critical rules stay enforced elsewhere.",
   "rule_sets": [
     {
       "matching_content_path": "tests/Compiler/QueryBuilderBehaviorTest.php",
@@ -129,6 +129,16 @@
       "rules": [
         {
           "name": "Code Duplication",
+          "weight": 0.0
+        }
+      ]
+    },
+    {
+      "matching_content_path": "src/Cursor.php",
+      "matching_content_path_doc": "The discarded-connection guard stays inline in the cursor row loop because extracting it as a method call measurably regressed streaming-cursor benchmarks (roughly 6-9%); the guard is bounded and covered by the focused discard-fetch cases.",
+      "rules": [
+        {
+          "name": "Complex Method",
           "weight": 0.0
         }
       ]

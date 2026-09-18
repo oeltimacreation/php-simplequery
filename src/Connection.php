@@ -15,6 +15,7 @@ use Oeltima\SimpleQuery\Internal\Ast\Source;
 use Oeltima\SimpleQuery\Internal\Compiler\CompilerFactory;
 use Oeltima\SimpleQuery\Internal\Compiler\DialectCompiler;
 use Oeltima\SimpleQuery\Internal\ConnectionProfile;
+use Oeltima\SimpleQuery\Internal\ConnectionState;
 use Oeltima\SimpleQuery\Internal\Executor;
 use Oeltima\SimpleQuery\Internal\Transaction\TransactionManager;
 use Oeltima\SimpleQuery\Observability\QueryObserver;
@@ -23,7 +24,7 @@ use PDOException;
 
 final class Connection
 {
-    private bool $closed = false;
+    private readonly ConnectionState $state;
 
     private int $activeCursors = 0;
 
@@ -39,6 +40,7 @@ final class Connection
         private readonly ConnectionOptions $options,
         private readonly ?QueryObserver $observer,
     ) {
+        $this->state = new ConnectionState();
         $this->transactionManager = new TransactionManager($this);
     }
 
@@ -175,7 +177,7 @@ final class Connection
 
     public function close(): void
     {
-        if ($this->closed) {
+        if ($this->state->closed) {
             return;
         }
         if ($this->activeCursors > 0) {
@@ -198,18 +200,24 @@ final class Connection
         }
 
         $this->pdoInstance = null;
-        $this->closed = true;
+        $this->state->closed = true;
     }
 
     public function isClosed(): bool
     {
-        return $this->closed;
+        return $this->state->closed;
+    }
+
+    /** @internal */
+    public function connectionState(): ConnectionState
+    {
+        return $this->state;
     }
 
     /** Local lifecycle inspection only; this does not check transport liveness or reset session state. */
     public function isReusable(): bool
     {
-        if ($this->closed) {
+        if ($this->state->closed) {
             return false;
         }
         if ($this->pdoInstance === null) {
@@ -245,7 +253,7 @@ final class Connection
     /** Invalidate this wrapper without SQL; escaped PDO/statement references remain application-owned. */
     public function discard(): void
     {
-        $this->closed = true;
+        $this->state->closed = true;
         $this->pdoInstance = null;
     }
 
@@ -291,7 +299,7 @@ final class Connection
     /** @internal */
     public function pdoForExecution(): PDO
     {
-        if ($this->closed) {
+        if ($this->state->closed) {
             throw ConnectionException::closed($this->selectedDriver, $this->options->label);
         }
         if ($this->pdoInstance === null) {
@@ -355,7 +363,7 @@ final class Connection
 
     private function assertCanCreateQuery(): void
     {
-        if ($this->closed) {
+        if ($this->state->closed) {
             throw ConnectionException::closed($this->selectedDriver, $this->options->label);
         }
     }

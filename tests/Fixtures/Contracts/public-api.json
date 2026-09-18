@@ -843,6 +843,16 @@
                     "parameters": []
                 },
                 {
+                    "name": "connectionState",
+                    "compatibility": "internal",
+                    "static": false,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\Internal\\ConnectionState",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
                     "name": "discard",
                     "compatibility": "public",
                     "static": false,

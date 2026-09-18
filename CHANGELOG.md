@@ -8,6 +8,15 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-09-18
+
+### Fixed
+
+- Reduce the per-row cursor discarded-connection guard to a shared internal
+  lifecycle-state read, removing the `v0.8.0` streaming-cursor benchmark cost
+  while preserving the failure before the next fetch after a discarded
+  connection.
+
 ## [0.8.0] - 2026-09-18
 
 ### Added
@@ -338,7 +347,8 @@ with ZeroVer releases before `1.0.0`.
 - A repeatable direct-migration playbook and complete intentional-difference
   checklist without a runtime Pixie dependency or compatibility façade.
 
-[Unreleased]: https://github.com/oeltimacreation/php-simplequery/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/oeltimacreation/php-simplequery/compare/v0.8.1...HEAD
+[0.8.1]: https://github.com/oeltimacreation/php-simplequery/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.5.0...v0.6.0

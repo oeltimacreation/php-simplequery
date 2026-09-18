@@ -10,6 +10,7 @@ use IteratorAggregate;
 use Oeltima\SimpleQuery\Exception\ConnectionException;
 use Oeltima\SimpleQuery\Exception\InvalidQueryException;
 use Oeltima\SimpleQuery\Exception\QueryExecutionException;
+use Oeltima\SimpleQuery\Internal\ConnectionState;
 use PDO;
 use PDOException;
 use PDOStatement;
@@ -27,6 +28,8 @@ final class Cursor implements IteratorAggregate
 
     private bool $closed = false;
 
+    private readonly ConnectionState $state;
+
     /** @var Closure(self<TRow>): Traversable<int, TRow> */
     private readonly Closure $rowsFactory;
 
@@ -38,6 +41,7 @@ final class Cursor implements IteratorAggregate
         Closure $rowsFactory,
     ) {
         $this->rowsFactory = $rowsFactory;
+        $this->state = $connection->connectionState();
         $this->connection->registerCursor();
     }
 
@@ -176,7 +180,9 @@ final class Cursor implements IteratorAggregate
 
         try {
             while (!$this->closed) {
-                $this->assertConnectionOpen();
+                if ($this->state->closed) {
+                    throw $this->closedConnectionFailure();
+                }
 
                 try {
                     $row = $fetch();
@@ -206,13 +212,9 @@ final class Cursor implements IteratorAggregate
         }
     }
 
-    private function assertConnectionOpen(): void
+    private function closedConnectionFailure(): ConnectionException
     {
-        if (!$this->connection->isClosed()) {
-            return;
-        }
-
-        throw ConnectionException::closed(
+        return ConnectionException::closed(
             $this->connection->driver(),
             $this->connection->connectionOptions()->label,
         );
