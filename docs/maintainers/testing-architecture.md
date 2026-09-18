@@ -21,6 +21,7 @@ composer probe:transaction -- sqlite  # managed transaction state matrix
 bash tools/database-probes/run-services.sh  # complete direct/proxy behavior and execution matrix
 php tools/database-probes/ambiguous-write.php proxysql  # operator-controlled failure window
 php tools/database-probes/vendor-writes.php mariadb  # immediate IDs, upserts, lock ownership
+php tools/database-probes/transaction-cost.php mariadb  # control counts and component timings
 bash tools/worker-rehearsal/run.sh  # FrankenPHP classic/worker rehearsal with a short soak
 REHEARSAL_SOAK_SECONDS=3600 bash tools/worker-rehearsal/run.sh  # one-hour gate soak
 composer benchmark             # complete deterministic SQLite benchmark suite
