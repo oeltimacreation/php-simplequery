@@ -91,7 +91,7 @@ builder operation also clears the development plan's decision rule.
 ## Comparison and noise policy
 
 For the current development plan, CI checks the candidate against a fresh
-worktree at immutable `v0.7.0`, the latest published release. Labels and report
+worktree at immutable `v0.8.0`, the latest published release. Labels and report
 filenames remain generic:
 `release-baseline`, `candidate`,
 `release-comparison-baseline-first.json`, and
