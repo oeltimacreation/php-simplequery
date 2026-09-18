@@ -249,7 +249,7 @@ Terminals never mutate clause state.
 | `iterateAssociative()` | One-shot final `Cursor<array<string, mixed>>`. |
 | `count()` | Range-checked non-negative `int`. |
 | `sum()` / `average()` | Preserved `int|float|string|null`; rejects distinct/grouped/HAVING shapes. |
-| `min()` / `max()` | Preserved driver scalar or `null`; rejects distinct/grouped/HAVING shapes. |
+| `min()` / `max()` | Preserved `int|float|string|null`; rejects distinct/grouped/HAVING shapes and unsupported driver scalars. |
 | `insert()` / `insertMany()` | Affected rows as `int`. |
 | `insertGetId()` | Immediately captured generated ID as `string`. |
 | `update()` / `delete()` | Affected rows as `int`. |

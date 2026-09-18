@@ -27,3 +27,12 @@ scalars to avoid decimal/large-number precision loss.
 - Generated IDs are not conflated with write success.
 - Existing insert call sites require classification during migration.
 - Driver-specific affected-row and scalar behavior requires live tests.
+
+## Amendment: 2026-09-18 (`0.8.0`)
+
+`min()` and `max()` now declare and validate the same scalar union as `sum()`
+and `average()`: they return `int|float|string|null` and throw
+`QueryExecutionException` when the driver returns any other value. Previously
+they declared `mixed` and returned unvalidated driver output. The change
+aligns the signature with the documented "preserve driver scalar" policy;
+supported driver values are unchanged.

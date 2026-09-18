@@ -3528,7 +3528,7 @@
                     "compatibility": "public",
                     "static": false,
                     "final": false,
-                    "return_type": "mixed",
+                    "return_type": "string|int|float|null",
                     "returns_reference": false,
                     "annotations": [],
                     "parameters": [
@@ -3547,7 +3547,7 @@
                     "compatibility": "public",
                     "static": false,
                     "final": false,
-                    "return_type": "mixed",
+                    "return_type": "string|int|float|null",
                     "returns_reference": false,
                     "annotations": [],
                     "parameters": [

@@ -60,6 +60,11 @@ retry classification, and ambiguous-write reconciliation remain
 application-owned; see
 [connection lifecycle and failure guidance](concurrency-and-workers.md).
 
+`min()` and `max()` now describe and validate the same `int|float|string|null`
+scalar union as `sum()` and `average()`. Supported driver values are unchanged;
+an unsupported driver scalar now throws `QueryExecutionException` instead of
+being returned. See [ADR-006](../adr/006-results-and-write-returns.md).
+
 Worker-mode applications should also adopt the framework-free request recipe:
 lazily acquire and pin one connection per role and unit; initialize every
 replacement before publishing it; restore temporary session settings in

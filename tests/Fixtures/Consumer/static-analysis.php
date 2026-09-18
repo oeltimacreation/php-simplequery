@@ -133,8 +133,8 @@ return static function (Connection $database): void {
     assertType('int', $database->table('users')->count());
     assertType('float|int|string|null', $database->table('users')->sum('score'));
     assertType('float|int|string|null', $database->table('users')->average('score'));
-    assertType('mixed', $database->table('users')->min('score'));
-    assertType('mixed', $database->table('users')->max('score'));
+    assertType('float|int|string|null', $database->table('users')->min('score'));
+    assertType('float|int|string|null', $database->table('users')->max('score'));
     assertType('list<stdClass>', $database->table('users')->get());
     assertType('list<array<string, mixed>>', $database->table('users')->getAssociative());
     assertType('stdClass|null', $database->table('users')->first());
