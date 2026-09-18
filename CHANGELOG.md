@@ -8,6 +8,13 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+### Fixed
+
+- Reduce the per-row cursor discarded-connection guard to a shared internal
+  lifecycle-state read, removing the `v0.8.0` streaming-cursor benchmark cost
+  while preserving the failure before the next fetch after a discarded
+  connection.
+
 ## [0.8.0] - 2026-09-18
 
 ### Added
