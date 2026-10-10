@@ -36,6 +36,10 @@ settings. Their decimal text may change: `0.1` binds as
 `"0.10000000000000001"`. Bind an explicit decimal string when textual formatting
 or scale matters, particularly for text columns and application assertions.
 
+Column clauses reject aliased and wildcard `Identifier` objects before SQL
+compilation. Keep `as()` and wildcards in projections or valid table sources;
+reference a projected alias by its name in `groupBy()` or `orderBy()`.
+
 ## Installing 0.8.0
 
 ```bash

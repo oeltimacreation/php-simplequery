@@ -104,7 +104,7 @@ final class ConditionFactory
             throw new InvalidQueryException('A comparison requires a column/value or column/operator/value shape.');
         }
 
-        return self::comparison(InputNormalizer::identifier($column), $operatorOrValue, $value);
+        return self::comparison(InputNormalizer::column($column), $operatorOrValue, $value);
     }
 
     private static function comparison(
@@ -144,9 +144,9 @@ final class ConditionFactory
         string|Identifier $right,
     ): IdentifierComparisonPredicate {
         return new IdentifierComparisonPredicate(
-            InputNormalizer::identifier($left),
+            InputNormalizer::column($left),
             ComparisonOperator::normalize($operator),
-            InputNormalizer::identifier($right),
+            InputNormalizer::column($right),
         );
     }
 
@@ -157,7 +157,7 @@ final class ConditionFactory
         iterable|QueryBuilder $values,
         bool $negated,
     ): InPredicate {
-        $normalizedColumn = InputNormalizer::identifier($column);
+        $normalizedColumn = InputNormalizer::column($column);
         if ($values instanceof QueryBuilder) {
             if (!$values->belongsTo($connection)) {
                 throw new InvalidQueryException('Structured subqueries must belong to the same connection.');
@@ -180,7 +180,7 @@ final class ConditionFactory
         mixed $to,
     ): BetweenPredicate {
         return new BetweenPredicate(
-            InputNormalizer::identifier($column),
+            InputNormalizer::column($column),
             Binding::fromValue($from),
             Binding::fromValue($to),
         );

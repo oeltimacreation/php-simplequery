@@ -10,6 +10,8 @@ with ZeroVer releases before `1.0.0`.
 
 ### Fixed
 
+- Reject aliased and wildcard identifier objects in column clauses before
+  producing invalid SQL, matching structured string validation.
 - Preserve successful generated-ID inserts when optional affected-row metadata
   cannot be collected for observation.
 - Preserve finite float binding values independently of PHP's precision settings
