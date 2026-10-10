@@ -348,6 +348,25 @@ final class ExecutionTest extends TestCase
         );
     }
 
+    public function testFloatValuesReachPdoWithoutRuntimePrecisionRounding(): void
+    {
+        $original = ini_get('serialize_precision');
+        self::assertIsString($original);
+        $this->connection->query('CREATE TABLE float_values (value TEXT)')->execute();
+        try {
+            ini_set('serialize_precision', '3');
+            $value = 1.23456789012345;
+            self::assertSame(1, $this->connection->table('float_values')->insert(['value' => $value]));
+            $row = $this->connection->table('float_values')->where('value', $value)->firstAssociative();
+            self::assertSame(['value' => '1.23456789012345'], $row);
+            self::assertSame(['value' => '0.10000000000000001'], $this->connection
+                ->query('SELECT ? AS value', [0.1])->firstAssociative());
+            self::assertSame('3', ini_get('serialize_precision'));
+        } finally {
+            ini_set('serialize_precision', $original);
+        }
+    }
+
     public function testCursorLifecycleIsOneShotTrackedAndSafeOnEarlyClose(): void
     {
         $this->seedUsers();

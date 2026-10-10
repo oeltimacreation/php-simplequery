@@ -83,6 +83,12 @@ final readonly class Binding
             throw new InvalidQueryException('Non-finite floats cannot be bound.');
         }
 
-        return json_encode($value, JSON_PRESERVE_ZERO_FRACTION | JSON_THROW_ON_ERROR);
+        // Seventeen significant digits round-trip a PHP double. The h format
+        // uses a locale-independent decimal point and ignores runtime precision.
+        $normalized = sprintf('%.17h', $value);
+
+        return str_contains($normalized, '.') || str_contains($normalized, 'e')
+            ? $normalized
+            : $normalized . '.0';
     }
 }

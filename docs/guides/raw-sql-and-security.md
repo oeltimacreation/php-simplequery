@@ -20,7 +20,11 @@ booleans, integers, floats, strings, and backed enums. Arrays and arbitrary
 objects are rejected outside structured operations such as `whereIn()`.
 
 Boolean values normalize to integer `0`/`1`. Floats bind as
-locale-independent strings. `DateTimeInterface` is rejected; callers must
+locale-independent strings with up to 17 significant digits, independently of
+PHP's `precision` and `serialize_precision` settings. These strings preserve the
+input float when parsed back to a float; they do not provide exact decimal
+arithmetic. Bind an explicit string when decimal formatting or scale matters.
+`DateTimeInterface` is rejected; callers must
 choose a format, timezone, and database representation explicitly.
 
 LOB streams and binary data use an explicit validated `Binding` and

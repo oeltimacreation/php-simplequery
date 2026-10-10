@@ -103,6 +103,38 @@ final class PublicValuesTest extends TestCase
         new Binding('1', ParameterType::Integer);
     }
 
+    #[DataProvider('floatBindings')]
+    public function testFloatBindingsRoundTripIndependentlyOfRuntimePrecision(float $value, string $expected): void
+    {
+        $original = ini_get('serialize_precision');
+        self::assertIsString($original);
+        try {
+            foreach ([-1, 3, 14, 17] as $precision) {
+                ini_set('serialize_precision', (string) $precision);
+                $binding = Binding::fromValue($value);
+                self::assertSame($expected, $binding->value);
+                self::assertSame(ParameterType::String, $binding->type);
+                self::assertSame(pack('d', $value), pack('d', (float) $binding->value));
+                self::assertSame((string) $precision, ini_get('serialize_precision'));
+            }
+        } finally {
+            ini_set('serialize_precision', $original);
+        }
+    }
+
+    /** @return iterable<string, array{float, string}> */
+    public static function floatBindings(): iterable
+    {
+        yield 'fraction' => [0.1, '0.10000000000000001'];
+        yield 'precision' => [1.23456789012345, '1.23456789012345'];
+        yield 'whole' => [1.0, '1.0'];
+        yield 'negative zero' => [-0.0, '-0.0'];
+        yield 'large exponent' => [1e20, '1.0e+20'];
+        yield 'maximum' => [PHP_FLOAT_MAX, '1.7976931348623157e+308'];
+        yield 'minimum normal' => [PHP_FLOAT_MIN, '2.2250738585072014e-308'];
+        yield 'subnormal' => [5e-324, '4.9406564584124654e-324'];
+    }
+
     public function testUnsupportedAndNonFiniteAutomaticValuesAreRejected(): void
     {
         $invalid = [

@@ -10,6 +10,8 @@ with ZeroVer releases before `1.0.0`.
 
 ### Fixed
 
+- Preserve finite float binding values independently of PHP's precision settings
+  using locale-independent, round-trippable decimal strings.
 - Prevent cloning connections and cursors from duplicating ownership of PDO,
   transaction state, and active statements.
 - Avoid PHP 8.5 deprecation warnings from MySQL-specific PDO constants during

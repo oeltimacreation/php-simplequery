@@ -31,6 +31,11 @@ Connections and cursors now reject `clone` with PHP's `Error`. Replace connectio
 cloning with explicit construction, and consume each cursor once. Cloning a
 `QueryBuilder` remains supported and keeps the same connection owner.
 
+Float bindings now preserve the input value independently of PHP's precision
+settings. Their decimal text may change: `0.1` binds as
+`"0.10000000000000001"`. Bind an explicit decimal string when textual formatting
+or scale matters, particularly for text columns and application assertions.
+
 ## Installing 0.8.0
 
 ```bash
