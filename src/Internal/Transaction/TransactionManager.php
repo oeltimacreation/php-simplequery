@@ -12,6 +12,7 @@ use Oeltima\SimpleQuery\Exception\TransactionStateException;
 use PDO;
 use RuntimeException;
 use Throwable;
+use WeakReference;
 
 /** @internal */
 final class TransactionManager
@@ -24,8 +25,18 @@ final class TransactionManager
 
     private bool $unusable = false;
 
-    public function __construct(private readonly Connection $connection)
+    /** @var WeakReference<Connection> */
+    private readonly WeakReference $connection;
+
+    public function __construct(Connection $connection)
     {
+        $this->connection = WeakReference::create($connection);
+    }
+
+    private function connection(): Connection
+    {
+        return $this->connection->get()
+            ?? throw new \LogicException('The transaction manager no longer has a connection owner.');
     }
 
     /**
@@ -36,7 +47,7 @@ final class TransactionManager
     public function run(Closure $callback): mixed
     {
         $this->assertUsable();
-        $pdo = $this->connection->pdoForExecution();
+        $pdo = $this->connection()->pdoForExecution();
 
         return $this->depth === 0
             ? $this->runOuter($pdo, $callback)
@@ -59,8 +70,8 @@ final class TransactionManager
             throw new TransactionStateException(
                 'The connection transaction state is unusable and must be discarded.',
                 operation: 'use_connection',
-                driver: $this->connection->driver(),
-                connectionLabel: $this->connection->connectionOptions()->label,
+                driver: $this->connection()->driver(),
+                connectionLabel: $this->connection()->connectionOptions()->label,
                 connectionUnusable: true,
             );
         }
@@ -87,7 +98,7 @@ final class TransactionManager
         $this->ownsPhysicalTransaction = true;
 
         try {
-            $result = $callback($this->connection);
+            $result = $callback($this->connection());
         } catch (Throwable $callbackFailure) {
             $this->completeOuterFailure($pdo, $guard, $callbackFailure);
         }
@@ -106,8 +117,8 @@ final class TransactionManager
         throw new ExternalTransactionException(
             'SimpleQuery cannot adopt an externally started transaction.',
             operation: 'begin',
-            driver: $this->connection->driver(),
-            connectionLabel: $this->connection->connectionOptions()->label,
+            driver: $this->connection()->driver(),
+            connectionLabel: $this->connection()->connectionOptions()->label,
         );
     }
 
@@ -162,8 +173,8 @@ final class TransactionManager
             $message,
             operation: $operation,
             managedDepth: 0,
-            driver: $this->connection->driver(),
-            connectionLabel: $this->connection->connectionOptions()->label,
+            driver: $this->connection()->driver(),
+            connectionLabel: $this->connection()->connectionOptions()->label,
             controlFailure: $failure,
             recoveryFailure: $recoveryFailure,
             connectionUnusable: $recoveryFailure !== null,
@@ -191,8 +202,8 @@ final class TransactionManager
                 'Could not create a nested transaction savepoint.',
                 operation: 'savepoint',
                 managedDepth: $scopeDepth,
-                driver: $this->connection->driver(),
-                connectionLabel: $this->connection->connectionOptions()->label,
+                driver: $this->connection()->driver(),
+                connectionLabel: $this->connection()->connectionOptions()->label,
                 controlFailure: $failure,
                 connectionUnusable: true,
             );
@@ -200,7 +211,7 @@ final class TransactionManager
 
         $this->depth = $scopeDepth;
         try {
-            $result = $callback($this->connection);
+            $result = $callback($this->connection());
         } catch (Throwable $callbackFailure) {
             $this->completeNestedFailure($pdo, $savepoint, $parentDepth, $callbackFailure);
         }
@@ -241,8 +252,8 @@ final class TransactionManager
                 'Managed transaction commit failed; its outcome must be treated as uncertain.',
                 operation: 'commit',
                 managedDepth: $scopeDepth,
-                driver: $this->connection->driver(),
-                connectionLabel: $this->connection->connectionOptions()->label,
+                driver: $this->connection()->driver(),
+                connectionLabel: $this->connection()->connectionOptions()->label,
                 controlFailure: $failure,
                 recoveryFailure: $recoveryFailure,
                 connectionUnusable: true,
@@ -299,8 +310,8 @@ final class TransactionManager
                 'Managed transaction rollback failed.',
                 operation: 'rollback',
                 managedDepth: $scopeDepth,
-                driver: $this->connection->driver(),
-                connectionLabel: $this->connection->connectionOptions()->label,
+                driver: $this->connection()->driver(),
+                connectionLabel: $this->connection()->connectionOptions()->label,
                 callbackFailure: $callbackFailure,
                 controlFailure: $failure,
                 connectionUnusable: true,
@@ -339,8 +350,8 @@ final class TransactionManager
                 'Could not release the nested transaction savepoint.',
                 operation: 'release_savepoint',
                 managedDepth: $scopeDepth,
-                driver: $this->connection->driver(),
-                connectionLabel: $this->connection->connectionOptions()->label,
+                driver: $this->connection()->driver(),
+                connectionLabel: $this->connection()->connectionOptions()->label,
                 controlFailure: $failure,
                 connectionUnusable: true,
             );
@@ -375,8 +386,8 @@ final class TransactionManager
                 'Could not roll back the nested transaction savepoint.',
                 operation: 'rollback_savepoint',
                 managedDepth: $scopeDepth,
-                driver: $this->connection->driver(),
-                connectionLabel: $this->connection->connectionOptions()->label,
+                driver: $this->connection()->driver(),
+                connectionLabel: $this->connection()->connectionOptions()->label,
                 callbackFailure: $callbackFailure,
                 controlFailure: $failure,
                 connectionUnusable: true,
@@ -393,7 +404,7 @@ final class TransactionManager
         int $scopeDepth,
         ?Throwable $callbackFailure,
     ): void {
-        if (!$this->connection->hasActiveCursors()) {
+        if (!$this->connection()->hasActiveCursors()) {
             return;
         }
 
@@ -411,8 +422,8 @@ final class TransactionManager
             'A live cursor blocked rollback after the transaction callback failed.',
             operation: $operation,
             managedDepth: $scopeDepth,
-            driver: $this->connection->driver(),
-            connectionLabel: $this->connection->connectionOptions()->label,
+            driver: $this->connection()->driver(),
+            connectionLabel: $this->connection()->connectionOptions()->label,
             callbackFailure: $callbackFailure,
             controlFailure: $stateFailure,
             connectionUnusable: true,
@@ -425,7 +436,7 @@ final class TransactionManager
         int $scopeDepth,
         ?Throwable $callbackFailure = null,
     ): void {
-        if ($this->connection->isClosed()) {
+        if ($this->connection()->isClosed()) {
             $exception = $this->stateException(
                 'The connection was closed or discarded during the managed transaction.',
                 $operation,
@@ -544,8 +555,8 @@ final class TransactionManager
             $message,
             operation: $operation,
             managedDepth: $scopeDepth,
-            driver: $this->connection->driver(),
-            connectionLabel: $this->connection->connectionOptions()->label,
+            driver: $this->connection()->driver(),
+            connectionLabel: $this->connection()->connectionOptions()->label,
             callbackFailure: $callbackFailure,
             controlFailure: $controlFailure,
             connectionUnusable: true,

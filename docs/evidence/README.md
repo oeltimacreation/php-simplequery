@@ -36,6 +36,9 @@ Maintained compatibility and migration records:
 
 Current release evidence:
 
+- [Connection wrapper release efficiency](connection-release-efficiency.md) —
+  unreleased ownership correction with before/after release tests, paired CI
+  comparisons, and reference-profile soak evidence.
 - [`0.8.1` cursor guard cost correction](0.8.1-cursor-guard-cost.md) —
   post-release fix for the per-row discarded-connection guard, with local A/B
   attribution and candidate/tag verification.

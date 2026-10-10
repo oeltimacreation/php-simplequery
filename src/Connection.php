@@ -297,7 +297,7 @@ final class Connection
      */
     public function executorForQueryBuilding(): Executor
     {
-        return $this->executorForQueryBuilding ??= new Executor($this);
+        return $this->executorForQueryBuilding ??= new Executor();
     }
 
     /** @internal */

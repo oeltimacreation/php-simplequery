@@ -27,41 +27,41 @@ final readonly class RawQuery
     /** @return list<stdClass> */
     public function get(): array
     {
-        return $this->executor()->getObjects($this->query);
+        return $this->executor()->getObjects($this->connection, $this->query);
     }
 
     public function first(): ?stdClass
     {
-        return $this->executor()->firstObject($this->query);
+        return $this->executor()->firstObject($this->connection, $this->query);
     }
 
     /** @return list<array<string, mixed>> */
     public function getAssociative(): array
     {
-        return $this->executor()->getAssociative($this->query);
+        return $this->executor()->getAssociative($this->connection, $this->query);
     }
 
     /** @return array<string, mixed>|null */
     public function firstAssociative(): ?array
     {
-        return $this->executor()->firstAssociative($this->query);
+        return $this->executor()->firstAssociative($this->connection, $this->query);
     }
 
     /** @return Cursor<stdClass> */
     public function iterate(): Cursor
     {
-        return $this->executor()->objectCursor($this->query);
+        return $this->executor()->objectCursor($this->connection, $this->query);
     }
 
     /** @return Cursor<array<string, mixed>> */
     public function iterateAssociative(): Cursor
     {
-        return $this->executor()->associativeCursor($this->query);
+        return $this->executor()->associativeCursor($this->connection, $this->query);
     }
 
     public function execute(): int
     {
-        return $this->executor()->affectedRows($this->query);
+        return $this->executor()->affectedRows($this->connection, $this->query);
     }
 
     private function executor(): Executor

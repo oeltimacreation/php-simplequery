@@ -10,6 +10,8 @@ with ZeroVer releases before `1.0.0`.
 
 ### Fixed
 
+- Release unused closed or discarded connection wrappers without waiting for
+  cyclic garbage collection; retained queries and cursors still keep their owner.
 - Validate complete SQL and ordered typed bindings in compiler benchmark digests,
   and measure associative key allocation on every simulated row.
 - Reject aliased and wildcard identifier objects in column clauses before
