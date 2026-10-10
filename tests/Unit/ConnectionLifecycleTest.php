@@ -11,6 +11,7 @@ use Oeltima\SimpleQuery\Driver;
 use Oeltima\SimpleQuery\Exception\ConfigurationException;
 use Oeltima\SimpleQuery\Exception\ConnectionException;
 use Oeltima\SimpleQuery\Exception\TransactionStateException;
+use Oeltima\SimpleQuery\Internal\MySqlAttributes;
 use PDO;
 use PDOStatement;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -197,7 +198,7 @@ final class ConnectionLifecycleTest extends TestCase
             static fn () => Connection::connect(
                 Driver::MySql,
                 'mysql:host=localhost;dbname=test;charset=utf8mb4',
-                pdoOptions: [PDO::MYSQL_ATTR_FOUND_ROWS => true],
+                pdoOptions: [MySqlAttributes::foundRows() => true],
             ),
         ];
         yield 'non-boolean emulate prepares' => [
@@ -231,14 +232,14 @@ final class ConnectionLifecycleTest extends TestCase
             static fn () => Connection::connect(
                 Driver::MySql,
                 'mysql:host=localhost;dbname=test;charset=utf8mb4',
-                pdoOptions: [PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => 1],
+                pdoOptions: [MySqlAttributes::bufferedQuery() => 1],
             ),
         ];
         yield 'conflicting buffered query options' => [
             static fn () => Connection::connect(
                 Driver::MariaDb,
                 'mysql:host=localhost;dbname=test;charset=utf8mb4',
-                pdoOptions: [PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => false],
+                pdoOptions: [MySqlAttributes::bufferedQuery() => false],
                 connectionOptions: new ConnectionOptions(bufferedQueries: true),
             ),
         ];

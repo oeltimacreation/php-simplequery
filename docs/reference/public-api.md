@@ -73,6 +73,13 @@ final readonly declaration with nullable prepare-emulation, buffering,
 The executable construction cases are in
 [`connection-construction.json`](https://github.com/oeltimacreation/php-simplequery/blob/HEAD/tests/Fixtures/Contracts/connection-construction.json).
 
+For buffering, prefer `ConnectionOptions(bufferedQueries: false)` when opening
+an unbuffered MariaDB/MySQL connection. If supplying driver-specific constants
+in `pdoOptions`, use `Pdo\Mysql::ATTR_*` on PHP 8.4+ and `PDO::MYSQL_ATTR_*` on
+PHP 8.2/8.3. PHP 8.5 deprecates the latter constants; SimpleQuery selects the
+appropriate constants internally, but cannot prevent warnings emitted while
+the application constructs its own options array.
+
 Construction performs no environment lookup or topology discovery. Broad PDO
 driver mismatch, hard-invariant conflict, invalid/inapplicable options,
 missing MySQL-family `utf8mb4`, failed SQLite foreign-key verification, or an

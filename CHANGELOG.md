@@ -10,6 +10,8 @@ with ZeroVer releases before `1.0.0`.
 
 ### Fixed
 
+- Avoid PHP 8.5 deprecation warnings from MySQL-specific PDO constants during
+  MariaDB/MySQL connection setup and validation, retaining PHP 8.2 compatibility.
 - Measure soak retained growth from PHP used memory instead of reserved
   arena chunks, so a normal 2 MiB arena increment no longer fails the soak
   memory gate as apparent retained growth.

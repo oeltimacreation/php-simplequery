@@ -116,6 +116,9 @@ lowest-dependency job, minimum/current MariaDB/MySQL direct probes, a no-dev
 installation, an independent external-consumer PHPStan run, enforced Xdebug
 branch/path coverage, the compact SQLite benchmark suite, and fresh-process
 labeled historical comparisons.
+The PHP compatibility and coverage jobs load `pdo_mysql` for the MySQL/MariaDB
+option regression tests, which need no database server. PHPUnit treats
+deprecations as failures in both ordinary and coverage runs.
 The scheduled/manual proxy workflow runs the exact direct/proxy fixtures plus
 live comparisons and four concurrent soak workers, then uploads redacted JSON
 artifacts. Release

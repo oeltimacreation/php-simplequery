@@ -7,6 +7,7 @@ use Oeltima\SimpleQuery\Benchmark\MeasurementRequest;
 use Oeltima\SimpleQuery\Connection;
 use Oeltima\SimpleQuery\ConnectionOptions;
 use Oeltima\SimpleQuery\Driver;
+use Oeltima\SimpleQuery\Internal\MySqlAttributes;
 use Oeltima\SimpleQuery\Tools\DatabaseProbe\ProbeTarget;
 
 require dirname(__DIR__) . '/vendor/autoload.php';
@@ -22,7 +23,7 @@ $target = ProbeTarget::named($targetName);
 $driver = $target->engine === 'mysql' ? Driver::MySql : Driver::MariaDb;
 $pdo = $target->connect();
 $emulated = (bool) ($target->options[PDO::ATTR_EMULATE_PREPARES] ?? false);
-$buffered = (bool) ($target->options[PDO::MYSQL_ATTR_USE_BUFFERED_QUERY] ?? true);
+$buffered = (bool) ($target->options[MySqlAttributes::bufferedQuery()] ?? true);
 $connection = Connection::fromPdo(
     $pdo,
     $driver,

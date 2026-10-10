@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Oeltima\SimpleQuery\Tools\DatabaseProbe;
 
 use InvalidArgumentException;
+use Oeltima\SimpleQuery\Internal\MySqlAttributes;
 use PDO;
 
 final readonly class ProbeTarget
@@ -56,12 +57,9 @@ final readonly class ProbeTarget
         $password = self::environment($prefix . '_PASSWORD', 'simplequery');
         $options = self::commonOptions();
 
-        if (defined('PDO::MYSQL_ATTR_USE_BUFFERED_QUERY')) {
-            $options[PDO::MYSQL_ATTR_USE_BUFFERED_QUERY] = self::environmentBoolean('PROBE_BUFFERED', true);
-        }
-
-        if (defined('PDO::MYSQL_ATTR_FOUND_ROWS')) {
-            $options[PDO::MYSQL_ATTR_FOUND_ROWS] = false;
+        if (extension_loaded('pdo_mysql')) {
+            $options[MySqlAttributes::bufferedQuery()] = self::environmentBoolean('PROBE_BUFFERED', true);
+            $options[MySqlAttributes::foundRows()] = false;
         }
 
         $options[PDO::ATTR_EMULATE_PREPARES] = self::environmentBoolean('PROBE_EMULATE_PREPARES', false);

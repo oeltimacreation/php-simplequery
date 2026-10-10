@@ -7,6 +7,7 @@ namespace Oeltima\SimpleQuery\Benchmark;
 use JsonException;
 use Closure;
 use PDO;
+use Pdo\Mysql;
 use RuntimeException;
 
 final class Harness
@@ -436,9 +437,13 @@ final class Harness
                 $metadata[$name] = null;
             }
         }
-        if (defined('PDO::MYSQL_ATTR_USE_BUFFERED_QUERY')) {
+        if (extension_loaded('pdo_mysql')) {
             try {
-                $metadata['buffered_queries'] = $pdo->getAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY);
+                // Historical package autoloaders may not contain the current internal helpers.
+                $attribute = class_exists(Mysql::class)
+                    ? Mysql::ATTR_USE_BUFFERED_QUERY
+                    : PDO::MYSQL_ATTR_USE_BUFFERED_QUERY;
+                $metadata['buffered_queries'] = $pdo->getAttribute($attribute);
             } catch (\Throwable) {
                 $metadata['buffered_queries'] = null;
             }

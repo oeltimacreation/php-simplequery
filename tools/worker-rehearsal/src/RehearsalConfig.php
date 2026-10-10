@@ -6,6 +6,7 @@ namespace Oeltima\SimpleQuery\Tools\WorkerRehearsal;
 
 use InvalidArgumentException;
 use Oeltima\SimpleQuery\Driver;
+use Oeltima\SimpleQuery\Internal\MySqlAttributes;
 use PDO;
 
 /** Synthetic worker-rehearsal configuration from the process environment. */
@@ -54,8 +55,8 @@ final class RehearsalConfig
             PDO::ATTR_STRINGIFY_FETCHES => false,
             PDO::ATTR_EMULATE_PREPARES => false,
         ];
-        if (defined('PDO::MYSQL_ATTR_USE_BUFFERED_QUERY')) {
-            $pdoOptions[PDO::MYSQL_ATTR_USE_BUFFERED_QUERY] = true;
+        if (extension_loaded('pdo_mysql')) {
+            $pdoOptions[MySqlAttributes::bufferedQuery()] = true;
         }
 
         return new self(

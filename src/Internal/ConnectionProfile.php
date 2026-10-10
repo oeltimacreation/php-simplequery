@@ -86,7 +86,7 @@ final class ConnectionProfile
                 'prepare emulation',
             ),
             new RequestedBooleanOption(
-                PDO::MYSQL_ATTR_USE_BUFFERED_QUERY,
+                MySqlAttributes::bufferedQuery(),
                 $connectionOptions->bufferedQueries,
                 true,
                 'query buffering',
@@ -95,8 +95,8 @@ final class ConnectionProfile
         foreach ($requests as $request) {
             $pdoOptions[$request->attribute] = self::requestedBooleanOption($pdoOptions, $request);
         }
-        self::assertOption($pdoOptions, PDO::MYSQL_ATTR_FOUND_ROWS, false, 'changed-row counting');
-        $pdoOptions[PDO::MYSQL_ATTR_FOUND_ROWS] = false;
+        self::assertOption($pdoOptions, MySqlAttributes::foundRows(), false, 'changed-row counting');
+        $pdoOptions[MySqlAttributes::foundRows()] = false;
 
         return $pdoOptions;
     }
@@ -167,7 +167,7 @@ final class ConnectionProfile
     ): ConnectionOptions {
         return new ConnectionOptions(
             emulatePrepares: (bool) $pdoOptions[PDO::ATTR_EMULATE_PREPARES],
-            bufferedQueries: (bool) $pdoOptions[PDO::MYSQL_ATTR_USE_BUFFERED_QUERY],
+            bufferedQueries: (bool) $pdoOptions[MySqlAttributes::bufferedQuery()],
             foundRows: false,
             persistent: false,
             label: $declared->label,
@@ -244,7 +244,7 @@ final class ConnectionProfile
 
     private static function validateBufferedQueries(PDO $pdo, ConnectionOptions $options): void
     {
-        $buffered = (bool) $pdo->getAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY);
+        $buffered = (bool) $pdo->getAttribute(MySqlAttributes::bufferedQuery());
         if ($buffered !== ($options->bufferedQueries ?? true)) {
             throw new ConfigurationException('PDO query-buffering state does not match its declaration.');
         }

@@ -7,6 +7,7 @@ use Oeltima\SimpleQuery\ConnectionOptions;
 use Oeltima\SimpleQuery\Driver;
 use Oeltima\SimpleQuery\Exception\ConnectionException;
 use Oeltima\SimpleQuery\Exception\QueryExecutionException;
+use Oeltima\SimpleQuery\Internal\MySqlAttributes;
 use Oeltima\SimpleQuery\Testing\RecordingQueryObserver;
 use Oeltima\SimpleQuery\Tools\DatabaseProbe\ProbeReport;
 use Oeltima\SimpleQuery\Tools\DatabaseProbe\ProbeTarget;
@@ -69,7 +70,7 @@ $report = new ProbeReport($targetName, $target->engine, [
     'pdo_client_version' => $first->pdo()->getAttribute(PDO::ATTR_CLIENT_VERSION),
     'server_version' => $first->pdo()->getAttribute(PDO::ATTR_SERVER_VERSION),
     'emulated_prepares' => $target->options[PDO::ATTR_EMULATE_PREPARES] ?? false,
-    'buffered_queries' => $target->options[PDO::MYSQL_ATTR_USE_BUFFERED_QUERY] ?? true,
+    'buffered_queries' => $target->options[MySqlAttributes::bufferedQuery()] ?? true,
     'statement_limit_variable' => $limitVariable,
     'statement_limit_unit' => $isMariaDb ? 'seconds' : 'milliseconds',
     'initialization_value' => $initializationValue,
