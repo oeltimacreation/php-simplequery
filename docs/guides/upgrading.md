@@ -25,6 +25,12 @@ For each upgrade:
 7. review generated SQL for raw or dialect-specific queries;
 8. deploy through the application's normal staged rollout.
 
+## Unreleased changes
+
+Connections and cursors now reject `clone` with PHP's `Error`. Replace connection
+cloning with explicit construction, and consume each cursor once. Cloning a
+`QueryBuilder` remains supported and keeps the same connection owner.
+
 ## Installing 0.8.0
 
 ```bash

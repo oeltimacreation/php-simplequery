@@ -10,6 +10,8 @@ with ZeroVer releases before `1.0.0`.
 
 ### Fixed
 
+- Prevent cloning connections and cursors from duplicating ownership of PDO,
+  transaction state, and active statements.
 - Avoid PHP 8.5 deprecation warnings from MySQL-specific PDO constants during
   MariaDB/MySQL connection setup and validation, retaining PHP 8.2 compatibility.
 - Measure soak retained growth from PHP used memory instead of reserved

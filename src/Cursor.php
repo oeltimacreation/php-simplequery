@@ -33,6 +33,10 @@ final class Cursor implements IteratorAggregate
     /** @var Closure(self<TRow>): Traversable<int, TRow> */
     private readonly Closure $rowsFactory;
 
+    private function __clone(): void
+    {
+    }
+
     /** @param Closure(self<TRow>): Traversable<int, TRow> $rowsFactory */
     private function __construct(
         private readonly PDOStatement $statement,

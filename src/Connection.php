@@ -34,6 +34,10 @@ final class Connection
 
     private readonly TransactionManager $transactionManager;
 
+    private function __clone(): void
+    {
+    }
+
     private function __construct(
         private ?PDO $pdoInstance,
         private readonly Driver $selectedDriver,
