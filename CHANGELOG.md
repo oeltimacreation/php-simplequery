@@ -10,6 +10,8 @@ with ZeroVer releases before `1.0.0`.
 
 ### Fixed
 
+- Preserve successful generated-ID inserts when optional affected-row metadata
+  cannot be collected for observation.
 - Preserve finite float binding values independently of PHP's precision settings
   using locale-independent, round-trippable decimal strings.
 - Prevent cloning connections and cursors from duplicating ownership of PDO,

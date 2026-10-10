@@ -237,7 +237,7 @@ final readonly class Executor
             $result = $operation($statement, $pdo);
             $affectedRows = null;
             if ($observer !== null && $affectedRowsMeaningful) {
-                $affectedRows = is_int($result) ? $result : $statement->rowCount();
+                $affectedRows = is_int($result) ? $result : $this->optionalAffectedRows($statement);
             }
             if (!$retainStatement) {
                 $cleanupAttempted = true;
@@ -288,6 +288,16 @@ final readonly class Executor
             $statement->closeCursor();
         } catch (PDOException) {
             // A prior result or failure remains authoritative.
+        }
+    }
+
+    private function optionalAffectedRows(PDOStatement $statement): ?int
+    {
+        try {
+            return $statement->rowCount();
+        } catch (\Throwable) {
+            // Optional observation metadata cannot replace a successful result.
+            return null;
         }
     }
 

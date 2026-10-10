@@ -53,6 +53,11 @@ results, or transaction behavior.
 Observer failure is caught and cannot replace a successful database outcome or
 the original query/transaction failure. It never triggers a query retry.
 
+After a generated-ID insert, affected-row collection is optional telemetry.
+If that metadata read fails, the captured ID is returned and the successful
+notification contains `affectedRows=null`. Required write-return counts still
+propagate failures through `QueryExecutionException`.
+
 Observer implementations must handle their own durable error reporting. Avoid
 blocking network work in a hot-path observer unless the application explicitly
 accepts that cost.
