@@ -71,9 +71,8 @@ final class HydrationScenarios
     {
         $keyCount = 0;
         $lastKey = null;
-        $keys = $useArrayKeys ? array_keys($row) : null;
-
         for ($rowIndex = 0; $rowIndex < $rowCount; ++$rowIndex) {
+            $keys = $useArrayKeys ? array_keys($row) : null;
             $iterable = $keys ?? $row;
             foreach ($iterable as $key => $_value) {
                 $lastKey = self::assertStringKey($keys !== null ? $_value : $key);

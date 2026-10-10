@@ -50,12 +50,7 @@ final class CompilerScenarios
             }
             $compiled = $query->compile();
 
-            return [
-                'sql_hash' => hash('sha256', $compiled->sql),
-                'binding_count' => count($compiled->bindings),
-                'first_binding' => $compiled->bindings[0]->value ?? null,
-                'last_binding' => $compiled->bindings[$predicates - 1]->value ?? null,
-            ];
+            return ['query' => $compiled];
         };
 
         return [
@@ -104,15 +99,10 @@ final class CompilerScenarios
             ->orderBy('u.id');
     }
 
-    /** @return array{sql_hash: string, binding_count: int, first_binding: mixed, last_binding: mixed} */
+    /** @return array{query: CompiledQuery} */
     private function compiledSummary(CompiledQuery $compiled): array
     {
-        return [
-            'sql_hash' => hash('sha256', $compiled->sql),
-            'binding_count' => count($compiled->bindings),
-            'first_binding' => $compiled->bindings[0]->value ?? null,
-            'last_binding' => $compiled->bindings[count($compiled->bindings) - 1]->value ?? null,
-        ];
+        return ['query' => $compiled];
     }
 
     /** @return Scenario */
@@ -127,7 +117,7 @@ final class CompilerScenarios
                 $last = $query->compile();
             }
 
-            return ['compiles' => $compiles, 'sql_hash' => hash('sha256', $last->sql)];
+            return ['compiles' => $compiles, 'query' => $last];
         };
 
         return [
@@ -156,7 +146,7 @@ final class CompilerScenarios
                     ->compile();
             }
 
-            return ['compiles' => $compiles, 'sql_hash' => hash('sha256', $last->sql)];
+            return ['compiles' => $compiles, 'query' => $last];
         };
 
         return [
@@ -238,8 +228,8 @@ final class CompilerScenarios
         ];
     }
 
-    /** @param array{sql_hash: string, binding_count: int, first_binding: mixed, last_binding: mixed} $summary
-     * @return array{sql_hash: string, binding_count: int, first_binding: mixed, last_binding: mixed}
+    /** @param array{query: CompiledQuery} $summary
+     * @return array{query: CompiledQuery}
      */
     private function inPlaceholderControl(
         CompiledQuery $reference,
@@ -307,7 +297,7 @@ final class CompilerScenarios
             'binding_normalization_control' => fn (): array => $this->batchBindingControl(
                 $fixture,
                 $summary,
-                $rows * count($columns),
+                $reference,
             ),
         ];
     }
@@ -402,7 +392,7 @@ final class CompilerScenarios
      * @param array<string, mixed> $summary
      * @return array<string, mixed>
      */
-    private function batchBindingControl(array $fixture, array $summary, int $expectedBindings): array
+    private function batchBindingControl(array $fixture, array $summary, CompiledQuery $reference): array
     {
         $bindings = [];
         foreach ($fixture as $row) {
@@ -411,22 +401,23 @@ final class CompilerScenarios
             }
         }
 
-        $this->assertValidBatchBindings($bindings, $expectedBindings);
+        $this->assertValidBatchBindings($bindings, $reference);
 
         return $summary;
     }
 
     /** @param list<Binding> $bindings */
-    private function assertValidBatchBindings(array $bindings, int $expectedBindings): void
+    private function assertValidBatchBindings(array $bindings, CompiledQuery $reference): void
     {
-        if (count($bindings) !== $expectedBindings) {
+        if (count($bindings) !== count($reference->bindings)) {
             throw new LogicException('The batch binding control changed normalized values.');
         }
 
-        $first = $bindings[0]->value ?? null;
-        $last = $bindings[count($bindings) - 1]->value ?? null;
-        if ($first !== 1 || $last !== 1) {
-            throw new LogicException('The batch binding control changed normalized values.');
+        foreach ($bindings as $index => $binding) {
+            $expected = $reference->bindings[$index];
+            if ($binding->value !== $expected->value || $binding->type !== $expected->type) {
+                throw new LogicException('The batch binding control changed normalized values.');
+            }
         }
     }
 
@@ -499,15 +490,12 @@ final class CompilerScenarios
         ];
     }
 
-    /** @return array{binding_count: int, expected_bindings: int, sql_hash: string, first_binding: mixed, last_binding: mixed} */
+    /** @return array{expected_bindings: int, query: CompiledQuery} */
     private static function batchSummary(CompiledQuery $compiled, int $rows): array
     {
         return [
-            'binding_count' => count($compiled->bindings),
             'expected_bindings' => $rows * 3,
-            'sql_hash' => hash('sha256', $compiled->sql),
-            'first_binding' => $compiled->bindings[0]->value ?? null,
-            'last_binding' => $compiled->bindings[count($compiled->bindings) - 1]->value ?? null,
+            'query' => $compiled,
         ];
     }
 
