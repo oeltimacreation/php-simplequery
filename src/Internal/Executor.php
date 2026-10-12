@@ -242,11 +242,25 @@ final readonly class Executor
                 $cleanupAttempted = true;
                 $statement->closeCursor();
             }
-            $this->notify($connection, $query, $startedAt, true, $affectedRows);
+            if ($observer !== null) {
+                $this->notify(
+                    $connection,
+                    $query,
+                    $startedAt,
+                    new ExecutionOutcome(true, $affectedRows),
+                );
+            }
 
             return $result;
         } catch (PDOException $exception) {
-            $this->notify($connection, $query, $startedAt, false, null);
+            if ($observer !== null) {
+                $this->notify(
+                    $connection,
+                    $query,
+                    $startedAt,
+                    new ExecutionOutcome(false, null),
+                );
+            }
 
             throw QueryExecutionException::fromPdo(
                 $exception,
@@ -255,7 +269,14 @@ final readonly class Executor
                 $connection->connectionOptions()->label,
             );
         } catch (QueryExecutionException $exception) {
-            $this->notify($connection, $query, $startedAt, false, null);
+            if ($observer !== null) {
+                $this->notify(
+                    $connection,
+                    $query,
+                    $startedAt,
+                    new ExecutionOutcome(false, null),
+                );
+            }
 
             throw $exception;
         } finally {
@@ -315,21 +336,15 @@ final readonly class Executor
         Connection $connection,
         CompiledQuery $query,
         int|float $startedAt,
-        bool $successful,
-        ?int $affectedRows,
+        ExecutionOutcome $outcome,
     ): void {
-        $observer = $connection->observer();
-        if ($observer === null) {
-            return;
-        }
-
         try {
-            $observer->queryExecuted(new QueryExecution(
+            $connection->observer()?->queryExecuted(new QueryExecution(
                 $query->sql,
                 array_map(static fn ($binding): ParameterType => $binding->type, $query->bindings),
                 (hrtime(true) - $startedAt) / 1_000_000,
-                $successful,
-                $affectedRows,
+                $outcome->successful,
+                $outcome->affectedRows,
                 $connection->driver(),
                 $connection->connectionOptions()->label,
                 $connection->transactionDepth(),
