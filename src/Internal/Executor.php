@@ -19,24 +19,20 @@ use stdClass;
 /** @internal */
 final readonly class Executor
 {
-    public function __construct(private Connection $connection)
-    {
-    }
-
     /** @return list<stdClass> */
-    public function getObjects(CompiledQuery $query): array
+    public function getObjects(Connection $connection, CompiledQuery $query): array
     {
         /** @var list<stdClass> $rows */
         $rows = $this->attempt(
+            $connection,
             $query,
-            false,
-            false,
-            function (PDOStatement $statement) use ($query): array {
+            ExecutionMode::Result,
+            function (PDOStatement $statement) use ($connection, $query): array {
                 /** @var list<mixed> $rows */
                 $rows = $statement->fetchAll(PDO::FETCH_OBJ);
                 foreach ($rows as $row) {
                     if (!$row instanceof stdClass) {
-                        throw $this->invalidResult('PDO returned an invalid object result set.', $query);
+                        throw $this->invalidResult($connection, 'PDO returned an invalid object result set.', $query);
                     }
                 }
 
@@ -49,37 +45,37 @@ final readonly class Executor
     }
 
     /** @return list<array<string, mixed>> */
-    public function getAssociative(CompiledQuery $query): array
+    public function getAssociative(Connection $connection, CompiledQuery $query): array
     {
         /** @var list<array<string, mixed>> $rows */
         $rows = $this->attempt(
+            $connection,
             $query,
-            false,
-            false,
-            fn (PDOStatement $statement): array => $this->fetchAssociativeRows($statement, $query),
+            ExecutionMode::Result,
+            fn (PDOStatement $statement): array => $this->fetchAssociativeRows($connection, $statement, $query),
         );
 
         return $rows;
     }
 
     /** @return list<array<string, mixed>> */
-    private function fetchAssociativeRows(PDOStatement $statement, CompiledQuery $query): array
+    private function fetchAssociativeRows(Connection $connection, PDOStatement $statement, CompiledQuery $query): array
     {
         $rows = [];
         while (($row = $statement->fetch(PDO::FETCH_ASSOC)) !== false) {
-            $rows[] = $this->validateAssociativeRow($row, $query);
+            $rows[] = $this->validateAssociativeRow($connection, $row, $query);
         }
 
         return $rows;
     }
 
     /** @return array<string, mixed> */
-    private function validateAssociativeRow(mixed $row, CompiledQuery $query): array
+    private function validateAssociativeRow(Connection $connection, mixed $row, CompiledQuery $query): array
     {
         if (!is_array($row)) {
-            throw $this->invalidResult('PDO returned an invalid associative result row.', $query);
+            throw $this->invalidResult($connection, 'PDO returned an invalid associative result row.', $query);
         }
-        $this->assertStringKeys($row, $query);
+        $this->assertStringKeys($connection, $row, $query);
 
         return $row;
     }
@@ -88,28 +84,28 @@ final readonly class Executor
      * @param array<array-key, mixed> $row
      * @phpstan-assert array<string, mixed> $row
      */
-    private function assertStringKeys(array $row, CompiledQuery $query): void
+    private function assertStringKeys(Connection $connection, array $row, CompiledQuery $query): void
     {
         foreach ($row as $key => $_value) {
             if (!is_string($key)) {
-                throw $this->invalidResult('PDO returned a non-string column name.', $query);
+                throw $this->invalidResult($connection, 'PDO returned a non-string column name.', $query);
             }
         }
     }
 
-    public function firstObject(CompiledQuery $query): ?stdClass
+    public function firstObject(Connection $connection, CompiledQuery $query): ?stdClass
     {
         return $this->attempt(
+            $connection,
             $query,
-            false,
-            false,
-            function (PDOStatement $statement) use ($query): ?stdClass {
+            ExecutionMode::Result,
+            function (PDOStatement $statement) use ($connection, $query): ?stdClass {
                 $row = $statement->fetch(PDO::FETCH_OBJ);
                 if ($row === false) {
                     return null;
                 }
                 if (!$row instanceof stdClass) {
-                    throw $this->invalidResult('PDO returned an invalid object row.', $query);
+                    throw $this->invalidResult($connection, 'PDO returned an invalid object row.', $query);
                 }
 
                 return $row;
@@ -118,33 +114,33 @@ final readonly class Executor
     }
 
     /** @return array<string, mixed>|null */
-    public function firstAssociative(CompiledQuery $query): ?array
+    public function firstAssociative(Connection $connection, CompiledQuery $query): ?array
     {
         return $this->attempt(
+            $connection,
             $query,
-            false,
-            false,
-            function (PDOStatement $statement) use ($query): ?array {
+            ExecutionMode::Result,
+            function (PDOStatement $statement) use ($connection, $query): ?array {
                 $row = $statement->fetch(PDO::FETCH_ASSOC);
                 if ($row === false) {
                     return null;
                 }
 
-                return $this->validateAssociativeRow($row, $query);
+                return $this->validateAssociativeRow($connection, $row, $query);
             },
         );
     }
 
     /** @return Cursor<stdClass> */
-    public function objectCursor(CompiledQuery $query): Cursor
+    public function objectCursor(Connection $connection, CompiledQuery $query): Cursor
     {
         $cursor = $this->attempt(
+            $connection,
             $query,
-            false,
-            true,
+            ExecutionMode::Cursor,
             fn (PDOStatement $statement): Cursor => Cursor::objects(
                 $statement,
-                $this->connection,
+                $connection,
                 $query,
             ),
         );
@@ -153,15 +149,15 @@ final readonly class Executor
     }
 
     /** @return Cursor<array<string, mixed>> */
-    public function associativeCursor(CompiledQuery $query): Cursor
+    public function associativeCursor(Connection $connection, CompiledQuery $query): Cursor
     {
         $cursor = $this->attempt(
+            $connection,
             $query,
-            false,
-            true,
+            ExecutionMode::Cursor,
             fn (PDOStatement $statement): Cursor => Cursor::associative(
                 $statement,
-                $this->connection,
+                $connection,
                 $query,
             ),
         );
@@ -169,26 +165,27 @@ final readonly class Executor
         return $cursor;
     }
 
-    public function affectedRows(CompiledQuery $query): int
+    public function affectedRows(Connection $connection, CompiledQuery $query): int
     {
         return $this->attempt(
+            $connection,
             $query,
-            true,
-            false,
+            ExecutionMode::ObservedWrite,
             static fn (PDOStatement $statement): int => $statement->rowCount(),
         );
     }
 
-    public function insertGetId(CompiledQuery $query): string
+    public function insertGetId(Connection $connection, CompiledQuery $query): string
     {
         return $this->attempt(
+            $connection,
             $query,
-            true,
-            false,
-            function (PDOStatement $statement, PDO $pdo) use ($query): string {
+            ExecutionMode::ObservedWrite,
+            function (PDOStatement $statement, PDO $pdo) use ($connection, $query): string {
                 $id = $pdo->lastInsertId();
                 if ($id === false || $id === '' || $id === '0') {
                     throw $this->invalidResult(
+                        $connection,
                         'The database did not provide a generated ID for the insert.',
                         $query,
                     );
@@ -199,12 +196,12 @@ final readonly class Executor
         );
     }
 
-    public function scalar(CompiledQuery $query): mixed
+    public function scalar(Connection $connection, CompiledQuery $query): mixed
     {
         return $this->attempt(
+            $connection,
             $query,
-            false,
-            false,
+            ExecutionMode::Result,
             static fn (PDOStatement $statement): mixed => $statement->fetchColumn(),
         );
     }
@@ -215,13 +212,15 @@ final readonly class Executor
      * @return T
      */
     private function attempt(
+        Connection $connection,
         CompiledQuery $query,
-        bool $affectedRowsMeaningful,
-        bool $retainStatement,
+        ExecutionMode $mode,
         Closure $operation,
     ): mixed {
-        $pdo = $this->connection->pdoForExecution();
-        $observer = $this->connection->observer();
+        $affectedRowsMeaningful = $mode === ExecutionMode::ObservedWrite;
+        $retainStatement = $mode === ExecutionMode::Cursor;
+        $pdo = $connection->pdoForExecution();
+        $observer = $connection->observer();
         $startedAt = $observer === null ? 0 : hrtime(true);
         $statement = null;
         $cleanupAttempted = false;
@@ -229,34 +228,34 @@ final readonly class Executor
         try {
             $prepared = $pdo->prepare($query->sql);
             if (!$prepared instanceof PDOStatement) {
-                throw $this->invalidResult('PDO could not prepare the statement.', $query);
+                throw $this->invalidResult($connection, 'PDO could not prepare the statement.', $query);
             }
             $statement = $prepared;
-            $this->bindAndExecute($statement, $query);
+            $this->bindAndExecute($connection, $statement, $query);
 
             $result = $operation($statement, $pdo);
             $affectedRows = null;
             if ($observer !== null && $affectedRowsMeaningful) {
-                $affectedRows = is_int($result) ? $result : $statement->rowCount();
+                $affectedRows = is_int($result) ? $result : $this->optionalAffectedRows($statement);
             }
             if (!$retainStatement) {
                 $cleanupAttempted = true;
                 $statement->closeCursor();
             }
-            $this->notify($query, $startedAt, true, $affectedRows);
+            $this->notify($connection, $query, $startedAt, $affectedRows);
 
             return $result;
         } catch (PDOException $exception) {
-            $this->notify($query, $startedAt, false, null);
+            $this->notify($connection, $query, $startedAt, false);
 
             throw QueryExecutionException::fromPdo(
                 $exception,
                 $query->sql,
-                $this->connection->driver(),
-                $this->connection->connectionOptions()->label,
+                $connection->driver(),
+                $connection->connectionOptions()->label,
             );
         } catch (QueryExecutionException $exception) {
-            $this->notify($query, $startedAt, false, null);
+            $this->notify($connection, $query, $startedAt, false);
 
             throw $exception;
         } finally {
@@ -266,15 +265,42 @@ final readonly class Executor
         }
     }
 
-    private function bindAndExecute(PDOStatement $statement, CompiledQuery $query): void
+    private function bindAndExecute(Connection $connection, PDOStatement $statement, CompiledQuery $query): void
     {
         foreach ($query->bindings as $index => $binding) {
             if (!$statement->bindValue($index + 1, $binding->value, self::pdoType($binding->type))) {
-                throw $this->invalidResult('PDO could not bind a statement parameter.', $query);
+                throw $this->invalidResult($connection, 'PDO could not bind a statement parameter.', $query);
             }
         }
         if (!$statement->execute()) {
-            throw $this->invalidResult('PDO could not execute the statement.', $query);
+            throw $this->invalidResult($connection, 'PDO could not execute the statement.', $query);
+        }
+    }
+
+    private function notify(
+        Connection $connection,
+        CompiledQuery $query,
+        int|float $startedAt,
+        int|false|null $affectedRowsOrFailure,
+    ): void {
+        $observer = $connection->observer();
+        if ($observer === null) {
+            return;
+        }
+
+        try {
+            $observer->queryExecuted(new QueryExecution(
+                $query->sql,
+                array_map(static fn ($binding): ParameterType => $binding->type, $query->bindings),
+                (hrtime(true) - $startedAt) / 1_000_000,
+                $affectedRowsOrFailure !== false,
+                is_int($affectedRowsOrFailure) ? $affectedRowsOrFailure : null,
+                $connection->driver(),
+                $connection->connectionOptions()->label,
+                $connection->transactionDepth(),
+            ));
+        } catch (\Throwable) {
+            // Observation is deliberately non-interfering.
         }
     }
 
@@ -291,6 +317,16 @@ final readonly class Executor
         }
     }
 
+    private function optionalAffectedRows(PDOStatement $statement): ?int
+    {
+        try {
+            return $statement->rowCount();
+        } catch (\Throwable) {
+            // Optional observation metadata cannot replace a successful result.
+            return null;
+        }
+    }
+
     private static function pdoType(ParameterType $type): int
     {
         return match ($type) {
@@ -302,40 +338,16 @@ final readonly class Executor
         };
     }
 
-    private function notify(
+    private function invalidResult(
+        Connection $connection,
+        string $message,
         CompiledQuery $query,
-        int|float $startedAt,
-        bool $successful,
-        ?int $affectedRows,
-    ): void {
-        $observer = $this->connection->observer();
-        if ($observer === null) {
-            return;
-        }
-
-        try {
-            $observer->queryExecuted(new QueryExecution(
-                $query->sql,
-                array_map(static fn ($binding): ParameterType => $binding->type, $query->bindings),
-                (hrtime(true) - $startedAt) / 1_000_000,
-                $successful,
-                $affectedRows,
-                $this->connection->driver(),
-                $this->connection->connectionOptions()->label,
-                $this->connection->transactionDepth(),
-            ));
-        } catch (\Throwable) {
-            // Observation is deliberately non-interfering.
-        }
-    }
-
-    private function invalidResult(string $message, CompiledQuery $query): QueryExecutionException
-    {
+    ): QueryExecutionException {
         return QueryExecutionException::invalidResult(
             $message,
             $query->sql,
-            $this->connection->driver(),
-            $this->connection->connectionOptions()->label,
+            $connection->driver(),
+            $connection->connectionOptions()->label,
         );
     }
 }

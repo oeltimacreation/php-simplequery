@@ -234,42 +234,42 @@ final class QueryBuilder
     /** @return list<stdClass> */
     public function get(): array
     {
-        return $this->executor()->getObjects($this->compiledForExecution());
+        return $this->executor()->getObjects($this->connection, $this->compiledForExecution());
     }
 
     public function first(): ?stdClass
     {
-        return $this->executor()->firstObject($this->compiledForExecution(true));
+        return $this->executor()->firstObject($this->connection, $this->compiledForExecution(true));
     }
 
     /** @return list<array<string, mixed>> */
     public function getAssociative(): array
     {
-        return $this->executor()->getAssociative($this->compiledForExecution());
+        return $this->executor()->getAssociative($this->connection, $this->compiledForExecution());
     }
 
     /** @return array<string, mixed>|null */
     public function firstAssociative(): ?array
     {
-        return $this->executor()->firstAssociative($this->compiledForExecution(true));
+        return $this->executor()->firstAssociative($this->connection, $this->compiledForExecution(true));
     }
 
     /** @return Cursor<stdClass> */
     public function iterate(): Cursor
     {
-        return $this->executor()->objectCursor($this->compiledForExecution());
+        return $this->executor()->objectCursor($this->connection, $this->compiledForExecution());
     }
 
     /** @return Cursor<array<string, mixed>> */
     public function iterateAssociative(): Cursor
     {
-        return $this->executor()->associativeCursor($this->compiledForExecution());
+        return $this->executor()->associativeCursor($this->connection, $this->compiledForExecution());
     }
 
     public function count(): int
     {
         $query = $this->compiler()->count($this->state);
-        $value = $this->executor()->scalar($query);
+        $value = $this->executor()->scalar($this->connection, $query);
         try {
             return AggregateResult::count($value);
         } catch (\UnexpectedValueException $exception) {
@@ -300,30 +300,30 @@ final class QueryBuilder
     /** @param array<string, mixed> $row */
     public function insert(array $row): int
     {
-        return $this->executor()->affectedRows($this->compiler()->insert($this->state, $row));
+        return $this->executor()->affectedRows($this->connection, $this->compiler()->insert($this->state, $row));
     }
 
     /** @param array<string, mixed> $row */
     public function insertGetId(array $row): string
     {
-        return $this->executor()->insertGetId($this->compiler()->insert($this->state, $row));
+        return $this->executor()->insertGetId($this->connection, $this->compiler()->insert($this->state, $row));
     }
 
     /** @param array<array-key, array<string, mixed>> $rows */
     public function insertMany(array $rows): int
     {
-        return $this->executor()->affectedRows($this->compiler()->insertMany($this->state, $rows));
+        return $this->executor()->affectedRows($this->connection, $this->compiler()->insertMany($this->state, $rows));
     }
 
     /** @param array<string, mixed> $changes */
     public function update(array $changes): int
     {
-        return $this->executor()->affectedRows($this->compiler()->update($this->state, $changes));
+        return $this->executor()->affectedRows($this->connection, $this->compiler()->update($this->state, $changes));
     }
 
     public function delete(): int
     {
-        return $this->executor()->affectedRows($this->compiler()->delete($this->state));
+        return $this->executor()->affectedRows($this->connection, $this->compiler()->delete($this->state));
     }
 
     /** @internal */
@@ -479,7 +479,7 @@ final class QueryBuilder
         string|Identifier|RawExpression $column,
     ): int|float|string|null {
         $query = $this->aggregateCompiled($function, $column);
-        $value = $this->executor()->scalar($query);
+        $value = $this->executor()->scalar($this->connection, $query);
         if ($value !== null && !is_int($value) && !is_float($value) && !is_string($value)) {
             throw $this->invalidAggregate('An aggregate returned an unsupported scalar type.', $query);
         }

@@ -30,6 +30,16 @@ final class InputNormalizer
         return is_string($identifier) ? Identifier::of($identifier) : $identifier;
     }
 
+    public static function column(string|Identifier $column): Identifier
+    {
+        $identifier = self::identifier($column);
+        if ($identifier->wildcard || $identifier->alias !== null) {
+            throw new InvalidQueryException('Column identifiers cannot be wildcards or aliases.');
+        }
+
+        return $identifier;
+    }
+
     public static function projection(string|Identifier|RawExpression $expression): Identifier|RawExpression
     {
         if (!is_string($expression)) {
@@ -50,6 +60,6 @@ final class InputNormalizer
     public static function structuredExpression(
         string|Identifier|RawExpression $expression,
     ): Identifier|RawExpression {
-        return is_string($expression) ? Identifier::of($expression) : $expression;
+        return $expression instanceof RawExpression ? $expression : self::column($expression);
     }
 }

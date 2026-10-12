@@ -47,6 +47,12 @@ Internal types are not subclassing, plugin, or compatibility contracts. The
 project does not publish compiler replacement interfaces, driver registries,
 custom AST hooks, or middleware.
 
+The cached executor is stateless and receives its connection for each terminal
+operation. The transaction manager keeps a weak reference to its owning
+connection. Neither cached service forms a cycle with the wrapper, so an unused
+closed or discarded wrapper can be released immediately. Builders, raw queries,
+and cursors keep strong owner references for their documented lifecycle.
+
 ## Core invariants
 
 1. Values are bindings; SQL fragments are code.

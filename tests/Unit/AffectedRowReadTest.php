@@ -64,6 +64,24 @@ final class AffectedRowReadTest extends TestCase
         $db->close();
     }
 
+    public function testOptionalCountFailurePreservesGeneratedIdAndSuccessfulObservation(): void
+    {
+        [$db, $observer] = $this->connection(true);
+        ConfigurableStatement::$rowCountThrowsOnCall = 1;
+        $builder = $db->table('items');
+        $before = $builder->compile();
+
+        self::assertSame('1', $builder->insertGetId(['value' => 'one']));
+        self::assertEquals($before, $builder->compile());
+        self::assertSame(1, ConfigurableStatement::$rowCountCalls);
+        self::assertSame(1, ConfigurableStatement::$closeCalls);
+        self::assertCount(1, $observer->executions());
+        self::assertTrue($observer->executions()[0]->successful);
+        self::assertNull($observer->executions()[0]->affectedRows);
+        self::assertSame(1, $db->table('items')->count());
+        $db->close();
+    }
+
     /** @return iterable<string, array{bool}> */
     public static function observationModes(): iterable
     {

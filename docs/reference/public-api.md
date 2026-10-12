@@ -43,6 +43,11 @@ Everything above is implemented. `close()` is idempotent after success and
 rejects active physical transactions or tracked cursors rather than silently
 completing or truncating them.
 
+`Connection` and `Cursor` cannot be cloned; attempting either raises PHP's
+`Error` before creating another resource owner. Clone a `QueryBuilder` to copy
+query state on its existing connection, or construct a new connection for an
+independent execution unit. See [ADR-025](../adr/025-resource-owner-cloning.md).
+
 `isClosed()` reads wrapper state. `isReusable()` is a local check: it returns
 false for closed/compiler-only/quarantined connections, managed transactions,
 tracked cursors, or a PDO-reported physical transaction. It sends no ping and

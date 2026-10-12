@@ -34,6 +34,10 @@ final class Connection
 
     private readonly TransactionManager $transactionManager;
 
+    private function __clone(): void
+    {
+    }
+
     private function __construct(
         private ?PDO $pdoInstance,
         private readonly Driver $selectedDriver,
@@ -293,7 +297,7 @@ final class Connection
      */
     public function executorForQueryBuilding(): Executor
     {
-        return $this->executorForQueryBuilding ??= new Executor($this);
+        return $this->executorForQueryBuilding ??= new Executor();
     }
 
     /** @internal */

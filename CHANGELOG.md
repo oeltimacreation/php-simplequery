@@ -10,6 +10,18 @@ with ZeroVer releases before `1.0.0`.
 
 ### Fixed
 
+- Release unused closed or discarded connection wrappers without waiting for
+  cyclic garbage collection; retained queries and cursors still keep their owner.
+- Validate complete SQL and ordered typed bindings in compiler benchmark digests,
+  and measure associative key allocation on every simulated row.
+- Reject aliased and wildcard identifier objects in column clauses before
+  producing invalid SQL, matching structured string validation.
+- Preserve successful generated-ID inserts when optional affected-row metadata
+  cannot be collected for observation.
+- Preserve finite float binding values independently of PHP's precision settings
+  using locale-independent, round-trippable decimal strings.
+- Prevent cloning connections and cursors from duplicating ownership of PDO,
+  transaction state, and active statements.
 - Avoid PHP 8.5 deprecation warnings from MySQL-specific PDO constants during
   MariaDB/MySQL connection setup and validation, retaining PHP 8.2 compatibility.
 - Measure soak retained growth from PHP used memory instead of reserved

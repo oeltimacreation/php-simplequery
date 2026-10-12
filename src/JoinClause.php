@@ -162,11 +162,8 @@ final class JoinClause
         if ($operand instanceof RawExpression) {
             return $operand;
         }
-        if ($operand instanceof Identifier) {
-            return $operand;
-        }
-        if (is_string($operand)) {
-            return InputNormalizer::identifier($operand);
+        if ($operand instanceof Identifier || is_string($operand)) {
+            return InputNormalizer::column($operand);
         }
 
         throw new InvalidQueryException(
@@ -198,7 +195,7 @@ final class JoinClause
         $normalizedOperator = ComparisonOperator::normalize($operator);
         $predicate = $expression instanceof RawExpression
             ? new ExpressionComparisonPredicate($expression, $normalizedOperator, $binding)
-            : new ComparisonPredicate(InputNormalizer::identifier($expression), $normalizedOperator, $binding);
+            : new ComparisonPredicate(InputNormalizer::column($expression), $normalizedOperator, $binding);
         $this->conditions->add(new ConditionTerm($predicate, $or));
 
         return $this;

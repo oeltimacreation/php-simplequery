@@ -204,7 +204,7 @@ trait BuildsConditions
 
     private function addNull(bool $or, bool $negated, string|Identifier $column): static
     {
-        $predicate = new NullPredicate(InputNormalizer::identifier($column), $negated);
+        $predicate = new NullPredicate(InputNormalizer::column($column), $negated);
         $this->conditionCollection()->add(new ConditionTerm($predicate, $or));
 
         return $this;

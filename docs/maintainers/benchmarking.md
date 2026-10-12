@@ -48,7 +48,7 @@ still belongs to the shared target worker.
 
 ## Maintained scenarios
 
-The 36-scenario CI suite covers 95 fresh-worker operations:
+The 36-scenario CI suite covers 96 fresh-worker operations:
 
 - direct PDO controls at 10, 100, 1,000, and 5,000 rows;
 - predicate scaling, the representative build-and-compile shape, its prepared-
@@ -83,6 +83,11 @@ Historical migration validation remains in `docs/evidence/`; retired query-
 plan scenarios and their generators are not active commands.
 
 Component controls are attribution probes, not application throughput claims.
+Compiler operations return the full `CompiledQuery` to the harness, which hashes
+SQL and every ordered binding value/type outside timed work. An interior value,
+type, or order change must fail parity. The associative attribution control
+allocates `array_keys()` on each simulated row, matching its named per-row work.
+
 Each performs and validates its named work against the prepared reference SQL,
 then returns the same normalized correctness facts so the fresh-worker digest
 gate remains exact. Loop changes are considered only when their full prepared-

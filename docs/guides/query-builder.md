@@ -105,6 +105,12 @@ Each qualified segment is quoted independently. Empty segments and NUL bytes
 are rejected, embedded dialect quote characters are escaped, and aliases are
 explicit and case-preserving.
 
+Aliases belong to projections and table sources; wildcards belong to
+projections. Predicate, join comparison, grouping, ordering, and aggregate
+operands reject aliased or wildcard `Identifier` objects with
+`InvalidQueryException`. To refer to a projected alias in grouping or ordering,
+use `Identifier::of('email_address')`, without attaching another `as()` clause.
+
 Quoting prevents syntax injection; it does not authorize a request-derived
 table or column. Applications must allowlist dynamic identifiers.
 

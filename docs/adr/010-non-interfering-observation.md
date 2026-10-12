@@ -19,6 +19,15 @@ Observer failures are caught and never replace database success or the original
 failure. Values are redacted by default. No global registry or core logging
 dependency is provided.
 
+## Optional write metadata amendment (2026-10-10)
+
+Failure isolation includes metadata collected only for observation.
+`insertGetId()` captures its generated ID immediately after execution. A later
+optional `rowCount()` failure must not replace that ID or turn its successful
+notification into a failure; affected rows are unknown (`null`) in that event.
+Counts required as a terminal's return value remain authoritative and their
+failures still propagate. No write is retried or replayed.
+
 ## Consequences
 
 - Applications can bridge to their chosen logging/metrics systems.
