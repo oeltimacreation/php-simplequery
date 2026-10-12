@@ -9,7 +9,6 @@ use Oeltima\SimpleQuery\CompiledQuery;
 use Oeltima\SimpleQuery\Connection;
 use Oeltima\SimpleQuery\Cursor;
 use Oeltima\SimpleQuery\Exception\QueryExecutionException;
-use Oeltima\SimpleQuery\Observability\QueryExecution;
 use Oeltima\SimpleQuery\ParameterType;
 use PDO;
 use PDOException;
@@ -222,6 +221,7 @@ final readonly class Executor
         $pdo = $connection->pdoForExecution();
         $observer = $connection->observer();
         $startedAt = $observer === null ? 0 : hrtime(true);
+        $observation = ExecutionObservation::begin($connection, $query, $observer, $startedAt);
         $statement = null;
         $cleanupAttempted = false;
 
@@ -242,25 +242,11 @@ final readonly class Executor
                 $cleanupAttempted = true;
                 $statement->closeCursor();
             }
-            if ($observer !== null) {
-                $this->notify(
-                    $connection,
-                    $query,
-                    $startedAt,
-                    new ExecutionOutcome(true, $affectedRows),
-                );
-            }
+            $observation?->notify(true, $affectedRows);
 
             return $result;
         } catch (PDOException $exception) {
-            if ($observer !== null) {
-                $this->notify(
-                    $connection,
-                    $query,
-                    $startedAt,
-                    new ExecutionOutcome(false, null),
-                );
-            }
+            $observation?->notify(false, null);
 
             throw QueryExecutionException::fromPdo(
                 $exception,
@@ -269,14 +255,7 @@ final readonly class Executor
                 $connection->connectionOptions()->label,
             );
         } catch (QueryExecutionException $exception) {
-            if ($observer !== null) {
-                $this->notify(
-                    $connection,
-                    $query,
-                    $startedAt,
-                    new ExecutionOutcome(false, null),
-                );
-            }
+            $observation?->notify(false, null);
 
             throw $exception;
         } finally {
@@ -330,28 +309,6 @@ final readonly class Executor
             ParameterType::Lob => PDO::PARAM_LOB,
             ParameterType::Auto => throw new \LogicException('Compiled bindings cannot be automatic.'),
         };
-    }
-
-    private function notify(
-        Connection $connection,
-        CompiledQuery $query,
-        int|float $startedAt,
-        ExecutionOutcome $outcome,
-    ): void {
-        try {
-            $connection->observer()?->queryExecuted(new QueryExecution(
-                $query->sql,
-                array_map(static fn ($binding): ParameterType => $binding->type, $query->bindings),
-                (hrtime(true) - $startedAt) / 1_000_000,
-                $outcome->successful,
-                $outcome->affectedRows,
-                $connection->driver(),
-                $connection->connectionOptions()->label,
-                $connection->transactionDepth(),
-            ));
-        } catch (\Throwable) {
-            // Observation is deliberately non-interfering.
-        }
     }
 
     private function invalidResult(
