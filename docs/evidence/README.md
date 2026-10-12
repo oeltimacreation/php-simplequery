@@ -36,6 +36,9 @@ Maintained compatibility and migration records:
 
 Current release evidence:
 
+- [`0.9` candidate local release review](0.9-candidate-review.md) — local
+  quality, coverage, package, SQLite, direct-engine, proxy, and benchmark
+  results, with remote CI and post-merge release work still pending.
 - [Connection wrapper release efficiency](connection-release-efficiency.md) —
   unreleased ownership correction with before/after release tests, paired CI
   comparisons, and reference-profile soak evidence.
