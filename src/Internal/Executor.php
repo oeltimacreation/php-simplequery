@@ -242,11 +242,11 @@ final readonly class Executor
                 $cleanupAttempted = true;
                 $statement->closeCursor();
             }
-            $observation?->notify(true, $affectedRows);
+            $this->notify($observation, true, $affectedRows);
 
             return $result;
         } catch (PDOException $exception) {
-            $observation?->notify(false, null);
+            $this->notify($observation, false, null);
 
             throw QueryExecutionException::fromPdo(
                 $exception,
@@ -255,7 +255,7 @@ final readonly class Executor
                 $connection->connectionOptions()->label,
             );
         } catch (QueryExecutionException $exception) {
-            $observation?->notify(false, null);
+            $this->notify($observation, false, null);
 
             throw $exception;
         } finally {
@@ -275,6 +275,18 @@ final readonly class Executor
         if (!$statement->execute()) {
             throw $this->invalidResult($connection, 'PDO could not execute the statement.', $query);
         }
+    }
+
+    private function notify(
+        ?ExecutionObservation $observation,
+        bool $successful,
+        ?int $affectedRows,
+    ): void {
+        if ($observation === null) {
+            return;
+        }
+
+        $observation->notify($successful, $affectedRows);
     }
 
     private function closeStatementQuietly(?PDOStatement $statement): void
