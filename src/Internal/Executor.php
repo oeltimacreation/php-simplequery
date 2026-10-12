@@ -9,6 +9,7 @@ use Oeltima\SimpleQuery\CompiledQuery;
 use Oeltima\SimpleQuery\Connection;
 use Oeltima\SimpleQuery\Cursor;
 use Oeltima\SimpleQuery\Exception\QueryExecutionException;
+use Oeltima\SimpleQuery\Observability\QueryExecution;
 use Oeltima\SimpleQuery\ParameterType;
 use PDO;
 use PDOException;
@@ -221,7 +222,6 @@ final readonly class Executor
         $pdo = $connection->pdoForExecution();
         $observer = $connection->observer();
         $startedAt = $observer === null ? 0 : hrtime(true);
-        $observation = ExecutionObservation::begin($connection, $query, $observer, $startedAt);
         $statement = null;
         $cleanupAttempted = false;
 
@@ -242,11 +242,11 @@ final readonly class Executor
                 $cleanupAttempted = true;
                 $statement->closeCursor();
             }
-            $this->notify($observation, true, $affectedRows);
+            $this->notify($connection, $query, $startedAt, $affectedRows);
 
             return $result;
         } catch (PDOException $exception) {
-            $this->notify($observation, false, null);
+            $this->notify($connection, $query, $startedAt, false);
 
             throw QueryExecutionException::fromPdo(
                 $exception,
@@ -255,7 +255,7 @@ final readonly class Executor
                 $connection->connectionOptions()->label,
             );
         } catch (QueryExecutionException $exception) {
-            $this->notify($observation, false, null);
+            $this->notify($connection, $query, $startedAt, false);
 
             throw $exception;
         } finally {
@@ -278,15 +278,30 @@ final readonly class Executor
     }
 
     private function notify(
-        ?ExecutionObservation $observation,
-        bool $successful,
-        ?int $affectedRows,
+        Connection $connection,
+        CompiledQuery $query,
+        int|float $startedAt,
+        int|false|null $affectedRowsOrFailure,
     ): void {
-        if ($observation === null) {
+        $observer = $connection->observer();
+        if ($observer === null) {
             return;
         }
 
-        $observation->notify($successful, $affectedRows);
+        try {
+            $observer->queryExecuted(new QueryExecution(
+                $query->sql,
+                array_map(static fn ($binding): ParameterType => $binding->type, $query->bindings),
+                (hrtime(true) - $startedAt) / 1_000_000,
+                $affectedRowsOrFailure !== false,
+                is_int($affectedRowsOrFailure) ? $affectedRowsOrFailure : null,
+                $connection->driver(),
+                $connection->connectionOptions()->label,
+                $connection->transactionDepth(),
+            ));
+        } catch (\Throwable) {
+            // Observation is deliberately non-interfering.
+        }
     }
 
     private function closeStatementQuietly(?PDOStatement $statement): void
