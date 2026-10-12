@@ -26,8 +26,7 @@ final readonly class Executor
         $rows = $this->attempt(
             $connection,
             $query,
-            false,
-            false,
+            ExecutionMode::Result,
             function (PDOStatement $statement) use ($connection, $query): array {
                 /** @var list<mixed> $rows */
                 $rows = $statement->fetchAll(PDO::FETCH_OBJ);
@@ -52,8 +51,7 @@ final readonly class Executor
         $rows = $this->attempt(
             $connection,
             $query,
-            false,
-            false,
+            ExecutionMode::Result,
             fn (PDOStatement $statement): array => $this->fetchAssociativeRows($connection, $statement, $query),
         );
 
@@ -100,8 +98,7 @@ final readonly class Executor
         return $this->attempt(
             $connection,
             $query,
-            false,
-            false,
+            ExecutionMode::Result,
             function (PDOStatement $statement) use ($connection, $query): ?stdClass {
                 $row = $statement->fetch(PDO::FETCH_OBJ);
                 if ($row === false) {
@@ -122,8 +119,7 @@ final readonly class Executor
         return $this->attempt(
             $connection,
             $query,
-            false,
-            false,
+            ExecutionMode::Result,
             function (PDOStatement $statement) use ($connection, $query): ?array {
                 $row = $statement->fetch(PDO::FETCH_ASSOC);
                 if ($row === false) {
@@ -141,8 +137,7 @@ final readonly class Executor
         $cursor = $this->attempt(
             $connection,
             $query,
-            false,
-            true,
+            ExecutionMode::Cursor,
             fn (PDOStatement $statement): Cursor => Cursor::objects(
                 $statement,
                 $connection,
@@ -159,8 +154,7 @@ final readonly class Executor
         $cursor = $this->attempt(
             $connection,
             $query,
-            false,
-            true,
+            ExecutionMode::Cursor,
             fn (PDOStatement $statement): Cursor => Cursor::associative(
                 $statement,
                 $connection,
@@ -176,8 +170,7 @@ final readonly class Executor
         return $this->attempt(
             $connection,
             $query,
-            true,
-            false,
+            ExecutionMode::ObservedWrite,
             static fn (PDOStatement $statement): int => $statement->rowCount(),
         );
     }
@@ -187,8 +180,7 @@ final readonly class Executor
         return $this->attempt(
             $connection,
             $query,
-            true,
-            false,
+            ExecutionMode::ObservedWrite,
             function (PDOStatement $statement, PDO $pdo) use ($connection, $query): string {
                 $id = $pdo->lastInsertId();
                 if ($id === false || $id === '' || $id === '0') {
@@ -209,8 +201,7 @@ final readonly class Executor
         return $this->attempt(
             $connection,
             $query,
-            false,
-            false,
+            ExecutionMode::Result,
             static fn (PDOStatement $statement): mixed => $statement->fetchColumn(),
         );
     }
@@ -223,10 +214,11 @@ final readonly class Executor
     private function attempt(
         Connection $connection,
         CompiledQuery $query,
-        bool $affectedRowsMeaningful,
-        bool $retainStatement,
+        ExecutionMode $mode,
         Closure $operation,
     ): mixed {
+        $affectedRowsMeaningful = $mode === ExecutionMode::ObservedWrite;
+        $retainStatement = $mode === ExecutionMode::Cursor;
         $pdo = $connection->pdoForExecution();
         $observer = $connection->observer();
         $startedAt = $observer === null ? 0 : hrtime(true);
