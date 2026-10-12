@@ -8,7 +8,7 @@ lines. The first public release is `0.1.0`.
 - `0.y.0` may contain documented breaking changes.
 - `0.y.z` patch releases should remain compatible within that minor line,
   except for urgent security or data-integrity fixes.
-- Consumers should pin a tested minor line such as `~0.8.1`.
+- Consumers should pin a tested minor line such as `~0.9.0`.
 - Changelog entries are not a substitute for migration instructions; every
   breaking change must be documented here.
 
@@ -25,7 +25,7 @@ For each upgrade:
 7. review generated SQL for raw or dialect-specific queries;
 8. deploy through the application's normal staged rollout.
 
-## Unreleased changes
+## Upgrading from 0.8 to 0.9
 
 Connections and cursors now reject `clone` with PHP's `Error`. Replace connection
 cloning with explicit construction, and consume each cursor once. Cloning a
@@ -40,13 +40,13 @@ Column clauses reject aliased and wildcard `Identifier` objects before SQL
 compilation. Keep `as()` and wildcards in projections or valid table sources;
 reference a projected alias by its name in `groupBy()` or `orderBy()`.
 
-## Installing 0.8.0
+## Installing 0.9.0
 
 ```bash
-composer require oeltimacreation/php-simplequery:^0.8
+composer require oeltimacreation/php-simplequery:^0.9
 ```
 
-`0.8.0` requires PHP 8.2+, `ext-pdo`, and either `pdo_sqlite` or `pdo_mysql`.
+`0.9.0` requires PHP 8.2+, `ext-pdo`, and either `pdo_sqlite` or `pdo_mysql`.
 Select `Driver::MariaDb`, `Driver::MySql`, or `Driver::Sqlite` explicitly. See
 [getting started](getting-started.md) for connection examples and
 [database support](../reference/database-support.md) for engine floors.
