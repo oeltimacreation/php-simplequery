@@ -17,6 +17,8 @@ with ZeroVer releases before `1.0.0`.
 
 ### Fixed
 
+- Infer `QueryBuilder` for untyped `when()` and `unless()` callback parameters
+  in consumer static analysis without changing callback execution semantics.
 - Quarantine the owner and preserve structured transaction-state evidence when
   the active-transaction check for a locking read cannot be inspected.
 - Attempt statement cleanup when cursor binding or execution fails before

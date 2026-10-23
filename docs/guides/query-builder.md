@@ -20,12 +20,16 @@ its parent.
 falsey respectively. The callback receives the current builder, and both
 methods return that same builder. A callback return value is ignored.
 
+The callback argument is described as `Closure(QueryBuilder): mixed` for static
+analysis and IDE inference. An untyped callback parameter infers the current
+builder; the callback still receives only that argument.
+
 ```php
 $query
-    ->when($status !== null, static function (QueryBuilder $query) use ($status): void {
+    ->when($status !== null, static function ($query) use ($status): void {
         $query->where('status', $status);
     })
-    ->unless($includeDeleted, static function (QueryBuilder $query): void {
+    ->unless($includeDeleted, static function ($query): void {
         $query->whereNull('deleted_at');
     });
 ```

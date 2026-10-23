@@ -4010,7 +4010,9 @@
                     "final": false,
                     "return_type": "self",
                     "returns_reference": false,
-                    "annotations": [],
+                    "annotations": [
+                        "@param Closure(self): mixed $callback"
+                    ],
                     "parameters": [
                         {
                             "name": "value",
@@ -4058,7 +4060,9 @@
                     "final": false,
                     "return_type": "self",
                     "returns_reference": false,
-                    "annotations": [],
+                    "annotations": [
+                        "@param Closure(self): mixed $callback"
+                    ],
                     "parameters": [
                         {
                             "name": "value",

@@ -172,6 +172,7 @@ final class QueryBuilder
         return $this;
     }
 
+    /** @param Closure(self): mixed $callback */
     public function when(mixed $value, Closure $callback): self
     {
         if ((bool) $value) {
@@ -181,6 +182,7 @@ final class QueryBuilder
         return $this;
     }
 
+    /** @param Closure(self): mixed $callback */
     public function unless(mixed $value, Closure $callback): self
     {
         if (!(bool) $value) {

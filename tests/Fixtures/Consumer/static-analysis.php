@@ -100,10 +100,12 @@ return static function (Connection $database): void {
     assertType('Oeltima\\SimpleQuery\\QueryBuilder', $builder);
 
     $conditional = $builder
-        ->when(false, static function (QueryBuilder $query): void {
+        ->when(false, static function ($query): void {
+            assertType(QueryBuilder::class, $query);
             $query->whereNotNull('users.email');
         })
-        ->unless(false, static function (QueryBuilder $query): void {
+        ->unless(false, static function ($query): void {
+            assertType(QueryBuilder::class, $query);
             $query->where('users.active', true);
         })
         ->forPage(2, 25);
