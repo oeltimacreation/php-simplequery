@@ -28,6 +28,20 @@ notification into a failure; affected rows are unknown (`null`) in that event.
 Counts required as a terminal's return value remain authoritative and their
 failures still propagate. No write is retried or replayed.
 
+## Unknown transaction depth amendment (2026-10-23)
+
+Observation-only transaction-state inspection failure must not erase the
+statement notification. `QueryExecution::$transactionDepth` is nullable, including
+its constructor parameter: `null` represents unknown depth. Preserve known
+managed depth and the existing inspected unmanaged zero/one values. Never
+fabricate zero, quarantine the owner solely for optional metadata, replace a
+query result/failure, or retry the statement. Disabled observers perform no
+metadata reads. Cursor observation still ends at handoff.
+
+The type change requires 0.10 upgrade guidance and consumer/API-manifest review.
+Mandatory transaction or lock-precondition inspection keeps its distinct
+quarantine policy under ADR-008.
+
 ## Consequences
 
 - Applications can bridge to their chosen logging/metrics systems.

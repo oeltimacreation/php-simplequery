@@ -283,4 +283,10 @@ final class PublicValuesTest extends TestCase
             }
         }
     }
+
+    public function testQueryExecutionCanRepresentUnknownTransactionDepth(): void
+    {
+        $execution = new QueryExecution('SELECT 1', [], 0.1, true, null, Driver::Sqlite, null, null);
+        self::assertNull($execution->transactionDepth);
+    }
 }

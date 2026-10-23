@@ -2724,7 +2724,7 @@
                     "name": "transactionDepth",
                     "static": false,
                     "readonly": true,
-                    "type": "int"
+                    "type": "?int"
                 }
             ],
             "methods": [
@@ -2797,7 +2797,7 @@
                         },
                         {
                             "name": "transactionDepth",
-                            "type": "int",
+                            "type": "?int",
                             "by_reference": false,
                             "variadic": false,
                             "optional": false,

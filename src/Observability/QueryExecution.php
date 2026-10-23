@@ -24,7 +24,7 @@ final readonly class QueryExecution
         public ?int $affectedRows,
         public Driver $driver,
         public ?string $connectionLabel,
-        public int $transactionDepth,
+        public ?int $transactionDepth,
     ) {
         $this->parameterTypes = self::validatedParameterTypes($parameterTypes);
         if (trim($this->sql) === '') {
@@ -36,7 +36,7 @@ final readonly class QueryExecution
         if ($this->affectedRows !== null && $this->affectedRows < 0) {
             throw new InvalidQueryException('Observed affected rows cannot be negative.');
         }
-        if ($this->transactionDepth < 0) {
+        if ($this->transactionDepth !== null && $this->transactionDepth < 0) {
             throw new InvalidQueryException('Observed transaction depth cannot be negative.');
         }
     }

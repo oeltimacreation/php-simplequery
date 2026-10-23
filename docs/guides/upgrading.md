@@ -42,6 +42,13 @@ catching a raw `PDOException` and reusing the wrapper. The original failure is
 available as `controlFailure`; logging retained exception chains still requires
 redaction. Strict `close()` propagation is unchanged.
 
+`QueryExecution::$transactionDepth` and its constructor argument now accept
+`null` for unavailable optional transaction-state metadata. Update observer
+consumers that assume an integer: retain an unknown category rather than
+coercing `null` to zero. Successful queries and original query failures still
+deliver their single notification when only that inspection fails. This does
+not add quarantine or recovery behavior to optional observation.
+
 ## Upgrading from 0.8 to 0.9
 
 Connections and cursors now reject `clone` with PHP's `Error`. Replace connection

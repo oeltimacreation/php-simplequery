@@ -298,7 +298,7 @@ final readonly class Executor
                 is_int($affectedRowsOrFailure) ? $affectedRowsOrFailure : null,
                 $connection->driver(),
                 $connection->connectionOptions()->label,
-                $connection->transactionDepth(),
+                $this->optionalTransactionDepth($connection),
             ));
         } catch (\Throwable) {
             // Observation is deliberately non-interfering.
@@ -324,6 +324,15 @@ final readonly class Executor
             return $statement->rowCount();
         } catch (\Throwable) {
             // Optional observation metadata cannot replace a successful result.
+            return null;
+        }
+    }
+
+    private function optionalTransactionDepth(Connection $connection): ?int
+    {
+        try {
+            return $connection->transactionDepth();
+        } catch (\Throwable) {
             return null;
         }
     }

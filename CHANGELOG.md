@@ -10,6 +10,8 @@ with ZeroVer releases before `1.0.0`.
 
 ### Changed
 
+- Represent unavailable observer transaction depth as `null` and deliver the
+  statement notification when only that optional metadata inspection fails.
 - Reject structured row-locked child queries before derived-source or `IN`/
   `NOT IN` attachment, preventing execution without the parent's transaction guard.
 

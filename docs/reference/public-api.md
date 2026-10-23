@@ -302,6 +302,12 @@ redacted, and non-interfering. Observer failures never change the database
 outcome or trigger replay. There is no global event or mutable last-query
 state. See [observability](../guides/observability.md).
 
+`QueryExecution::$transactionDepth` and its constructor argument are `?int`.
+`null` denotes unavailable optional physical transaction-state metadata; known
+managed depth and inspected zero/one retain their meaning. An unavailable depth
+does not suppress notification or change the database result. Negative known
+depths remain invalid.
+
 ## Exceptions
 
 ```text
