@@ -78,14 +78,25 @@ final class CursorHandoffTest extends TestCase
     /** @return iterable<string, array{bool, bool, string, string}> */
     public static function failedHandoffs(): iterable
     {
-        foreach ([false, true] as $builder) {
-            foreach ([false, true] as $associative) {
-                foreach (['bind-false', 'bind-throws', 'execute-false', 'execute-throws'] as $stage) {
-                    foreach (['success', 'false', 'throws'] as $cleanup) {
-                        yield (int) $builder . '-' . (int) $associative . '-' . $stage . '-' . $cleanup
-                            => [$builder, $associative, $stage, $cleanup];
-                    }
-                }
+        $contexts = [
+            'raw-object' => [false, false],
+            'raw-associative' => [false, true],
+            'builder-object' => [true, false],
+            'builder-associative' => [true, true],
+        ];
+        foreach ($contexts as $context => [$builder, $associative]) {
+            foreach (self::handoffFailures() as $failure => [$stage, $cleanup]) {
+                yield $context . '-' . $failure => [$builder, $associative, $stage, $cleanup];
+            }
+        }
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    private static function handoffFailures(): iterable
+    {
+        foreach (['bind-false', 'bind-throws', 'execute-false', 'execute-throws'] as $stage) {
+            foreach (['success', 'false', 'throws'] as $cleanup) {
+                yield $stage . '-' . $cleanup => [$stage, $cleanup];
             }
         }
     }
