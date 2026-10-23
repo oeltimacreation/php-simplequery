@@ -3064,6 +3064,16 @@
                     "parameters": []
                 },
                 {
+                    "name": "compileForSubquery",
+                    "compatibility": "internal",
+                    "static": false,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\CompiledQuery",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
                     "name": "count",
                     "compatibility": "public",
                     "static": false,

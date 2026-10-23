@@ -8,6 +8,11 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+### Changed
+
+- Reject structured row-locked child queries before derived-source or `IN`/
+  `NOT IN` attachment, preventing execution without the parent's transaction guard.
+
 ### Fixed
 
 - Attempt statement cleanup when cursor binding or execution fails before

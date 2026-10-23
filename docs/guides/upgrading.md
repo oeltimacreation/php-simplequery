@@ -25,6 +25,16 @@ For each upgrade:
 7. review generated SQL for raw or dialect-specific queries;
 8. deploy through the application's normal staged rollout.
 
+## Upgrading from 0.9 to 0.10
+
+Structured locked children now throw `UnsupportedFeatureException` before
+attachment through `table($child, $alias)` or `IN`/`NOT IN` predicates. Previously
+their SQL could reach execution without the parent's transaction guard. Keep
+locking reads standalone inside an active transaction, or use an explicitly
+trusted raw query with application-owned transaction checks and live-engine
+tests for nested locking. Existing attached snapshots stay unchanged when the
+original child is later mutated.
+
 ## Upgrading from 0.8 to 0.9
 
 Connections and cursors now reject `clone` with PHP's `Error`. Replace connection

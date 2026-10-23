@@ -131,7 +131,7 @@ final class Connection
                 throw new InvalidQueryException('A derived source requires an alias.');
             }
 
-            return new QueryBuilder($this, Source::subquery($source->compile(), $alias));
+            return new QueryBuilder($this, Source::subquery($source->compileForSubquery(), $alias));
         }
 
         $identifier = is_string($source) ? Identifier::of($source) : $source;

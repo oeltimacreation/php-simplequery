@@ -72,6 +72,10 @@ and the [worker guide](../guides/concurrency-and-workers.md).
 The two raw-SQL binding parameters are PHPDoc `list<mixed>` contracts; keyed
 binding maps are rejected at runtime.
 
+Structured child builders containing row locks are rejected before attachment
+as derived sources or `IN`/`NOT IN` operands. Standalone locking reads keep their
+active-transaction requirement. See [ADR-026](../adr/026-locked-child-queries.md).
+
 `Driver` has exactly `MariaDb`, `MySql`, and `Sqlite`. `ConnectionOptions` is a
 final readonly declaration with nullable prepare-emulation, buffering,
 `FOUND_ROWS`, persistence, SQLite busy-timeout, and connection-label fields.

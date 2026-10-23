@@ -347,6 +347,14 @@ Exactly one lock mode is allowed. `noWait()` and `skipLocked()` are mutually
 exclusive and require a lock mode. Ambiguous grouped, distinct, aggregate, or
 derived-only lock shapes are rejected.
 
+Structured child queries with row locks are rejected when attached as derived
+sources or through any `IN`/`NOT IN` variant, including nested condition groups.
+Use a standalone locking query inside an active transaction. If the operation
+requires vendor-specific nested locking SQL, use a trusted raw query and own its
+transaction and engine qualification. Adding a lock to a child after attachment
+does not change the parent's existing snapshot. See
+[ADR-026](../adr/026-locked-child-queries.md).
+
 ## Structured write shapes
 
 Insert terminals require an unaliased physical table with no read clauses.
