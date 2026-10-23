@@ -36,3 +36,11 @@ and `average()`: they return `int|float|string|null` and throw
 they declared `mixed` and returned unvalidated driver output. The change
 aligns the signature with the documented "preserve driver scalar" policy;
 supported driver values are unchanged.
+
+## Cursor handoff clarification (2026-10-23)
+
+The executor owns a prepared statement until successful cursor construction.
+Bind/execute failures before that handoff use ordinary statement cleanup and
+preserve the original failure. After handoff, only the cursor lifecycle owns
+cleanup, with its existing quarantine policy. Requesting a cursor terminal
+alone does not transfer statement ownership.

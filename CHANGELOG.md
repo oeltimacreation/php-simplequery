@@ -8,6 +8,11 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+### Fixed
+
+- Attempt statement cleanup when cursor binding or execution fails before
+  handoff, preserving the original failure and cursor ownership rules.
+
 ## [0.9.0] - 2026-10-12
 
 ### Fixed

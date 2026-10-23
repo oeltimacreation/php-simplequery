@@ -124,6 +124,25 @@ final class ExecutionTest extends TestCase
         self::assertSame(3, $builder->count());
     }
 
+    public function testFailedCursorExecutionLeavesTheConnectionAvailable(): void
+    {
+        foreach ([false, true] as $associative) {
+            $query = $this->connection->query('SELECT abs(?) AS value', [PHP_INT_MIN]);
+            try {
+                $associative ? $query->iterateAssociative() : $query->iterate();
+                self::fail('SQLite integer overflow must fail execution.');
+            } catch (QueryExecutionException $failure) {
+                self::assertInstanceOf(PDOException::class, $failure->getPrevious());
+                self::assertSame('SELECT abs(?) AS value', $failure->sql);
+            }
+            self::assertTrue($this->connection->isReusable());
+            self::assertSame(['value' => 42], $this->connection->query('SELECT 42 AS value')->firstAssociative());
+        }
+        self::assertCount(4, $this->observer->executions());
+        self::assertFalse($this->observer->executions()[0]->successful);
+        self::assertTrue($this->observer->executions()[1]->successful);
+    }
+
     public function testForPageReturnsTheRequestedSliceAndDoesNotChangeTerminalState(): void
     {
         $this->connection->table('users')->insertMany([

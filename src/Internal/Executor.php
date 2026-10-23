@@ -218,7 +218,7 @@ final readonly class Executor
         Closure $operation,
     ): mixed {
         $affectedRowsMeaningful = $mode === ExecutionMode::ObservedWrite;
-        $retainStatement = $mode === ExecutionMode::Cursor;
+        $retainStatement = false;
         $pdo = $connection->pdoForExecution();
         $observer = $connection->observer();
         $startedAt = $observer === null ? 0 : hrtime(true);
@@ -234,6 +234,7 @@ final readonly class Executor
             $this->bindAndExecute($connection, $statement, $query);
 
             $result = $operation($statement, $pdo);
+            $retainStatement = $mode === ExecutionMode::Cursor;
             $affectedRows = null;
             if ($observer !== null && $affectedRowsMeaningful) {
                 $affectedRows = is_int($result) ? $result : $this->optionalAffectedRows($statement);
