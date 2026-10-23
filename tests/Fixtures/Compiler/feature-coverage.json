@@ -1,6 +1,11 @@
 {
   "schema_version": 2,
   "features": {
+    "locked_child_queries": {
+      "mariadb": ["unsupported:mariadb-locked-derived", "unsupported:mariadb-locked-in"],
+      "mysql": ["unsupported:mysql-locked-derived", "unsupported:mysql-locked-in"],
+      "sqlite": ["unsupported:sqlite-locked-derived", "unsupported:sqlite-locked-in"]
+    },
     "aliases": {
       "mariadb": [
         "mariadb-composition",

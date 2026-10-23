@@ -6,6 +6,7 @@ information.
 
 ## Core references
 
+- [0.10.0 analysis and implementation plan](../plans/0.10.md)
 - [Architecture](../reference/architecture.md)
 - [Architecture decisions](../adr/README.md)
 - [Testing architecture](testing-architecture.md)

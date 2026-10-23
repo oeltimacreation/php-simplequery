@@ -100,10 +100,12 @@ return static function (Connection $database): void {
     assertType('Oeltima\\SimpleQuery\\QueryBuilder', $builder);
 
     $conditional = $builder
-        ->when(false, static function (QueryBuilder $query): void {
+        ->when(false, static function ($query): void {
+            assertType(QueryBuilder::class, $query);
             $query->whereNotNull('users.email');
         })
-        ->unless(false, static function (QueryBuilder $query): void {
+        ->unless(false, static function ($query): void {
+            assertType(QueryBuilder::class, $query);
             $query->where('users.active', true);
         })
         ->forPage(2, 25);
@@ -124,7 +126,8 @@ return static function (Connection $database): void {
     $database->query('SELECT ? WHERE ? = ?', $bindings);
     new RawExpression('COALESCE(?, ?)', $bindings);
     new CompiledQuery('SELECT ?', [new Binding(1, ParameterType::Integer)]);
-    new QueryExecution('SELECT ?', [ParameterType::Integer], 0.1, true, null, Driver::Sqlite, null, 0);
+    $execution = new QueryExecution('SELECT ?', [ParameterType::Integer], 0.1, true, null, Driver::Sqlite, null, null);
+    assertType('int|null', $execution->transactionDepth);
 
     assertType('int', $database->table('users')->insert(['email' => 'ada@example.test']));
     assertType('int', $database->table('users')->insertMany([['email' => 'ada@example.test']]));

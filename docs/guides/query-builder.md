@@ -20,12 +20,16 @@ its parent.
 falsey respectively. The callback receives the current builder, and both
 methods return that same builder. A callback return value is ignored.
 
+The callback argument is described as `Closure(QueryBuilder): mixed` for static
+analysis and IDE inference. An untyped callback parameter infers the current
+builder; the callback still receives only that argument.
+
 ```php
 $query
-    ->when($status !== null, static function (QueryBuilder $query) use ($status): void {
+    ->when($status !== null, static function ($query) use ($status): void {
         $query->where('status', $status);
     })
-    ->unless($includeDeleted, static function (QueryBuilder $query): void {
+    ->unless($includeDeleted, static function ($query): void {
         $query->whereNull('deleted_at');
     });
 ```
@@ -346,6 +350,14 @@ documented guarantees. SQLite rejects lock clauses.
 Exactly one lock mode is allowed. `noWait()` and `skipLocked()` are mutually
 exclusive and require a lock mode. Ambiguous grouped, distinct, aggregate, or
 derived-only lock shapes are rejected.
+
+Structured child queries with row locks are rejected when attached as derived
+sources or through any `IN`/`NOT IN` variant, including nested condition groups.
+Use a standalone locking query inside an active transaction. If the operation
+requires vendor-specific nested locking SQL, use a trusted raw query and own its
+transaction and engine qualification. Adding a lock to a child after attachment
+does not change the parent's existing snapshot. See
+[ADR-026](../adr/026-locked-child-queries.md).
 
 ## Structured write shapes
 

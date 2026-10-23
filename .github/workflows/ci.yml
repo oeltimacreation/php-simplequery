@@ -57,6 +57,9 @@ jobs:
   branch-coverage:
     name: Xdebug branch and path coverage
     runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      COMPOSER_PROCESS_TIMEOUT: "1200"
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
       - uses: shivammathur/setup-php@add91f08e1598a0b6ff470f1e389f9d652559bf0
@@ -193,7 +196,7 @@ jobs:
         shell: bash
         run: |
           baseline_dir="${RUNNER_TEMP}/php-simplequery-release-baseline"
-          git worktree add --detach "${baseline_dir}" v0.8.1
+          git worktree add --detach "${baseline_dir}" v0.9.0
           trap 'git worktree remove --force "${baseline_dir}"' EXIT
           composer install --working-dir="${baseline_dir}" --no-interaction --prefer-dist --no-progress
           php benchmarks/noise.php \

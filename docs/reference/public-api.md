@@ -72,6 +72,10 @@ and the [worker guide](../guides/concurrency-and-workers.md).
 The two raw-SQL binding parameters are PHPDoc `list<mixed>` contracts; keyed
 binding maps are rejected at runtime.
 
+Structured child builders containing row locks are rejected before attachment
+as derived sources or `IN`/`NOT IN` operands. Standalone locking reads keep their
+active-transaction requirement. See [ADR-026](../adr/026-locked-child-queries.md).
+
 `Driver` has exactly `MariaDb`, `MySql`, and `Sqlite`. `ConnectionOptions` is a
 final readonly declaration with nullable prepare-emulation, buffering,
 `FOUND_ROWS`, persistence, SQLite busy-timeout, and connection-label fields.
@@ -298,6 +302,12 @@ redacted, and non-interfering. Observer failures never change the database
 outcome or trigger replay. There is no global event or mutable last-query
 state. See [observability](../guides/observability.md).
 
+`QueryExecution::$transactionDepth` and its constructor argument are `?int`.
+`null` denotes unavailable optional physical transaction-state metadata; known
+managed depth and inspected zero/one retain their meaning. An unavailable depth
+does not suppress notification or change the database result. Negative known
+depths remain invalid.
+
 ## Exceptions
 
 ```text
@@ -325,6 +335,12 @@ depth, driver/connection label, callback/control/recovery failures, and whether
 the connection is unusable. Domain exceptions retain identity when rollback
 succeeds. Pixie's broad vendor-normalized constraint subclass family is not
 part of the public contract.
+
+Failure to inspect the physical transaction for a structured locking read
+throws `TransactionStateException` with `operation=lock_query`, captured managed
+depth, `controlFailure`, and `connectionUnusable=true`. Discard the wrapper;
+the failed precondition does not dispatch the query or trigger completion SQL.
+The retained control exception may contain sensitive driver diagnostics.
 
 ### Exception troubleshooting matrix
 

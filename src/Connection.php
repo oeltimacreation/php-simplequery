@@ -131,7 +131,7 @@ final class Connection
                 throw new InvalidQueryException('A derived source requires an alias.');
             }
 
-            return new QueryBuilder($this, Source::subquery($source->compile(), $alias));
+            return new QueryBuilder($this, Source::subquery($source->compileForSubquery(), $alias));
         }
 
         $identifier = is_string($source) ? Identifier::of($source) : $source;
@@ -354,11 +354,28 @@ final class Connection
     /** @internal */
     public function requireTransactionForLock(): void
     {
-        if (!$this->pdoForExecution()->inTransaction()) {
+        $pdo = $this->pdoForExecution();
+        $managedDepth = $this->transactionManager->depth();
+        try {
+            $active = $pdo->inTransaction();
+        } catch (\Throwable $failure) {
+            $this->transactionManager->quarantine();
+
+            throw new TransactionStateException(
+                'PDO transaction state could not be inspected for a row-lock query.',
+                operation: 'lock_query',
+                managedDepth: $managedDepth,
+                driver: $this->selectedDriver,
+                connectionLabel: $this->options->label,
+                controlFailure: $failure,
+                connectionUnusable: true,
+            );
+        }
+        if (!$active) {
             throw new TransactionStateException(
                 'A row-lock query requires an active transaction.',
                 operation: 'lock_query',
-                managedDepth: $this->transactionManager->depth(),
+                managedDepth: $managedDepth,
                 driver: $this->selectedDriver,
                 connectionLabel: $this->options->label,
             );

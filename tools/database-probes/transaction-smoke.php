@@ -189,7 +189,7 @@ try {
         },
     );
     $depths = array_map(
-        static fn (QueryExecution $execution): int => $execution->transactionDepth,
+        static fn (QueryExecution $execution): ?int => $execution->transactionDepth,
         $observer->executions(),
     );
     $record(

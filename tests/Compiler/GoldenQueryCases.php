@@ -30,10 +30,24 @@ final class GoldenQueryCases
     /** @return array<string, \Closure(): CompiledQuery> */
     public function rejections(): array
     {
-        return [
+        $rejections = [
             'sqlite-row-locks' => static fn (): CompiledQuery => CompilerConnection::for(Driver::Sqlite)
                 ->table('items')->forUpdate()->compile(),
         ];
+        foreach (Driver::cases() as $driver) {
+            $rejections[$driver->value . '-locked-derived'] = static function () use ($driver): CompiledQuery {
+                $db = CompilerConnection::for($driver);
+
+                return $db->table($db->table('items')->forUpdate(), 'locked')->compile();
+            };
+            $rejections[$driver->value . '-locked-in'] = static function () use ($driver): CompiledQuery {
+                $db = CompilerConnection::for($driver);
+
+                return $db->table('owners')->whereIn('id', $db->table('items')->select('id')->forShare())->compile();
+            };
+        }
+
+        return $rejections;
     }
 
     private function composition(Driver $driver): CompiledQuery

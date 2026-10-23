@@ -2724,7 +2724,7 @@
                     "name": "transactionDepth",
                     "static": false,
                     "readonly": true,
-                    "type": "int"
+                    "type": "?int"
                 }
             ],
             "methods": [
@@ -2797,7 +2797,7 @@
                         },
                         {
                             "name": "transactionDepth",
-                            "type": "int",
+                            "type": "?int",
                             "by_reference": false,
                             "variadic": false,
                             "optional": false,
@@ -3056,6 +3056,16 @@
                 {
                     "name": "compile",
                     "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "Oeltima\\SimpleQuery\\CompiledQuery",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": []
+                },
+                {
+                    "name": "compileForSubquery",
+                    "compatibility": "internal",
                     "static": false,
                     "final": false,
                     "return_type": "Oeltima\\SimpleQuery\\CompiledQuery",
@@ -4000,7 +4010,9 @@
                     "final": false,
                     "return_type": "self",
                     "returns_reference": false,
-                    "annotations": [],
+                    "annotations": [
+                        "@param Closure(self): mixed $callback"
+                    ],
                     "parameters": [
                         {
                             "name": "value",
@@ -4048,7 +4060,9 @@
                     "final": false,
                     "return_type": "self",
                     "returns_reference": false,
-                    "annotations": [],
+                    "annotations": [
+                        "@param Closure(self): mixed $callback"
+                    ],
                     "parameters": [
                         {
                             "name": "value",

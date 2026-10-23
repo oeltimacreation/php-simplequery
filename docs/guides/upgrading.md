@@ -25,6 +25,30 @@ For each upgrade:
 7. review generated SQL for raw or dialect-specific queries;
 8. deploy through the application's normal staged rollout.
 
+## Upgrading from 0.9 to 0.10
+
+Structured locked children now throw `UnsupportedFeatureException` before
+attachment through `table($child, $alias)` or `IN`/`NOT IN` predicates. Previously
+their SQL could reach execution without the parent's transaction guard. Keep
+locking reads standalone inside an active transaction, or use an explicitly
+trusted raw query with application-owned transaction checks and live-engine
+tests for nested locking. Existing attached snapshots stay unchanged when the
+original child is later mutated.
+
+A failed PDO transaction inspection before a standalone locking read now throws
+`TransactionStateException` (`operation=lock_query`) and quarantines the owner.
+Handle it through transaction-state recovery and explicit discard rather than
+catching a raw `PDOException` and reusing the wrapper. The original failure is
+available as `controlFailure`; logging retained exception chains still requires
+redaction. Strict `close()` propagation is unchanged.
+
+`QueryExecution::$transactionDepth` and its constructor argument now accept
+`null` for unavailable optional transaction-state metadata. Update observer
+consumers that assume an integer: retain an unknown category rather than
+coercing `null` to zero. Successful queries and original query failures still
+deliver their single notification when only that inspection fails. This does
+not add quarantine or recovery behavior to optional observation.
+
 ## Upgrading from 0.8 to 0.9
 
 Connections and cursors now reject `clone` with PHP's `Error`. Replace connection

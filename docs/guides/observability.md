@@ -43,7 +43,13 @@ Metadata includes:
 - success or failure;
 - affected rows when meaningful;
 - driver and optional non-secret connection label;
-- managed transaction depth.
+- transaction depth when known, or `null` if optional physical-state inspection fails.
+
+`transactionDepth` is `?int`: known managed depth is reported without an extra
+physical inspection; otherwise the existing PDO-reported transaction state
+distinguishes zero from one. If that optional read throws, the notification is
+still delivered with unknown depth. It does not change statement success or
+failure, quarantine the owner, or substitute zero for an unknown value.
 
 Binding values are redacted by default. Observers cannot modify SQL, bindings,
 results, or transaction behavior.

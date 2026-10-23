@@ -47,7 +47,11 @@ final class ConfigurableStatement extends PDOStatement
 
     public static bool $bindReturnsFalse = false;
 
+    public static bool $bindThrows = false;
+
     public static bool $executeReturnsFalse = false;
+
+    public static bool $executeThrows = false;
 
     public static int $executeCalls = 0;
 
@@ -70,7 +74,9 @@ final class ConfigurableStatement extends PDOStatement
         self::$closeCalls = 0;
         self::$rowCountCalls = 0;
         self::$bindReturnsFalse = false;
+        self::$bindThrows = false;
         self::$executeReturnsFalse = false;
+        self::$executeThrows = false;
         self::$executeCalls = 0;
         self::$rowCountThrowsOnCall = null;
     }
@@ -143,6 +149,10 @@ final class ConfigurableStatement extends PDOStatement
     #[\Override]
     public function bindValue(string|int $param, mixed $value, int $type = PDO::PARAM_STR): bool
     {
+        if (self::$bindThrows) {
+            throw new PDOException('Controlled statement bind failure.');
+        }
+
         return self::$bindReturnsFalse ? false : parent::bindValue($param, $value, $type);
     }
 
@@ -151,6 +161,9 @@ final class ConfigurableStatement extends PDOStatement
     public function execute(?array $params = null): bool
     {
         ++self::$executeCalls;
+        if (self::$executeThrows) {
+            throw new PDOException('Controlled statement execute failure.');
+        }
 
         return self::$executeReturnsFalse ? false : parent::execute($params);
     }

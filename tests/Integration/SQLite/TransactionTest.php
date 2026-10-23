@@ -117,7 +117,7 @@ final class TransactionTest extends TestCase
         self::assertSame(
             [1, 2, 1],
             array_map(
-                static fn (QueryExecution $execution): int => $execution->transactionDepth,
+                static fn (QueryExecution $execution): ?int => $execution->transactionDepth,
                 array_slice($this->observer->executions(), 0, 3),
             ),
         );

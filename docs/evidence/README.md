@@ -34,6 +34,13 @@ Maintained compatibility and migration records:
 - [synthetic migration validation](migration-validation.json) and its
   [performance control](migration-benchmark.json);
 
+Active development follows the
+[0.10.0 analysis and implementation plan](../plans/0.10.md). Its intended gates
+are planning, not candidate certification.
+
+The [0.10.0 candidate review](0.10-candidate-review.md) records completed local
+qualification and the remaining hosted CI, review, and publication gates.
+
 Current release evidence:
 
 - [`0.9.0` candidate and release certification](0.9-candidate-review.md) —

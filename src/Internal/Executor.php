@@ -218,7 +218,7 @@ final readonly class Executor
         Closure $operation,
     ): mixed {
         $affectedRowsMeaningful = $mode === ExecutionMode::ObservedWrite;
-        $retainStatement = $mode === ExecutionMode::Cursor;
+        $retainStatement = false;
         $pdo = $connection->pdoForExecution();
         $observer = $connection->observer();
         $startedAt = $observer === null ? 0 : hrtime(true);
@@ -234,6 +234,7 @@ final readonly class Executor
             $this->bindAndExecute($connection, $statement, $query);
 
             $result = $operation($statement, $pdo);
+            $retainStatement = $mode === ExecutionMode::Cursor;
             $affectedRows = null;
             if ($observer !== null && $affectedRowsMeaningful) {
                 $affectedRows = is_int($result) ? $result : $this->optionalAffectedRows($statement);
@@ -297,7 +298,7 @@ final readonly class Executor
                 is_int($affectedRowsOrFailure) ? $affectedRowsOrFailure : null,
                 $connection->driver(),
                 $connection->connectionOptions()->label,
-                $connection->transactionDepth(),
+                $this->optionalTransactionDepth($connection),
             ));
         } catch (\Throwable) {
             // Observation is deliberately non-interfering.
@@ -323,6 +324,15 @@ final readonly class Executor
             return $statement->rowCount();
         } catch (\Throwable) {
             // Optional observation metadata cannot replace a successful result.
+            return null;
+        }
+    }
+
+    private function optionalTransactionDepth(Connection $connection): ?int
+    {
+        try {
+            return $connection->transactionDepth();
+        } catch (\Throwable) {
             return null;
         }
     }

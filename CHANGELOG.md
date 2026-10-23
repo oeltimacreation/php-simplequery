@@ -8,6 +8,22 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+### Changed
+
+- Represent unavailable observer transaction depth as `null` and deliver the
+  statement notification when only that optional metadata inspection fails.
+- Reject structured row-locked child queries before derived-source or `IN`/
+  `NOT IN` attachment, preventing execution without the parent's transaction guard.
+
+### Fixed
+
+- Infer `QueryBuilder` for untyped `when()` and `unless()` callback parameters
+  in consumer static analysis without changing callback execution semantics.
+- Quarantine the owner and preserve structured transaction-state evidence when
+  the active-transaction check for a locking read cannot be inspected.
+- Attempt statement cleanup when cursor binding or execution fails before
+  handoff, preserving the original failure and cursor ownership rules.
+
 ## [0.9.0] - 2026-10-12
 
 ### Fixed

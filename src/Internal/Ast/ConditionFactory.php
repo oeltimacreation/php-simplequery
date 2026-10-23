@@ -163,7 +163,7 @@ final class ConditionFactory
                 throw new InvalidQueryException('Structured subqueries must belong to the same connection.');
             }
 
-            return new InPredicate($normalizedColumn, $values->compile(), $negated);
+            return new InPredicate($normalizedColumn, $values->compileForSubquery(), $negated);
         }
 
         $bindings = [];

@@ -32,6 +32,7 @@ silently rewriting the original decision.
 | [023](023-release-consistency-states.md) | Release consistency states and benchmark baselines | Accepted |
 | [024](024-explicit-connection-lifecycle.md) | Explicit lifecycle inspection and terminal connection discard | Accepted |
 | [025](025-resource-owner-cloning.md) | Non-cloneable resource owners | Accepted |
+| [026](026-locked-child-queries.md) | Reject structured locked child queries | Accepted |
 
 ## Format
 

@@ -261,7 +261,46 @@ try {
         $cursor->isClosed() && $connection->table('simplequery_phase2_probe')->count() === 3,
     );
 
+    foreach ([false, true] as $associativeCursor) {
+        $failedCursor = null;
+        try {
+            $duplicate = $connection->query(
+                'INSERT INTO simplequery_phase2_probe (label, enabled) VALUES (?, ?)',
+                ['phase2-one', 1],
+            );
+            $failedCursor = $associativeCursor ? $duplicate->iterateAssociative() : $duplicate->iterate();
+            throw new RuntimeException('A duplicate cursor write unexpectedly succeeded.');
+        } catch (QueryExecutionException $failure) {
+            $record(
+                'failed_cursor_attempt_' . ($associativeCursor ? 'associative' : 'object'),
+                $failure->sqlState !== null
+                && !$connection->hasActiveCursors()
+                && $connection->table('simplequery_phase2_probe')->count() === 3
+                && $connection->isReusable(),
+            );
+        } finally {
+            $failedCursor?->close();
+        }
+    }
+
     if ($driver !== Driver::Sqlite) {
+        $lockedChild = $connection->table('simplequery_phase2_probe')->select('id')->forUpdate();
+        $attemptsBeforeAttachment = count($observer->executions());
+        foreach (['derived', 'in', 'not-in'] as $attachment) {
+            try {
+                match ($attachment) {
+                    'derived' => $connection->table($lockedChild, 'locked'),
+                    'in' => $connection->table('simplequery_phase2_probe')->whereIn('id', $lockedChild),
+                    default => $connection->table('simplequery_phase2_probe')->whereNotIn('id', $lockedChild),
+                };
+                throw new RuntimeException('A locked child query was attached.');
+            } catch (\Oeltima\SimpleQuery\Exception\UnsupportedFeatureException) {
+            }
+        }
+        $record(
+            'locked_child_attachment_rejected_before_execution',
+            count($observer->executions()) === $attemptsBeforeAttachment && $connection->isReusable(),
+        );
         $connection->query('SET @simplequery_phase2_session = ?', ['phase2-session'])->execute();
         $session = $connection->query('SELECT @simplequery_phase2_session AS session_value')->firstAssociative();
         $record('proxy_session_continuity', ($session['session_value'] ?? null) === 'phase2-session');

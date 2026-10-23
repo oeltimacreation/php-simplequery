@@ -192,6 +192,11 @@ the duplicate-submission and chunk-atomicity patterns.
 
 ### Ordinary statement cleanup
 
+Until a cursor is successfully handed to the caller, the executor owns its
+statement. A failed prepare has no statement to close; a bind/execute failure
+attempts ordinary cleanup once and preserves the original failure. No active
+cursor is registered for an attempt that fails before handoff.
+
 Ordinary terminals attempt statement cleanup once. A cleanup PDO exception after
 successful execution is translated to `QueryExecutionException`; the write may
 already have completed, so do not automatically replay it. A prior operation

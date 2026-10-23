@@ -7,6 +7,7 @@ namespace Oeltima\SimpleQuery;
 use Closure;
 use Oeltima\SimpleQuery\Exception\InvalidQueryException;
 use Oeltima\SimpleQuery\Exception\QueryExecutionException;
+use Oeltima\SimpleQuery\Exception\UnsupportedFeatureException;
 use Oeltima\SimpleQuery\Expression\Identifier;
 use Oeltima\SimpleQuery\Expression\RawExpression;
 use Oeltima\SimpleQuery\Internal\Ast\ConditionCollection;
@@ -171,6 +172,7 @@ final class QueryBuilder
         return $this;
     }
 
+    /** @param Closure(self): mixed $callback */
     public function when(mixed $value, Closure $callback): self
     {
         if ((bool) $value) {
@@ -180,6 +182,7 @@ final class QueryBuilder
         return $this;
     }
 
+    /** @param Closure(self): mixed $callback */
     public function unless(mixed $value, Closure $callback): self
     {
         if (!(bool) $value) {
@@ -229,6 +232,16 @@ final class QueryBuilder
     public function compile(): CompiledQuery
     {
         return $this->compiler()->select($this->state);
+    }
+
+    /** @internal */
+    public function compileForSubquery(): CompiledQuery
+    {
+        if ($this->state->lock->mode !== null) {
+            throw new UnsupportedFeatureException('Structured child queries cannot contain row-lock clauses.');
+        }
+
+        return $this->compile();
     }
 
     /** @return list<stdClass> */
