@@ -34,20 +34,22 @@ Maintained compatibility and migration records:
 - [synthetic migration validation](migration-validation.json) and its
   [performance control](migration-benchmark.json);
 
-Active development follows the
-[0.10.0 analysis and implementation plan](../plans/0.10.md). Its intended gates
-are planning, not candidate certification.
-
-The [0.10.0 candidate review](0.10-candidate-review.md) records completed local
-qualification and the remaining hosted CI, review, and publication gates.
+The completed 0.10.0 plan is retired. Its accepted contracts are preserved in
+the changelog, upgrade guide, ADRs, and release review.
 
 Current release evidence:
+
+- [`0.10.0` candidate and release review](0.10-candidate-review.md) — local
+  qualification, accepted contract changes, hosted CI and code review, package
+  provenance, and release-finalization handoff.
+
+0.9 release evidence:
 
 - [`0.9.0` candidate and release certification](0.9-candidate-review.md) —
   local and hosted quality, coverage, package, SQLite, direct-engine, proxy,
   and benchmark evidence plus publication provenance.
 - [Connection wrapper release efficiency](connection-release-efficiency.md) —
-  unreleased ownership correction with before/after release tests, paired CI
+  0.9.0 ownership correction with before/after release tests, paired CI
   comparisons, and reference-profile soak evidence.
 - [`0.8.1` cursor guard cost correction](0.8.1-cursor-guard-cost.md) —
   post-release fix for the per-row discarded-connection guard, with local A/B

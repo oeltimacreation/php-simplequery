@@ -36,7 +36,6 @@ plan, not in reference documentation.
 
 ## Project records
 
-- [0.10.0 analysis and implementation plan](plans/0.10.md)
 - [Maintainer documentation](maintainers/README.md)
 - [Architecture decisions](adr/README.md)
 - [Compatibility and release evidence](evidence/README.md)

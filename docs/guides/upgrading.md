@@ -8,7 +8,7 @@ lines. The first public release is `0.1.0`.
 - `0.y.0` may contain documented breaking changes.
 - `0.y.z` patch releases should remain compatible within that minor line,
   except for urgent security or data-integrity fixes.
-- Consumers should pin a tested minor line such as `~0.9.0`.
+- Consumers should pin a tested minor line such as `~0.10.0`.
 - Changelog entries are not a substitute for migration instructions; every
   breaking change must be documented here.
 
@@ -26,6 +26,11 @@ For each upgrade:
 8. deploy through the application's normal staged rollout.
 
 ## Upgrading from 0.9 to 0.10
+
+`0.10.0` retains the PHP 8.2, MariaDB 11.8, MySQL 8.0, and SQLite 3.39.2+
+floors. Review the following changed contracts before upgrading. Cursor
+bind/execute failure cleanup and conditional callback type inference are also
+corrected; callback execution semantics are unchanged.
 
 Structured locked children now throw `UnsupportedFeatureException` before
 attachment through `table($child, $alias)` or `IN`/`NOT IN` predicates. Previously
@@ -64,13 +69,13 @@ Column clauses reject aliased and wildcard `Identifier` objects before SQL
 compilation. Keep `as()` and wildcards in projections or valid table sources;
 reference a projected alias by its name in `groupBy()` or `orderBy()`.
 
-## Installing 0.9.0
+## Installing 0.10.0
 
 ```bash
-composer require oeltimacreation/php-simplequery:^0.9
+composer require oeltimacreation/php-simplequery:^0.10
 ```
 
-`0.9.0` requires PHP 8.2+, `ext-pdo`, and either `pdo_sqlite` or `pdo_mysql`.
+`0.10.0` requires PHP 8.2+, `ext-pdo`, and either `pdo_sqlite` or `pdo_mysql`.
 Select `Driver::MariaDb`, `Driver::MySql`, or `Driver::Sqlite` explicitly. See
 [getting started](getting-started.md) for connection examples and
 [database support](../reference/database-support.md) for engine floors.
