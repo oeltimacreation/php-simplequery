@@ -33,14 +33,16 @@ final readonly class QueryExecution
         if (!is_finite($this->durationMilliseconds) || $this->durationMilliseconds < 0) {
             throw new InvalidQueryException('Observed duration must be a finite non-negative value.');
         }
-        self::validateNonNegative($this->affectedRows, 'Observed affected rows cannot be negative.');
-        self::validateNonNegative($this->transactionDepth, 'Observed transaction depth cannot be negative.');
+        $this->validateCounts();
     }
 
-    private static function validateNonNegative(?int $value, string $message): void
+    private function validateCounts(): void
     {
-        if ($value !== null && $value < 0) {
-            throw new InvalidQueryException($message);
+        if ($this->affectedRows !== null && $this->affectedRows < 0) {
+            throw new InvalidQueryException('Observed affected rows cannot be negative.');
+        }
+        if ($this->transactionDepth !== null && $this->transactionDepth < 0) {
+            throw new InvalidQueryException('Observed transaction depth cannot be negative.');
         }
     }
 
