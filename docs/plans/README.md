@@ -1,8 +1,7 @@
 # Development plans
 
-This directory contains only active release planning. The active
-[0.10.0 analysis and implementation plan](0.10.md) records the current findings,
-proposed scope, contract decisions, and acceptance gates.
+This directory contains only active release planning. No release plan is
+active after 0.10.0 finalization.
 
 A plan describes intended work, acceptance gates, and explicit non-goals. It
 is not part of the released public API contract. When a release is complete,
@@ -18,3 +17,8 @@ The completed `0.8.0` plan was retired at release finalization; its outcome is
 recorded in the `0.8.0` changelog section, the upgrade guide, ADR-006, ADR-008,
 ADR-009, ADR-024, and the
 [`0.8.0` development review](../evidence/0.8-development-review.md).
+
+The completed `0.10.0` plan was retired at release finalization; its outcome
+is recorded in the `0.10.0` changelog section, the upgrade guide, ADR-006,
+ADR-008, ADR-010, ADR-026, and the
+[`0.10.0` candidate and release review](../evidence/0.10-candidate-review.md).
