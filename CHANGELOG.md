@@ -15,6 +15,8 @@ with ZeroVer releases before `1.0.0`.
 
 ### Fixed
 
+- Quarantine the owner and preserve structured transaction-state evidence when
+  the active-transaction check for a locking read cannot be inspected.
 - Attempt statement cleanup when cursor binding or execution fails before
   handoff, preserving the original failure and cursor ownership rules.
 

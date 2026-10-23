@@ -35,6 +35,13 @@ trusted raw query with application-owned transaction checks and live-engine
 tests for nested locking. Existing attached snapshots stay unchanged when the
 original child is later mutated.
 
+A failed PDO transaction inspection before a standalone locking read now throws
+`TransactionStateException` (`operation=lock_query`) and quarantines the owner.
+Handle it through transaction-state recovery and explicit discard rather than
+catching a raw `PDOException` and reusing the wrapper. The original failure is
+available as `controlFailure`; logging retained exception chains still requires
+redaction. Strict `close()` propagation is unchanged.
+
 ## Upgrading from 0.8 to 0.9
 
 Connections and cursors now reject `clone` with PHP's `Error`. Replace connection

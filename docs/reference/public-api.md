@@ -330,6 +330,12 @@ the connection is unusable. Domain exceptions retain identity when rollback
 succeeds. Pixie's broad vendor-normalized constraint subclass family is not
 part of the public contract.
 
+Failure to inspect the physical transaction for a structured locking read
+throws `TransactionStateException` with `operation=lock_query`, captured managed
+depth, `controlFailure`, and `connectionUnusable=true`. Discard the wrapper;
+the failed precondition does not dispatch the query or trigger completion SQL.
+The retained control exception may contain sensitive driver diagnostics.
+
 ### Exception troubleshooting matrix
 
 Use this matrix to diagnose failures and choose safe application-layer remediation actions without exposing sensitive bindings, credentials, or network topology:

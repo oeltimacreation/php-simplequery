@@ -48,3 +48,14 @@ profile-controlled guards are declined for `0.8.0`: they need equivalent
 failure evidence and a separate public opt-out contract. Re-open only with
 measured consumer impact, an equivalent ownership check, and an amendment
 here.
+
+## Lock-precondition inspection amendment (2026-10-23)
+
+A structured locking read must verify physical transaction activity before
+dispatch. If inspection throws, capture managed depth before quarantine and
+throw `TransactionStateException` with `operation=lock_query`, retained control
+failure, and `connectionUnusable=true`. Managed callback unwinding preserves
+that failure and issues no further transaction-control SQL on the uncertain
+owner. An inspected inactive transaction still rejects the query without
+quarantine. Strict-close inspection/propagation remains as decided in ADR-024;
+optional observation metadata remains non-interfering under ADR-010.

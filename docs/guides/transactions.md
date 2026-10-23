@@ -46,6 +46,15 @@ commits externally owned work.
 Builder queries may execute inside an externally managed PDO transaction, but
 transaction completion remains the caller's responsibility.
 
+Standalone structured locking reads require a verifiable active physical
+transaction. An inspection failure throws `TransactionStateException` with
+`operation=lock_query`, the captured managed depth, retained `controlFailure`,
+and `connectionUnusable=true`. Discard that owner and reconcile uncertain work
+in the application; SimpleQuery issues no further completion SQL on it. A
+successful inspection reporting no transaction still rejects the lock query
+without quarantining the connection. Strict `close()` keeps its existing PDO
+inspection/propagation policy; `discard()` remains the inspection-free exit.
+
 Choose one owner for each physical transaction. If a framework or application
 owns PDO completion, use builder terminals inside that scope but do not call
 `Connection::transaction()`:
