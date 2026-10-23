@@ -109,6 +109,13 @@ When a threshold is configured, an absent Clover metric is a failure. Paths
 are reported for hotspot guidance without a percentage floor. Every documented
 transaction state/failure edge remains mandatory regardless of percentages.
 
+Path/branch instrumentation can exceed Composer's default 300-second process
+timeout. The CI branch lane allows 1,200 seconds for Composer within a bounded
+25-minute job. On a slower local host, run
+`COMPOSER_PROCESS_TIMEOUT=1200 composer test:coverage:branch` before checking its
+fresh report with `composer coverage:check:branch`. This changes the execution
+budget only; the coverage driver, tests, and thresholds remain the same.
+
 ## CI mapping
 
 Pull-request CI runs PHP 8.2–8.5 SQLite tests, strict quality checks, a
