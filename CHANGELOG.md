@@ -8,6 +8,11 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+### Added
+
+- Verify stable PHP 8.6 in CI with SQLite execution, direct MariaDB and MySQL
+  PDO probes, and independent no-dev installations.
+
 ### Fixed
 
 - Preserve comparison-operator and empty-SQL validation on PHP 8.6 when inputs
