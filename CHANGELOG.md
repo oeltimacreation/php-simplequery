@@ -13,6 +13,11 @@ with ZeroVer releases before `1.0.0`.
 - Verify stable PHP 8.6 in CI with SQLite execution, direct MariaDB and MySQL
   PDO probes, and independent no-dev installations.
 
+### Changed
+
+- Reduce temporary allocation when an `IN` list or subquery supplies the first
+  bindings in a compiled statement.
+
 ### Fixed
 
 - Preserve comparison-operator and empty-SQL validation on PHP 8.6 when inputs
