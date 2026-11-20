@@ -18,6 +18,7 @@ use Oeltima\SimpleQuery\Internal\Ast\LockModifier;
 use Oeltima\SimpleQuery\Internal\Ast\OrderClause;
 use Oeltima\SimpleQuery\Internal\Ast\QueryState;
 use Oeltima\SimpleQuery\Internal\Ast\Source;
+use Oeltima\SimpleQuery\Internal\Ast\SubquerySnapshot;
 use Oeltima\SimpleQuery\Internal\AggregateResult;
 use Oeltima\SimpleQuery\Internal\BuildsConditions;
 use Oeltima\SimpleQuery\Internal\Compiler\DialectCompiler;
@@ -235,13 +236,20 @@ final class QueryBuilder
     }
 
     /** @internal */
-    public function compileForSubquery(): CompiledQuery
+    public function compileForSubquery(bool $forExists = false): SubquerySnapshot
     {
         if ($this->state->lock->mode !== null) {
             throw new UnsupportedFeatureException('Structured child queries cannot contain row-lock clauses.');
         }
+        if ($forExists && ($this->state->limit !== null || $this->state->offset !== null)) {
+            throw new UnsupportedFeatureException('Structured EXISTS child queries cannot contain LIMIT or OFFSET.');
+        }
 
-        return $this->compile();
+        return new SubquerySnapshot(
+            $this->compile(),
+            ($this->state->source->subquery->containsStructuredExists ?? false)
+                || $this->state->where->containsStructuredExists(),
+        );
     }
 
     /** @return list<stdClass> */

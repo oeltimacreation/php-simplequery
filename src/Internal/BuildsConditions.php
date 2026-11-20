@@ -6,12 +6,14 @@ namespace Oeltima\SimpleQuery\Internal;
 
 use Closure;
 use Oeltima\SimpleQuery\Connection;
+use Oeltima\SimpleQuery\Exception\UnsupportedFeatureException;
 use Oeltima\SimpleQuery\Expression\Identifier;
 use Oeltima\SimpleQuery\Expression\RawExpression;
 use Oeltima\SimpleQuery\Internal\Ast\ConditionCollection;
 use Oeltima\SimpleQuery\Internal\Ast\ConditionFactory;
 use Oeltima\SimpleQuery\Internal\Ast\ConditionTerm;
 use Oeltima\SimpleQuery\Internal\Ast\ExpressionNullPredicate;
+use Oeltima\SimpleQuery\Internal\Ast\GroupPredicate;
 use Oeltima\SimpleQuery\Internal\Ast\NullPredicate;
 use Oeltima\SimpleQuery\QueryBuilder;
 
@@ -104,6 +106,26 @@ trait BuildsConditions
         return $this->addIn(true, true, $column, $values);
     }
 
+    public function whereExists(QueryBuilder $subquery): static
+    {
+        return $this->addExists(false, false, $subquery);
+    }
+
+    public function orWhereExists(QueryBuilder $subquery): static
+    {
+        return $this->addExists(true, false, $subquery);
+    }
+
+    public function whereNotExists(QueryBuilder $subquery): static
+    {
+        return $this->addExists(false, true, $subquery);
+    }
+
+    public function orWhereNotExists(QueryBuilder $subquery): static
+    {
+        return $this->addExists(true, true, $subquery);
+    }
+
     public function whereBetween(string|Identifier $column, mixed $from, mixed $to): static
     {
         return $this->addBetween(false, $column, $from, $to);
@@ -143,10 +165,10 @@ trait BuildsConditions
         RawExpression|Closure|string|Identifier $subject,
         mixed $operatorOrValue,
         mixed $value,
-        ?ConditionCollection $collection = null,
+        ?ConditionCollection $having = null,
         array $extra = [],
     ): static {
-        $collection ??= $this->conditionCollection();
+        $collection = $having ?? $this->conditionCollection();
         $predicate = ConditionFactory::condition(
             $this->conditionConnection(),
             $subject,
@@ -154,6 +176,14 @@ trait BuildsConditions
             $value,
             $extra,
         );
+
+        if (
+            $having !== null
+            && $predicate instanceof GroupPredicate
+            && $predicate->conditions->containsStructuredExists()
+        ) {
+            throw new UnsupportedFeatureException('Structured EXISTS predicates are not supported in HAVING.');
+        }
 
         if ($negated && $predicate instanceof NullPredicate) {
             $predicate = new NullPredicate($predicate->column, !$predicate->negated);
@@ -177,6 +207,14 @@ trait BuildsConditions
         iterable|QueryBuilder $values,
     ): static {
         $predicate = ConditionFactory::in($this->conditionConnection(), $column, $values, $negated);
+        $this->conditionCollection()->add(new ConditionTerm($predicate, $or));
+
+        return $this;
+    }
+
+    private function addExists(bool $or, bool $negated, QueryBuilder $subquery): static
+    {
+        $predicate = ConditionFactory::exists($this->conditionConnection(), $subquery, $negated);
         $this->conditionCollection()->add(new ConditionTerm($predicate, $or));
 
         return $this;

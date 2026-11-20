@@ -144,6 +144,7 @@ The predicate family includes:
   `orWhereNot()`;
 - closure groups;
 - `whereIn()` and `whereNotIn()` with iterables or subqueries;
+- `whereExists()` and `whereNotExists()` with a child builder;
 - `whereBetween()`;
 - null and not-null predicates;
 - complete trusted `RawExpression` conditions.
@@ -296,26 +297,28 @@ merged into the parent in exact SQL occurrence order.
 
 ### Filter by related rows
 
-Use a trusted raw `EXISTS` predicate and a compiled child to select customers
-with at least one paid order. `whereColumn()` correlates the two aliases and
-the order status stays in the binding list.
+Use `whereExists()` to select customers with at least one paid order. The
+qualified columns correlate the two aliases and the status stays in the
+binding list. Multiple paid orders still yield one row per customer.
 
 ```php
 $paidOrders = $db->table('orders', 'o')
     ->select('o.id')
     ->whereColumn('o.customer_id', '=', 'c.id')
-    ->where('o.status', 'paid')
-    ->compile();
+    ->where('o.status', 'paid');
 
-$customers = $db->table('customers', 'c')->select('c.id')->where(
-    $db->raw('EXISTS (' . $paidOrders->sql . ')', $paidOrders->bindings),
-);
+$customers = $db->table('customers', 'c')->select('c.id')->whereExists($paidOrders);
 ```
 
-Use `NOT EXISTS` to find customers without a paid order. For portable reads,
-use an unlocked, unpaginated child built on the same connection. See the
-[live `EXISTS` results](../evidence/0.11-structured-exists.md) for pagination
-and write differences across engines.
+Use `whereNotExists()` to find customers without a paid order. The
+`orWhereExists()` and `orWhereNotExists()` variants work in `WHERE` and its
+nested condition groups. Attach an unlocked, unpaginated builder from the
+same connection. Attachment snapshots the child's SQL and ordered bindings,
+including its projection. The outer read may still be paginated.
+
+Structured existence predicates are rejected in `HAVING` and write terminals,
+including when carried by an `IN` child or one of its derived sources. Use a
+trusted raw query for engine-qualified SQL in those contexts. [ADR-027](../adr/027-structured-exists.md)
 
 ## Count semantics
 
@@ -376,7 +379,8 @@ exclusive and require a lock mode. Ambiguous grouped, distinct, aggregate, or
 derived-only lock shapes are rejected.
 
 Structured child queries with row locks are rejected when attached as derived
-sources or through any `IN`/`NOT IN` variant, including nested condition groups.
+sources or through any `IN`/`NOT IN` or `EXISTS`/`NOT EXISTS` variant, including
+nested condition groups.
 Use a standalone locking query inside an active transaction. If the operation
 requires vendor-specific nested locking SQL, use a trusted raw query and own its
 transaction and engine qualification. Adding a lock to a child after attachment

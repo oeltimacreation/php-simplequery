@@ -13,6 +13,7 @@ use Oeltima\SimpleQuery\Expression\RawExpression;
 use Oeltima\SimpleQuery\Internal\Ast\BetweenPredicate;
 use Oeltima\SimpleQuery\Internal\Ast\ComparisonPredicate;
 use Oeltima\SimpleQuery\Internal\Ast\ConditionCollection;
+use Oeltima\SimpleQuery\Internal\Ast\ExistsPredicate;
 use Oeltima\SimpleQuery\Internal\Ast\ExpressionComparisonPredicate;
 use Oeltima\SimpleQuery\Internal\Ast\ExpressionIdentifierComparisonPredicate;
 use Oeltima\SimpleQuery\Internal\Ast\ExpressionNullPredicate;
@@ -356,8 +357,7 @@ abstract class AbstractDialectCompiler implements DialectCompiler
         if ($source->table !== null) {
             $sql = $this->quote($source->table);
         } elseif ($source->subquery !== null) {
-            $context->bindAll($source->subquery->bindings);
-            $sql = '(' . $source->subquery->sql . ')';
+            $sql = '(' . $this->subquery($source->subquery->query, $context) . ')';
         } else {
             throw new InvalidQueryException('Query source is invalid.');
         }
@@ -440,6 +440,11 @@ abstract class AbstractDialectCompiler implements DialectCompiler
 
     private function simplePredicate(Predicate $predicate, CompilationContext $context): ?string
     {
+        if ($predicate instanceof ExistsPredicate) {
+            return ($predicate->negated ? 'NOT EXISTS (' : 'EXISTS (')
+                . $this->subquery($predicate->subquery->query, $context) . ')';
+        }
+
         if ($predicate instanceof NullPredicate) {
             return $this->quote($predicate->column) . ($predicate->negated ? ' IS NOT NULL' : ' IS NULL');
         }
@@ -470,8 +475,7 @@ abstract class AbstractDialectCompiler implements DialectCompiler
                 $context->bindAll($predicate->values);
                 $valuesSql = str_repeat('?, ', count($predicate->values) - 1) . '?';
             } else {
-                $context->bindAll($predicate->values->bindings);
-                $valuesSql = $predicate->values->sql;
+                $valuesSql = $this->subquery($predicate->values->query, $context);
             }
 
             return sprintf(
@@ -490,6 +494,13 @@ abstract class AbstractDialectCompiler implements DialectCompiler
         }
 
         throw new InvalidQueryException('Unknown predicate type.');
+    }
+
+    private function subquery(CompiledQuery $query, CompilationContext $context): string
+    {
+        $context->bindAll($query->bindings);
+
+        return $query->sql;
     }
 
     /**
@@ -560,6 +571,11 @@ abstract class AbstractDialectCompiler implements DialectCompiler
     private function validateUpdateDeleteState(QueryState $state): void
     {
         $this->validateWriteState($state, allowPredicates: true);
+        if ($state->where->containsStructuredExists()) {
+            throw new UnsupportedFeatureException(
+                'Structured EXISTS predicates are not supported in update or delete queries.',
+            );
+        }
     }
 
     private function validateWriteState(QueryState $state, bool $allowPredicates): void

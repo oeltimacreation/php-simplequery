@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Oeltima\SimpleQuery\Internal\Ast;
 
-use Oeltima\SimpleQuery\CompiledQuery;
 use Oeltima\SimpleQuery\Expression\Identifier;
 
 /** @internal */
@@ -12,7 +11,7 @@ final readonly class Source
 {
     private function __construct(
         public ?Identifier $table,
-        public ?CompiledQuery $subquery,
+        public ?SubquerySnapshot $subquery,
         public ?string $alias,
     ) {
     }
@@ -22,7 +21,7 @@ final readonly class Source
         return new self($table, null, $alias);
     }
 
-    public static function subquery(CompiledQuery $subquery, string $alias): self
+    public static function subquery(SubquerySnapshot $subquery, string $alias): self
     {
         return new self(null, $subquery, $alias);
     }

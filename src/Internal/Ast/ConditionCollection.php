@@ -26,6 +26,23 @@ final class ConditionCollection
         return $this->terms === [];
     }
 
+    public function containsStructuredExists(): bool
+    {
+        foreach ($this->terms as $term) {
+            $predicate = $term->predicate;
+            if (
+                $predicate instanceof ExistsPredicate
+                || ($predicate instanceof GroupPredicate && $predicate->conditions->containsStructuredExists())
+                || ($predicate instanceof InPredicate && $predicate->values instanceof SubquerySnapshot
+                    && $predicate->values->containsStructuredExists)
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function copy(): self
     {
         // Only grouped terms contain mutable collections.

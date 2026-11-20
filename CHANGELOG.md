@@ -12,6 +12,8 @@ with ZeroVer releases before `1.0.0`.
 
 - Verify stable PHP 8.6 in CI with SQLite execution, direct MariaDB and MySQL
   PDO probes, and independent no-dev installations.
+- Add structured `whereExists()`, `whereNotExists()`, and their `OR` variants
+  for read filters, with same-connection child snapshots and ordered bindings.
 
 ### Changed
 

@@ -166,6 +166,20 @@ try {
         && count($expressionGroups) === 2,
     );
 
+    $existsChild = $connection->table('simplequery_phase2_probe', 'related')
+        ->select($connection->raw('? AS marker', ['projection']))
+        ->whereColumn('related.id', '=', 'probe.id')->where('related.label', 'phase2-one');
+    $existsParent = $connection->table('simplequery_phase2_probe', 'probe')->select('probe.label')->orderBy('probe.id');
+    $matched = (clone $existsParent)->whereExists($existsChild);
+    $unmatched = (clone $existsParent)->whereNotExists($existsChild);
+    $existsChild->where('related.enabled', false);
+    $record(
+        'structured_exists_and_not_exists',
+        array_column($matched->getAssociative(), 'label') === ['phase2-one']
+        && $matched->count() === 1
+        && array_column($unmatched->getAssociative(), 'label') === ['phase2-two', 'phase2-three'],
+    );
+
     $mixedIn = $connection
         ->table('simplequery_phase2_probe')
         ->select('label')

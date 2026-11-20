@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Oeltima\SimpleQuery\Tests\Compiler;
 
 use Oeltima\SimpleQuery\CompiledQuery;
+use Oeltima\SimpleQuery\ConditionGroup;
 use Oeltima\SimpleQuery\Binding;
 use Oeltima\SimpleQuery\ParameterType;
 use Oeltima\SimpleQuery\Driver;
@@ -22,6 +23,7 @@ final class GoldenQueryCases
         $cases = [...$this->mariaDbCases(), ...$this->mySqlCases(), ...$this->sqliteCases()];
         foreach (Driver::cases() as $driver) {
             $cases[$driver->value . '-composition'] = fn (): CompiledQuery => $this->composition($driver);
+            $cases[$driver->value . '-structured-exists'] = fn (): CompiledQuery => $this->structuredExists($driver);
         }
 
         return $cases;
@@ -65,6 +67,23 @@ final class GoldenQueryCases
         $original->where('discarded', 98);
 
         return $copy->compile();
+    }
+
+    private function structuredExists(Driver $driver): CompiledQuery
+    {
+        $db = CompilerConnection::for($driver);
+        $orders = $db->table('orders', 'o')->select($db->raw('? AS marker', ['child']))
+            ->whereColumn('o.customer_id', '=', 'c.id')->where('o.status', 'paid');
+        $refunds = $db->table('refunds', 'r')->select('r.id')
+            ->whereColumn('r.customer_id', '=', 'c.id')->where('r.pending', true);
+        $customers = $db->table('customers', 'c')->select($db->raw('? AS marker', ['outer']))
+            ->where('c.tenant_id', 11)->whereExists($orders)
+            ->where(static fn (ConditionGroup $group) => $group
+                ->whereNotExists($refunds)->orWhereExists($orders)->orWhereNotExists($refunds))
+            ->where('c.active', true);
+        $orders->where('o.status', 'archived')->limit(0);
+
+        return $customers->compile();
     }
 
     /** @return array<string, \Closure(): CompiledQuery> */
