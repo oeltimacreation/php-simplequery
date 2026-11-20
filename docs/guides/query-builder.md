@@ -294,6 +294,29 @@ $activeRoles->where('active', false);
 The later mutation does not change `$users`. Bindings from the snapshot are
 merged into the parent in exact SQL occurrence order.
 
+### Filter by related rows
+
+Use a trusted raw `EXISTS` predicate and a compiled child to select customers
+with at least one paid order. `whereColumn()` correlates the two aliases and
+the order status stays in the binding list.
+
+```php
+$paidOrders = $db->table('orders', 'o')
+    ->select('o.id')
+    ->whereColumn('o.customer_id', '=', 'c.id')
+    ->where('o.status', 'paid')
+    ->compile();
+
+$customers = $db->table('customers', 'c')->select('c.id')->where(
+    $db->raw('EXISTS (' . $paidOrders->sql . ')', $paidOrders->bindings),
+);
+```
+
+Use `NOT EXISTS` to find customers without a paid order. For portable reads,
+use an unlocked, unpaginated child built on the same connection. See the
+[live `EXISTS` results](../evidence/0.11-structured-exists.md) for pagination
+and write differences across engines.
+
 ## Count semantics
 
 `count()` returns the number of logical result rows before top-level order,

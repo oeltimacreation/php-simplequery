@@ -38,6 +38,8 @@ The completed 0.10.0 plan is retired. Its accepted contracts are preserved in
 the changelog, upgrade guide, ADRs, and release review.
 
 The [0.11.0 release plan](../plans/0.11.md) defines the next qualification work.
+The [structured `EXISTS` evaluation](0.11-structured-exists.md) records live
+engine observations and a proposed API boundary.
 
 Current release evidence:
 
