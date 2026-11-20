@@ -28,14 +28,20 @@ final class ConditionCollection
 
     public function copy(): self
     {
-        $copy = new self();
-        foreach ($this->terms as $term) {
-            $predicate = $term->predicate;
-            if ($predicate instanceof GroupPredicate) {
-                $predicate = new GroupPredicate($predicate->conditions->copy());
+        // Only grouped terms contain mutable collections.
+        $terms = $this->terms;
+        foreach ($terms as $index => $term) {
+            if ($term->predicate instanceof GroupPredicate) {
+                $terms[$index] = new ConditionTerm(
+                    new GroupPredicate($term->predicate->conditions->copy()),
+                    $term->or,
+                    $term->negated,
+                );
             }
-            $copy->add(new ConditionTerm($predicate, $term->or, $term->negated));
         }
+
+        $copy = new self();
+        $copy->terms = $terms;
 
         return $copy;
     }

@@ -17,6 +17,8 @@ with ZeroVer releases before `1.0.0`.
 
 - Reduce temporary allocation when an `IN` list or subquery supplies the first
   bindings in a compiled statement.
+- Reduce temporary allocation when cloning query conditions or taking a
+  detached builder snapshot.
 
 ### Fixed
 
