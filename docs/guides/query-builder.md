@@ -135,7 +135,8 @@ $query
 
 Supported comparison operators are `=`, `!=`, `<>`, `<`, `<=`, `>`, `>=`,
 `LIKE`, and `NOT LIKE`. Operator strings are case-insensitive and emitted in a
-canonical form. Arbitrary request-derived operators are rejected.
+canonical form. Form-feed padding and arbitrary request-derived operators are
+rejected.
 
 The predicate family includes:
 

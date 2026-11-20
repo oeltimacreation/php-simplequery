@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Oeltima\SimpleQuery\Internal\Ast;
 
 use Oeltima\SimpleQuery\Exception\InvalidQueryException;
+use Oeltima\SimpleQuery\Internal\InputNormalizer;
 
 /** @internal */
 enum ComparisonOperator: string
@@ -21,7 +22,7 @@ enum ComparisonOperator: string
 
     public static function normalize(string $operator): self
     {
-        return match (strtoupper(trim($operator))) {
+        return match (strtoupper(trim($operator, InputNormalizer::SQL_TRIM_CHARACTERS))) {
             '=' => self::Equal,
             '!=' => self::NotEqual,
             '<>' => self::AlternateNotEqual,

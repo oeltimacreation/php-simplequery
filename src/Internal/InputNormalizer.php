@@ -12,6 +12,9 @@ use Oeltima\SimpleQuery\Expression\RawExpression;
 /** @internal */
 final class InputNormalizer
 {
+    /** Keep SQL input validation independent of PHP's default trim characters. */
+    public const SQL_TRIM_CHARACTERS = " \t\n\r\0\x0B";
+
     /**
      * @param array<mixed> $bindings
      * @return list<Binding>

@@ -8,6 +8,11 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+### Fixed
+
+- Preserve comparison-operator and empty-SQL validation on PHP 8.6 when inputs
+  contain form-feed characters.
+
 ## [0.10.0] - 2026-10-24
 
 ### Changed

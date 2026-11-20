@@ -211,6 +211,15 @@ final class PublicValuesTest extends TestCase
         (new ReflectionClass(CompiledQuery::class))->newInstanceArgs(['SELECT ?', ['not-a-binding']]);
     }
 
+    public function testFormFeedIsRetainedWhenCheckingForEmptySql(): void
+    {
+        $sql = " \t\f\r\n";
+
+        self::assertSame($sql, (new RawExpression($sql))->sql);
+        self::assertSame($sql, (new CompiledQuery($sql))->sql);
+        self::assertSame($sql, (new QueryExecution($sql, [], 0.1, true, null, Driver::Sqlite, null, null))->sql);
+    }
+
     public function testCompiledQueryPreservesMemberValidationBeforeConcreteTypeValidation(): void
     {
         try {
