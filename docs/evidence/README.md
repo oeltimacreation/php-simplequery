@@ -37,6 +37,8 @@ Maintained compatibility and migration records:
 The completed 0.10.0 plan is retired. Its accepted contracts are preserved in
 the changelog, upgrade guide, ADRs, and release review.
 
+The [0.11.0 release plan](../plans/0.11.md) defines the next qualification work.
+
 Current release evidence:
 
 - [`0.10.0` candidate and release review](0.10-candidate-review.md) — local
