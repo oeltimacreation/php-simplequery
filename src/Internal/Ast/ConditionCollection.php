@@ -30,12 +30,14 @@ final class ConditionCollection
     {
         foreach ($this->terms as $term) {
             $predicate = $term->predicate;
-            if (
-                $predicate instanceof ExistsPredicate
-                || ($predicate instanceof GroupPredicate && $predicate->conditions->containsStructuredExists())
-                || ($predicate instanceof InPredicate && $predicate->values instanceof SubquerySnapshot
-                    && $predicate->values->containsStructuredExists)
-            ) {
+            $containsExists = match (true) {
+                $predicate instanceof ExistsPredicate => true,
+                $predicate instanceof GroupPredicate => $predicate->conditions->containsStructuredExists(),
+                $predicate instanceof InPredicate => $predicate->values instanceof SubquerySnapshot
+                    && $predicate->values->containsStructuredExists,
+                default => false,
+            };
+            if ($containsExists) {
                 return true;
             }
         }

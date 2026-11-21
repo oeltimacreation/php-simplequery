@@ -6,14 +6,12 @@ namespace Oeltima\SimpleQuery\Internal;
 
 use Closure;
 use Oeltima\SimpleQuery\Connection;
-use Oeltima\SimpleQuery\Exception\UnsupportedFeatureException;
 use Oeltima\SimpleQuery\Expression\Identifier;
 use Oeltima\SimpleQuery\Expression\RawExpression;
 use Oeltima\SimpleQuery\Internal\Ast\ConditionCollection;
 use Oeltima\SimpleQuery\Internal\Ast\ConditionFactory;
 use Oeltima\SimpleQuery\Internal\Ast\ConditionTerm;
 use Oeltima\SimpleQuery\Internal\Ast\ExpressionNullPredicate;
-use Oeltima\SimpleQuery\Internal\Ast\GroupPredicate;
 use Oeltima\SimpleQuery\Internal\Ast\NullPredicate;
 use Oeltima\SimpleQuery\QueryBuilder;
 
@@ -33,7 +31,7 @@ trait BuildsConditions
         mixed $value = self::MISSING,
         mixed ...$extra,
     ): static {
-        return $this->addCondition(false, false, $subject, $operatorOrValue, $value, extra: $extra);
+        return $this->addCondition(false, false, $subject, $operatorOrValue, $value, $extra);
     }
 
     /** @param RawExpression|(Closure(\Oeltima\SimpleQuery\ConditionGroup): mixed)|string|Identifier $subject */
@@ -43,7 +41,7 @@ trait BuildsConditions
         mixed $value = self::MISSING,
         mixed ...$extra,
     ): static {
-        return $this->addCondition(true, false, $subject, $operatorOrValue, $value, extra: $extra);
+        return $this->addCondition(true, false, $subject, $operatorOrValue, $value, $extra);
     }
 
     /** @param RawExpression|(Closure(\Oeltima\SimpleQuery\ConditionGroup): mixed)|string|Identifier $subject */
@@ -53,7 +51,7 @@ trait BuildsConditions
         mixed $value = self::MISSING,
         mixed ...$extra,
     ): static {
-        return $this->addCondition(false, true, $subject, $operatorOrValue, $value, extra: $extra);
+        return $this->addCondition(false, true, $subject, $operatorOrValue, $value, $extra);
     }
 
     /** @param RawExpression|(Closure(\Oeltima\SimpleQuery\ConditionGroup): mixed)|string|Identifier $subject */
@@ -63,7 +61,7 @@ trait BuildsConditions
         mixed $value = self::MISSING,
         mixed ...$extra,
     ): static {
-        return $this->addCondition(true, true, $subject, $operatorOrValue, $value, extra: $extra);
+        return $this->addCondition(true, true, $subject, $operatorOrValue, $value, $extra);
     }
 
     public function whereColumn(
@@ -165,10 +163,9 @@ trait BuildsConditions
         RawExpression|Closure|string|Identifier $subject,
         mixed $operatorOrValue,
         mixed $value,
-        ?ConditionCollection $having = null,
-        array $extra = [],
+        array $extra,
     ): static {
-        $collection = $having ?? $this->conditionCollection();
+        $collection = $this->conditionCollection();
         $predicate = ConditionFactory::condition(
             $this->conditionConnection(),
             $subject,
@@ -176,14 +173,6 @@ trait BuildsConditions
             $value,
             $extra,
         );
-
-        if (
-            $having !== null
-            && $predicate instanceof GroupPredicate
-            && $predicate->conditions->containsStructuredExists()
-        ) {
-            throw new UnsupportedFeatureException('Structured EXISTS predicates are not supported in HAVING.');
-        }
 
         if ($negated && $predicate instanceof NullPredicate) {
             $predicate = new NullPredicate($predicate->column, !$predicate->negated);

@@ -38,6 +38,11 @@ final class QueryState
         $this->lock = new LockState();
     }
 
+    public function hasPagination(): bool
+    {
+        return $this->limit !== null || $this->offset !== null;
+    }
+
     public function copy(): self
     {
         $copy = clone $this;

@@ -11,6 +11,9 @@ use Oeltima\SimpleQuery\Exception\UnsupportedFeatureException;
 use Oeltima\SimpleQuery\Expression\Identifier;
 use Oeltima\SimpleQuery\Expression\RawExpression;
 use Oeltima\SimpleQuery\Internal\Ast\ConditionCollection;
+use Oeltima\SimpleQuery\Internal\Ast\ConditionFactory;
+use Oeltima\SimpleQuery\Internal\Ast\ConditionTerm;
+use Oeltima\SimpleQuery\Internal\Ast\GroupPredicate;
 use Oeltima\SimpleQuery\Internal\Ast\JoinState;
 use Oeltima\SimpleQuery\Internal\Ast\JoinType;
 use Oeltima\SimpleQuery\Internal\Ast\LockMode;
@@ -127,7 +130,7 @@ final class QueryBuilder
         mixed $value = self::MISSING,
         mixed ...$extra,
     ): self {
-        return $this->addCondition(false, false, $subject, $operatorOrValue, $value, $this->state->having, $extra);
+        return $this->addHaving(false, $subject, $operatorOrValue, $value, $extra);
     }
 
     /** @param RawExpression|(Closure(ConditionGroup): mixed)|string|Identifier $subject */
@@ -137,7 +140,7 @@ final class QueryBuilder
         mixed $value = self::MISSING,
         mixed ...$extra,
     ): self {
-        return $this->addCondition(true, false, $subject, $operatorOrValue, $value, $this->state->having, $extra);
+        return $this->addHaving(true, $subject, $operatorOrValue, $value, $extra);
     }
 
     public function orderBy(
@@ -241,7 +244,7 @@ final class QueryBuilder
         if ($this->state->lock->mode !== null) {
             throw new UnsupportedFeatureException('Structured child queries cannot contain row-lock clauses.');
         }
-        if ($forExists && ($this->state->limit !== null || $this->state->offset !== null)) {
+        if ($forExists && $this->state->hasPagination()) {
             throw new UnsupportedFeatureException('Structured EXISTS child queries cannot contain LIMIT or OFFSET.');
         }
 
@@ -380,6 +383,26 @@ final class QueryBuilder
     protected function conditionCollection(): ConditionCollection
     {
         return $this->state->where;
+    }
+
+    /** @param RawExpression|(Closure(ConditionGroup): mixed)|string|Identifier $subject
+     * @param array<array-key, mixed> $extra
+     */
+    private function addHaving(
+        bool $or,
+        RawExpression|Closure|string|Identifier $subject,
+        mixed $operatorOrValue,
+        mixed $value,
+        array $extra,
+    ): self {
+        $having = $this->state->having;
+        $predicate = ConditionFactory::condition($this->connection, $subject, $operatorOrValue, $value, $extra);
+        if ($predicate instanceof GroupPredicate && $predicate->conditions->containsStructuredExists()) {
+            throw new UnsupportedFeatureException('Structured EXISTS predicates are not supported in HAVING.');
+        }
+        $having->add(new ConditionTerm($predicate, $or));
+
+        return $this;
     }
 
     /** @param (Closure(JoinClause): mixed)|RawExpression|string|Identifier $conditionOrLeft
