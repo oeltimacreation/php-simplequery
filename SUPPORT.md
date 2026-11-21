@@ -6,6 +6,8 @@ in production and stabilized.
 ## Release compatibility
 
 - `0.1.0` was the first public release; `0.10.0` is the current minor release.
+- `0.11.0` is under candidate review. Its migration and qualification details
+  are in the [candidate review](docs/evidence/0.11-candidate-review.md).
 - Patch releases within one `0.y` line should remain backward compatible,
   except for urgent security or data-integrity corrections.
 - A `0.y.0` release may contain documented breaking changes.

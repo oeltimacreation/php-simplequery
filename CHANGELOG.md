@@ -8,6 +8,8 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+The release candidate targets `0.11.0`.
+
 ### Added
 
 - Verify stable PHP 8.6 in CI with SQLite execution, direct MariaDB and MySQL

@@ -25,6 +25,37 @@ For each upgrade:
 7. review generated SQL for raw or dialect-specific queries;
 8. deploy through the application's normal staged rollout.
 
+## Upgrading from 0.10 to 0.11
+
+`0.11.0` is under candidate review. After publication, update the Composer
+constraint and run the upgrade checklist above.
+
+```bash
+composer require oeltimacreation/php-simplequery:^0.11
+```
+
+The candidate adds PHP 8.6 compatibility checks for SQLite, MariaDB, MySQL,
+and archive-installed consumers. The package requires PHP 8.2 or later and the
+PDO driver for the selected database. If your application adopts PHP 8.6,
+run its suite against the actual PDO drivers in deployment. SimpleQuery's
+comparison operator and empty-SQL validation use the same trim characters
+across those PHP versions.
+
+For correlated read filters, `whereExists()`, `whereNotExists()`, and their
+`OR` variants accept an unlocked, unpaginated child builder from the same
+connection. When migrating an existing raw predicate, retain the child's
+projection and move runtime inputs into its bindings. Use a trusted raw query
+for engine-qualified paginated children, `HAVING`, or writes. Structured
+predicates in those contexts raise `UnsupportedFeatureException`.
+[Query builder guide](query-builder.md#filter-by-related-rows) ·
+[ADR-027](../adr/027-structured-exists.md)
+
+The compiler reduces temporary allocation when a subquery or `IN` list
+supplies the first bindings and when copying query conditions. Check any
+consumer-side compiled query assertions as part of the rollout.
+[Candidate review](../evidence/0.11-candidate-review.md) ·
+[Database support](../reference/database-support.md)
+
 ## Upgrading from 0.9 to 0.10
 
 `0.10.0` retains the PHP 8.2, MariaDB 11.8, MySQL 8.0, and SQLite 3.39.2+
