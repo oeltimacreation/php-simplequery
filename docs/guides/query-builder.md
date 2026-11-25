@@ -135,7 +135,8 @@ $query
 
 Supported comparison operators are `=`, `!=`, `<>`, `<`, `<=`, `>`, `>=`,
 `LIKE`, and `NOT LIKE`. Operator strings are case-insensitive and emitted in a
-canonical form. Arbitrary request-derived operators are rejected.
+canonical form. Form-feed padding and arbitrary request-derived operators are
+rejected.
 
 The predicate family includes:
 
@@ -143,6 +144,7 @@ The predicate family includes:
   `orWhereNot()`;
 - closure groups;
 - `whereIn()` and `whereNotIn()` with iterables or subqueries;
+- `whereExists()` and `whereNotExists()` with a child builder;
 - `whereBetween()`;
 - null and not-null predicates;
 - complete trusted `RawExpression` conditions.
@@ -293,6 +295,31 @@ $activeRoles->where('active', false);
 The later mutation does not change `$users`. Bindings from the snapshot are
 merged into the parent in exact SQL occurrence order.
 
+### Filter by related rows
+
+Use `whereExists()` to select customers with at least one paid order. The
+qualified columns correlate the two aliases and the status stays in the
+binding list. Multiple paid orders still yield one row per customer.
+
+```php
+$paidOrders = $db->table('orders', 'o')
+    ->select('o.id')
+    ->whereColumn('o.customer_id', '=', 'c.id')
+    ->where('o.status', 'paid');
+
+$customers = $db->table('customers', 'c')->select('c.id')->whereExists($paidOrders);
+```
+
+Use `whereNotExists()` to find customers without a paid order. The
+`orWhereExists()` and `orWhereNotExists()` variants work in `WHERE` and its
+nested condition groups. Attach an unlocked, unpaginated builder from the
+same connection. Attachment snapshots the child's SQL and ordered bindings,
+including its projection. The outer read may still be paginated.
+
+Structured existence predicates are rejected in `HAVING` and write terminals,
+including when carried by an `IN` child or one of its derived sources. Use a
+trusted raw query for engine-qualified SQL in those contexts. [ADR-027](../adr/027-structured-exists.md)
+
 ## Count semantics
 
 `count()` returns the number of logical result rows before top-level order,
@@ -352,7 +379,8 @@ exclusive and require a lock mode. Ambiguous grouped, distinct, aggregate, or
 derived-only lock shapes are rejected.
 
 Structured child queries with row locks are rejected when attached as derived
-sources or through any `IN`/`NOT IN` variant, including nested condition groups.
+sources or through any `IN`/`NOT IN` or `EXISTS`/`NOT EXISTS` variant, including
+nested condition groups.
 Use a standalone locking query inside an active transaction. If the operation
 requires vendor-specific nested locking SQL, use a trusted raw query and own its
 transaction and engine qualification. Adding a lock to a child after attachment

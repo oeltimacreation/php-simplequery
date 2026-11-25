@@ -6,6 +6,7 @@ namespace Oeltima\SimpleQuery\Observability;
 
 use Oeltima\SimpleQuery\Driver;
 use Oeltima\SimpleQuery\Exception\InvalidQueryException;
+use Oeltima\SimpleQuery\Internal\InputNormalizer;
 use Oeltima\SimpleQuery\ParameterType;
 
 final readonly class QueryExecution
@@ -27,7 +28,7 @@ final readonly class QueryExecution
         public ?int $transactionDepth,
     ) {
         $this->parameterTypes = self::validatedParameterTypes($parameterTypes);
-        if (trim($this->sql) === '') {
+        if (trim($this->sql, InputNormalizer::SQL_TRIM_CHARACTERS) === '') {
             throw new InvalidQueryException('Observed SQL cannot be empty.');
         }
         if (!is_finite($this->durationMilliseconds) || $this->durationMilliseconds < 0) {

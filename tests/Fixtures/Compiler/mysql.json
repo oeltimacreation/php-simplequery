@@ -107,6 +107,32 @@
         "integer",
         "integer"
       ]
+    },
+    {
+      "id": "mysql-structured-exists",
+      "sql": "SELECT ? AS marker FROM `customers` AS `c` WHERE `c`.`tenant_id` = ? AND EXISTS (SELECT ? AS marker FROM `orders` AS `o` WHERE `o`.`customer_id` = `c`.`id` AND `o`.`status` = ?) AND (NOT EXISTS (SELECT `r`.`id` FROM `refunds` AS `r` WHERE `r`.`customer_id` = `c`.`id` AND `r`.`pending` = ?) OR EXISTS (SELECT ? AS marker FROM `orders` AS `o` WHERE `o`.`customer_id` = `c`.`id` AND `o`.`status` = ?) OR NOT EXISTS (SELECT `r`.`id` FROM `refunds` AS `r` WHERE `r`.`customer_id` = `c`.`id` AND `r`.`pending` = ?)) AND `c`.`active` = ?",
+      "bindings": [
+        "outer",
+        11,
+        "child",
+        "paid",
+        1,
+        "child",
+        "paid",
+        1,
+        1
+      ],
+      "types": [
+        "string",
+        "integer",
+        "string",
+        "string",
+        "integer",
+        "string",
+        "string",
+        "integer",
+        "integer"
+      ]
     }
   ]
 }

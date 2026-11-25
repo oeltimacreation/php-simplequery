@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Oeltima\SimpleQuery;
 
 use Oeltima\SimpleQuery\Exception\InvalidQueryException;
+use Oeltima\SimpleQuery\Internal\InputNormalizer;
 
 final readonly class CompiledQuery
 {
@@ -16,7 +17,7 @@ final readonly class CompiledQuery
         public string $sql,
         array $bindings = [],
     ) {
-        if (trim($this->sql) === '') {
+        if (trim($this->sql, InputNormalizer::SQL_TRIM_CHARACTERS) === '') {
             throw new InvalidQueryException('Compiled SQL cannot be empty.');
         }
 

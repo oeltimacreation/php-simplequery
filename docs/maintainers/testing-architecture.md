@@ -118,7 +118,7 @@ budget only; the coverage driver, tests, and thresholds remain the same.
 
 ## CI mapping
 
-Pull-request CI runs PHP 8.2–8.5 SQLite tests, strict quality checks, a
+Pull-request CI runs PHP 8.2–8.6 SQLite tests, strict quality checks, a
 lowest-dependency job, minimum/current MariaDB/MySQL direct probes, a no-dev
 installation, an independent external-consumer PHPStan run, enforced Xdebug
 branch/path coverage, the compact SQLite benchmark suite, and fresh-process
@@ -126,6 +126,10 @@ labeled historical comparisons.
 The PHP compatibility and coverage jobs load `pdo_mysql` for the MySQL/MariaDB
 option regression tests, which need no database server. PHPUnit treats
 deprecations as failures in both ordinary and coverage runs.
+The PHP 8.6 lane verifies the stable runtime, reports the PDO builds, and runs
+the examples. PHP 8.2 and 8.6 both exercise independent no-dev consumers and
+the current direct MariaDB/MySQL fixtures in all four prepare/buffering modes.
+The direct minimums and the lowest-dependency job run on PHP 8.2.
 The scheduled/manual proxy workflow runs the exact direct/proxy fixtures plus
 live comparisons and four concurrent soak workers, then uploads redacted JSON
 artifacts. Release

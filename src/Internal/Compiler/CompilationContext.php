@@ -20,8 +20,15 @@ final class CompilationContext
     /** @param list<Binding> $bindings */
     public function bindAll(array $bindings): void
     {
+        if ($this->bindings === []) {
+            // PHP shares the first list until this compilation appends another binding.
+            $this->bindings = $bindings;
+
+            return;
+        }
+
         foreach ($bindings as $binding) {
-            $this->bind($binding);
+            $this->bindings[] = $binding;
         }
     }
 

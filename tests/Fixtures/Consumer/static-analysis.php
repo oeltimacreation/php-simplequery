@@ -99,6 +99,12 @@ return static function (Connection $database): void {
 
     assertType('Oeltima\\SimpleQuery\\QueryBuilder', $builder);
 
+    $orders = $database->table('orders')->select('user_id')->whereColumn('user_id', '=', 'users.id');
+    assertType(QueryBuilder::class, $database->table('users')->whereExists($orders));
+    $database->table('users')->where(static function ($group) use ($orders): void {
+        assertType(ConditionGroup::class, $group->orWhereNotExists($orders));
+    });
+
     $conditional = $builder
         ->when(false, static function ($query): void {
             assertType(QueryBuilder::class, $query);

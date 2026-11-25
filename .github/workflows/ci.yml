@@ -21,16 +21,25 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: ["8.2", "8.3", "8.4", "8.5"]
+        php: ["8.2", "8.3", "8.4", "8.5", "8.6"]
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
-      - uses: shivammathur/setup-php@add91f08e1598a0b6ff470f1e389f9d652559bf0
+      - uses: shivammathur/setup-php@3c21e10268bafaf84c59e8f4e65b39acacb62ca4 # PHP 8.6 stable
         with:
           php-version: ${{ matrix.php }}
           extensions: pdo, pdo_mysql, pdo_sqlite
           coverage: none
+      - name: Verify stable PHP 8.6 and report PDO builds
+        if: matrix.php == '8.6'
+        run: |
+          php -v
+          php -r 'exit((int) (preg_match("/^8\.6\.[0-9]+$/D", PHP_VERSION) !== 1));'
+          php --ri pdo_mysql
+          php --ri pdo_sqlite
       - run: composer install --no-interaction --prefer-dist --no-progress
       - run: composer test
+      - run: composer examples:check
+        if: matrix.php == '8.6'
       - run: composer probe:sqlite > sqlite-probe.json
       - run: composer probe:execution -- sqlite > sqlite-execution-probe.json
       - run: composer probe:transaction -- sqlite > sqlite-transaction-probe.json
@@ -79,26 +88,32 @@ jobs:
           retention-days: 30
 
   direct-probes:
-    name: Direct probes / ${{ matrix.fixture.name }}
+    name: Direct probes / ${{ matrix.fixture }}${{ matrix.php == '8.6' && ' / PHP 8.6' || '' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        fixture:
-          - name: minimum
+        include:
+          - fixture: minimum
+            php: "8.2"
             mariadb: 11.8.2
             mysql: 8.0.11
-          - name: current
+          - fixture: current
+            php: "8.2"
+            mariadb: 11.8.8
+            mysql: 8.0.46
+          - fixture: current
+            php: "8.6"
             mariadb: 11.8.8
             mysql: 8.0.46
     env:
-      MARIADB_VERSION: ${{ matrix.fixture.mariadb }}
-      MYSQL_VERSION: ${{ matrix.fixture.mysql }}
+      MARIADB_VERSION: ${{ matrix.mariadb }}
+      MYSQL_VERSION: ${{ matrix.mysql }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
-      - uses: shivammathur/setup-php@add91f08e1598a0b6ff470f1e389f9d652559bf0
+      - uses: shivammathur/setup-php@3c21e10268bafaf84c59e8f4e65b39acacb62ca4 # PHP 8.6 stable
         with:
-          php-version: "8.2"
+          php-version: ${{ matrix.php }}
           extensions: pdo, pdo_mysql, pdo_sqlite
           coverage: none
       - run: composer install --no-interaction --prefer-dist --no-progress
@@ -113,20 +128,14 @@ jobs:
           for target in mariadb mysql; do
             for emulated in false true; do
               for buffered in false true; do
-                PROBE_EMULATE_PREPARES="${emulated}" PROBE_BUFFERED="${buffered}" \
-                  php tools/database-probes/run.php "${target}" \
-                  --output="tools/database-probes/results/${target}-${emulated}-${buffered}.json"
+                for probe in run execution-smoke transaction-smoke; do
+                  PROBE_EMULATE_PREPARES="${emulated}" PROBE_BUFFERED="${buffered}" \
+                    php "tools/database-probes/${probe}.php" "${target}" \
+                    --output="tools/database-probes/results/${target}-${probe}-${emulated}-${buffered}.json"
+                done
               done
             done
           done
-          php tools/database-probes/execution-smoke.php mariadb \
-            --output=tools/database-probes/results/mariadb-execution-native-buffered.json
-          php tools/database-probes/execution-smoke.php mysql \
-            --output=tools/database-probes/results/mysql-execution-native-buffered.json
-          php tools/database-probes/transaction-smoke.php mariadb \
-            --output=tools/database-probes/results/mariadb-transaction-native-buffered.json
-          php tools/database-probes/transaction-smoke.php mysql \
-            --output=tools/database-probes/results/mysql-transaction-native-buffered.json
           php tools/database-probes/summarize.php tools/database-probes/results
       - name: Stop direct-engine fixtures
         if: always()
@@ -134,7 +143,7 @@ jobs:
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         if: always()
         with:
-          name: direct-pdo-probe-reports-${{ matrix.fixture.name }}
+          name: direct-pdo-probe-reports-${{ matrix.fixture }}-php-${{ matrix.php }}
           path: tools/database-probes/results/*.json
           if-no-files-found: error
           retention-days: 30
@@ -166,13 +175,17 @@ jobs:
       - run: bash tools/database-probes/run-minimum-sqlite.sh
 
   no-dev-consumer:
-    name: Artifact-installed no-dev consumers
+    name: Artifact-installed no-dev consumers${{ matrix.php == '8.6' && ' / PHP 8.6' || '' }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ["8.2", "8.6"]
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
-      - uses: shivammathur/setup-php@add91f08e1598a0b6ff470f1e389f9d652559bf0
+      - uses: shivammathur/setup-php@3c21e10268bafaf84c59e8f4e65b39acacb62ca4 # PHP 8.6 stable
         with:
-          php-version: "8.2"
+          php-version: ${{ matrix.php }}
           extensions: pdo, pdo_sqlite, zip
           coverage: none
       - run: php scripts/check-package.php
@@ -196,7 +209,7 @@ jobs:
         shell: bash
         run: |
           baseline_dir="${RUNNER_TEMP}/php-simplequery-release-baseline"
-          git worktree add --detach "${baseline_dir}" v0.9.0
+          git worktree add --detach "${baseline_dir}" v0.10.0
           trap 'git worktree remove --force "${baseline_dir}"' EXIT
           composer install --working-dir="${baseline_dir}" --no-interaction --prefer-dist --no-progress
           php benchmarks/noise.php \

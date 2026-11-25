@@ -131,6 +131,35 @@ final class CompilerEfficiencyContractTest extends TestCase
         }
     }
 
+    public function testAppendingBindingsPreservesTheFirstListAndItsTypes(): void
+    {
+        $connection = CompilerConnection::for(Driver::Sqlite);
+        $child = $connection->table('roles')->select('id')->whereIn('label', ['staff', null]);
+        $childBefore = $child->compile();
+        $parent = $connection->table('users')
+            ->whereIn('role_id', $child)
+            ->where('active', true)
+            ->whereIn('id', [4, 5]);
+
+        $compiled = $parent->compile();
+
+        self::assertSame(
+            'SELECT * FROM "users" WHERE "role_id" IN (SELECT "id" FROM "roles" WHERE "label" IN (?, ?))'
+                . ' AND "active" = ? AND "id" IN (?, ?)',
+            $compiled->sql,
+        );
+        self::assertSame(['staff', null, 1, 4, 5], array_column($compiled->bindings, 'value'));
+        self::assertSame([
+            ParameterType::String,
+            ParameterType::Null,
+            ParameterType::Integer,
+            ParameterType::Integer,
+            ParameterType::Integer,
+        ], array_column($compiled->bindings, 'type'));
+        self::assertEquals($childBefore, $child->compile());
+        self::assertEquals($compiled, $parent->compile());
+    }
+
     public function testListSnapshotsClonesAndWriteCompilationRemainIsolated(): void
     {
         $connection = CompilerConnection::for(Driver::Sqlite);

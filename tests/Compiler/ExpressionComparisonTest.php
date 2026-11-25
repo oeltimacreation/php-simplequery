@@ -148,6 +148,9 @@ final class ExpressionComparisonTest extends TestCase
         yield 'invalid column operator' => [
             static fn () => $db->table('users')->whereColumn('owner_id', 'IS', 'user_id'),
         ];
+        yield 'comparison operator with form-feed padding' => [
+            static fn () => $db->table('users')->where('id', "\f=\f", 1),
+        ];
         yield 'two raw join operands' => [
             static fn () => (new JoinClause())->on($db->raw('LOWER(a)'), '=', $db->raw('LOWER(b)')),
         ];

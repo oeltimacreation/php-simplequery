@@ -1,6 +1,11 @@
 {
   "schema_version": 2,
   "features": {
+    "structured_exists": {
+      "mariadb": ["mariadb-structured-exists"],
+      "mysql": ["mysql-structured-exists"],
+      "sqlite": ["sqlite-structured-exists"]
+    },
     "locked_child_queries": {
       "mariadb": ["unsupported:mariadb-locked-derived", "unsupported:mariadb-locked-in"],
       "mysql": ["unsupported:mysql-locked-derived", "unsupported:mysql-locked-in"],

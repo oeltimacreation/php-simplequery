@@ -26,16 +26,41 @@ final class ConditionCollection
         return $this->terms === [];
     }
 
-    public function copy(): self
+    public function containsStructuredExists(): bool
     {
-        $copy = new self();
         foreach ($this->terms as $term) {
             $predicate = $term->predicate;
-            if ($predicate instanceof GroupPredicate) {
-                $predicate = new GroupPredicate($predicate->conditions->copy());
+            $containsExists = match (true) {
+                $predicate instanceof ExistsPredicate => true,
+                $predicate instanceof GroupPredicate => $predicate->conditions->containsStructuredExists(),
+                $predicate instanceof InPredicate => $predicate->values instanceof SubquerySnapshot
+                    && $predicate->values->containsStructuredExists,
+                default => false,
+            };
+            if ($containsExists) {
+                return true;
             }
-            $copy->add(new ConditionTerm($predicate, $term->or, $term->negated));
         }
+
+        return false;
+    }
+
+    public function copy(): self
+    {
+        // Only grouped terms contain mutable collections.
+        $terms = $this->terms;
+        foreach ($terms as $index => $term) {
+            if ($term->predicate instanceof GroupPredicate) {
+                $terms[$index] = new ConditionTerm(
+                    new GroupPredicate($term->predicate->conditions->copy()),
+                    $term->or,
+                    $term->negated,
+                );
+            }
+        }
+
+        $copy = new self();
+        $copy->terms = $terms;
 
         return $copy;
     }

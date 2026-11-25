@@ -159,11 +159,7 @@ final class ConditionFactory
     ): InPredicate {
         $normalizedColumn = InputNormalizer::column($column);
         if ($values instanceof QueryBuilder) {
-            if (!$values->belongsTo($connection)) {
-                throw new InvalidQueryException('Structured subqueries must belong to the same connection.');
-            }
-
-            return new InPredicate($normalizedColumn, $values->compileForSubquery(), $negated);
+            return new InPredicate($normalizedColumn, self::subquery($connection, $values), $negated);
         }
 
         $bindings = [];
@@ -172,6 +168,23 @@ final class ConditionFactory
         }
 
         return new InPredicate($normalizedColumn, $bindings, $negated);
+    }
+
+    public static function exists(Connection $connection, QueryBuilder $subquery, bool $negated): ExistsPredicate
+    {
+        return new ExistsPredicate(self::subquery($connection, $subquery, forExists: true), $negated);
+    }
+
+    private static function subquery(
+        Connection $connection,
+        QueryBuilder $subquery,
+        bool $forExists = false,
+    ): SubquerySnapshot {
+        if (!$subquery->belongsTo($connection)) {
+            throw new InvalidQueryException('Structured subqueries must belong to the same connection.');
+        }
+
+        return $subquery->compileForSubquery($forExists);
     }
 
     public static function between(

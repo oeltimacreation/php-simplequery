@@ -11,6 +11,7 @@ use Oeltima\SimpleQuery\Exception\InvalidQueryException;
 use Oeltima\SimpleQuery\Exception\UnsupportedFeatureException;
 use Oeltima\SimpleQuery\Expression\Identifier;
 use Oeltima\SimpleQuery\Internal\Ast\ConditionTerm;
+use Oeltima\SimpleQuery\Internal\Ast\GroupPredicate;
 use Oeltima\SimpleQuery\Internal\Ast\NullPredicate;
 use Oeltima\SimpleQuery\Internal\Compiler\CompilerFactory;
 use Oeltima\SimpleQuery\JoinClause;
@@ -197,6 +198,31 @@ final class QueryBuilderBehaviorTest extends TestCase
         ));
 
         self::assertSame('SELECT * FROM "users" WHERE "active" = ?', $query->compile()->sql);
+    }
+
+    public function testNestedGroupsInACompilationSnapshotAreIndependentlyMutable(): void
+    {
+        $db = CompilerConnection::for(Driver::Sqlite);
+        $query = $db->table('users')->where('active', true)->orWhereNot(
+            static fn (ConditionGroup $group) => $group->where(
+                static fn (ConditionGroup $nested) => $nested->where('role', 'staff'),
+            ),
+        );
+        $before = $query->compile();
+        $snapshot = $query->snapshotForCompilation();
+        $outer = $snapshot->where->terms()[1]->predicate;
+        self::assertInstanceOf(GroupPredicate::class, $outer);
+        $inner = $outer->conditions->terms()[0]->predicate;
+        self::assertInstanceOf(GroupPredicate::class, $inner);
+        $inner->conditions->add(new ConditionTerm(new NullPredicate(Identifier::of('deleted'), false), true));
+
+        $compiled = $db->compilerForQueryBuilding()->select($snapshot);
+        CompiledQueryAssertions::assertMatches(
+            $compiled,
+            'SELECT * FROM "users" WHERE "active" = ? OR NOT ((("role" = ? OR "deleted" IS NULL)))',
+            [1, 'staff'],
+        );
+        self::assertEquals($before, $query->compile());
     }
 
     public function testSubqueryIsSnapshottedAndBindingsFollowSqlOccurrenceOrder(): void

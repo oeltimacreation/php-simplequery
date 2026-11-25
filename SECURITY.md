@@ -18,6 +18,8 @@ Security support covers the current ZeroVer minor release line.
 | 0.1.x | ❌ Superseded by 0.2.0 |
 | Unreleased development branch | Best effort; not for production |
 
+The `0.11.0` candidate falls under the unreleased development policy.
+
 ## Reporting a vulnerability
 
 Please use GitHub's private vulnerability reporting feature for this

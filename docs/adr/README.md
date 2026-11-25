@@ -33,6 +33,7 @@ silently rewriting the original decision.
 | [024](024-explicit-connection-lifecycle.md) | Explicit lifecycle inspection and terminal connection discard | Accepted |
 | [025](025-resource-owner-cloning.md) | Non-cloneable resource owners | Accepted |
 | [026](026-locked-child-queries.md) | Reject structured locked child queries | Accepted |
+| [027](027-structured-exists.md) | Structured `EXISTS` in read filters | Accepted |
 
 ## Format
 

@@ -8,6 +8,27 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
+The release candidate targets `0.11.0`.
+
+### Added
+
+- Verify stable PHP 8.6 in CI with SQLite execution, direct MariaDB and MySQL
+  PDO probes, and independent no-dev installations.
+- Add structured `whereExists()`, `whereNotExists()`, and their `OR` variants
+  for read filters, with same-connection child snapshots and ordered bindings.
+
+### Changed
+
+- Reduce temporary allocation when an `IN` list or subquery supplies the first
+  bindings in a compiled statement.
+- Reduce temporary allocation when cloning query conditions or taking a
+  detached builder snapshot.
+
+### Fixed
+
+- Preserve comparison-operator and empty-SQL validation on PHP 8.6 when inputs
+  contain form-feed characters.
+
 ## [0.10.0] - 2026-10-24
 
 ### Changed

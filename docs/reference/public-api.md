@@ -154,6 +154,10 @@ whereIn(...): self
 orWhereIn(...): self
 whereNotIn(...): self
 orWhereNotIn(...): self
+whereExists(QueryBuilder $subquery): static
+orWhereExists(QueryBuilder $subquery): static
+whereNotExists(QueryBuilder $subquery): static
+orWhereNotExists(QueryBuilder $subquery): static
 whereBetween(...): self
 orWhereBetween(...): self
 whereNull(...): self
@@ -187,6 +191,13 @@ Expression SQL and its bindings occur before the separately bound comparison
 value. `whereColumn()` and `orWhereColumn()` are the explicit
 identifier-to-identifier forms and are also available inside condition groups.
 The same expression/value overloads apply to `having()` and `orHaving()`.
+
+All four existence methods are available on `QueryBuilder` and `ConditionGroup`
+for read `WHERE` predicates. They take a same-connection child and snapshot
+its SQL and bindings. A foreign connection throws `InvalidQueryException`.
+Child locks or pagination, `HAVING`, and write contexts throw
+`UnsupportedFeatureException`. Context checks follow structured nested
+children through `IN` and derived sources. [ADR-027](../adr/027-structured-exists.md)
 
 ```php
 where(

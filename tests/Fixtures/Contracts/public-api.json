@@ -305,6 +305,25 @@
                     ]
                 },
                 {
+                    "name": "orWhereExists",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "subquery",
+                            "type": "Oeltima\\SimpleQuery\\QueryBuilder",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
                     "name": "orWhereIn",
                     "compatibility": "public",
                     "static": false,
@@ -376,6 +395,25 @@
                             "by_reference": false,
                             "variadic": true,
                             "optional": true,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "orWhereNotExists",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "subquery",
+                            "type": "Oeltima\\SimpleQuery\\QueryBuilder",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
                             "attributes": []
                         }
                     ]
@@ -575,6 +613,25 @@
                     ]
                 },
                 {
+                    "name": "whereExists",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "subquery",
+                            "type": "Oeltima\\SimpleQuery\\QueryBuilder",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
                     "name": "whereIn",
                     "compatibility": "public",
                     "static": false,
@@ -646,6 +703,25 @@
                             "by_reference": false,
                             "variadic": true,
                             "optional": true,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "whereNotExists",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "subquery",
+                            "type": "Oeltima\\SimpleQuery\\QueryBuilder",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
                             "attributes": []
                         }
                     ]
@@ -3068,10 +3144,20 @@
                     "compatibility": "internal",
                     "static": false,
                     "final": false,
-                    "return_type": "Oeltima\\SimpleQuery\\CompiledQuery",
+                    "return_type": "Oeltima\\SimpleQuery\\Internal\\Ast\\SubquerySnapshot",
                     "returns_reference": false,
                     "annotations": [],
-                    "parameters": []
+                    "parameters": [
+                        {
+                            "name": "forExists",
+                            "type": "bool",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": true,
+                            "attributes": [],
+                            "default": false
+                        }
+                    ]
                 },
                 {
                     "name": "count",
@@ -3775,6 +3861,25 @@
                     ]
                 },
                 {
+                    "name": "orWhereExists",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "subquery",
+                            "type": "Oeltima\\SimpleQuery\\QueryBuilder",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
                     "name": "orWhereIn",
                     "compatibility": "public",
                     "static": false,
@@ -3846,6 +3951,25 @@
                             "by_reference": false,
                             "variadic": true,
                             "optional": true,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "orWhereNotExists",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "subquery",
+                            "type": "Oeltima\\SimpleQuery\\QueryBuilder",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
                             "attributes": []
                         }
                     ]
@@ -4200,6 +4324,25 @@
                     ]
                 },
                 {
+                    "name": "whereExists",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "subquery",
+                            "type": "Oeltima\\SimpleQuery\\QueryBuilder",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
                     "name": "whereIn",
                     "compatibility": "public",
                     "static": false,
@@ -4271,6 +4414,25 @@
                             "by_reference": false,
                             "variadic": true,
                             "optional": true,
+                            "attributes": []
+                        }
+                    ]
+                },
+                {
+                    "name": "whereNotExists",
+                    "compatibility": "public",
+                    "static": false,
+                    "final": false,
+                    "return_type": "static",
+                    "returns_reference": false,
+                    "annotations": [],
+                    "parameters": [
+                        {
+                            "name": "subquery",
+                            "type": "Oeltima\\SimpleQuery\\QueryBuilder",
+                            "by_reference": false,
+                            "variadic": false,
+                            "optional": false,
                             "attributes": []
                         }
                     ]

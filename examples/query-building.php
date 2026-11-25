@@ -69,4 +69,14 @@ CompiledQueryAssertions::assertMatches(
 CompiledWriteQuery::update($db->table('users')->where('id', 1), ['active' => false]);
 CompiledWriteQuery::delete($db->table('users')->where('id', 2));
 
+$paidOrders = $db->table('orders', 'o')->select('o.id')
+    ->whereColumn('o.customer_id', '=', 'c.id')->where('o.status', 'paid');
+$customers = $db->table('customers', 'c')->select('c.id')->whereExists($paidOrders);
+CompiledQueryAssertions::assertMatches(
+    $customers->compile(),
+    'SELECT `c`.`id` FROM `customers` AS `c` WHERE EXISTS '
+        . '(SELECT `o`.`id` FROM `orders` AS `o` WHERE `o`.`customer_id` = `c`.`id` AND `o`.`status` = ?)',
+    ['paid'],
+);
+
 fwrite(STDOUT, "Query-building example passed.\n");

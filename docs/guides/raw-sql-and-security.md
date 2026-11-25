@@ -61,6 +61,10 @@ $query->select(
 sanitized, or made portable. Bindings remain ordered and are inserted at the
 raw node's exact position during compilation.
 
+Empty-input validation for raw expressions and queries ignores leading and
+trailing spaces, tabs, LF, CR, NUL, and vertical tabs. It treats a form feed as
+SQL text across PHP versions.
+
 Use a raw expression only when the SQL text is trusted application code.
 Request input belongs in a binding or an allowlisted identifier.
 

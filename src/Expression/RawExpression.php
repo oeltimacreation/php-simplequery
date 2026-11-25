@@ -19,7 +19,7 @@ final readonly class RawExpression
         public string $sql,
         array $bindings = [],
     ) {
-        if (trim($this->sql) === '') {
+        if (trim($this->sql, InputNormalizer::SQL_TRIM_CHARACTERS) === '') {
             throw new InvalidQueryException('Trusted raw SQL cannot be empty.');
         }
 

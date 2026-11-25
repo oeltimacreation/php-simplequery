@@ -31,7 +31,7 @@ trait BuildsConditions
         mixed $value = self::MISSING,
         mixed ...$extra,
     ): static {
-        return $this->addCondition(false, false, $subject, $operatorOrValue, $value, extra: $extra);
+        return $this->addCondition(false, false, $subject, $operatorOrValue, $value, $extra);
     }
 
     /** @param RawExpression|(Closure(\Oeltima\SimpleQuery\ConditionGroup): mixed)|string|Identifier $subject */
@@ -41,7 +41,7 @@ trait BuildsConditions
         mixed $value = self::MISSING,
         mixed ...$extra,
     ): static {
-        return $this->addCondition(true, false, $subject, $operatorOrValue, $value, extra: $extra);
+        return $this->addCondition(true, false, $subject, $operatorOrValue, $value, $extra);
     }
 
     /** @param RawExpression|(Closure(\Oeltima\SimpleQuery\ConditionGroup): mixed)|string|Identifier $subject */
@@ -51,7 +51,7 @@ trait BuildsConditions
         mixed $value = self::MISSING,
         mixed ...$extra,
     ): static {
-        return $this->addCondition(false, true, $subject, $operatorOrValue, $value, extra: $extra);
+        return $this->addCondition(false, true, $subject, $operatorOrValue, $value, $extra);
     }
 
     /** @param RawExpression|(Closure(\Oeltima\SimpleQuery\ConditionGroup): mixed)|string|Identifier $subject */
@@ -61,7 +61,7 @@ trait BuildsConditions
         mixed $value = self::MISSING,
         mixed ...$extra,
     ): static {
-        return $this->addCondition(true, true, $subject, $operatorOrValue, $value, extra: $extra);
+        return $this->addCondition(true, true, $subject, $operatorOrValue, $value, $extra);
     }
 
     public function whereColumn(
@@ -104,6 +104,26 @@ trait BuildsConditions
         return $this->addIn(true, true, $column, $values);
     }
 
+    public function whereExists(QueryBuilder $subquery): static
+    {
+        return $this->addExists(false, false, $subquery);
+    }
+
+    public function orWhereExists(QueryBuilder $subquery): static
+    {
+        return $this->addExists(true, false, $subquery);
+    }
+
+    public function whereNotExists(QueryBuilder $subquery): static
+    {
+        return $this->addExists(false, true, $subquery);
+    }
+
+    public function orWhereNotExists(QueryBuilder $subquery): static
+    {
+        return $this->addExists(true, true, $subquery);
+    }
+
     public function whereBetween(string|Identifier $column, mixed $from, mixed $to): static
     {
         return $this->addBetween(false, $column, $from, $to);
@@ -143,10 +163,9 @@ trait BuildsConditions
         RawExpression|Closure|string|Identifier $subject,
         mixed $operatorOrValue,
         mixed $value,
-        ?ConditionCollection $collection = null,
-        array $extra = [],
+        array $extra,
     ): static {
-        $collection ??= $this->conditionCollection();
+        $collection = $this->conditionCollection();
         $predicate = ConditionFactory::condition(
             $this->conditionConnection(),
             $subject,
@@ -177,6 +196,14 @@ trait BuildsConditions
         iterable|QueryBuilder $values,
     ): static {
         $predicate = ConditionFactory::in($this->conditionConnection(), $column, $values, $negated);
+        $this->conditionCollection()->add(new ConditionTerm($predicate, $or));
+
+        return $this;
+    }
+
+    private function addExists(bool $or, bool $negated, QueryBuilder $subquery): static
+    {
+        $predicate = ConditionFactory::exists($this->conditionConnection(), $subquery, $negated);
         $this->conditionCollection()->add(new ConditionTerm($predicate, $or));
 
         return $this;
