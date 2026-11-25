@@ -95,8 +95,8 @@ builder operation also clears the development plan's decision rule.
 
 ## Comparison and noise policy
 
-During 0.11.0 development, CI checks the candidate against a fresh worktree at
-immutable `v0.10.0`. After publication, advance the baseline to the new immutable
+For 0.11.0 release finalization, CI compares the candidate with a fresh
+worktree at immutable `v0.10.0`. Advance the baseline to the new immutable
 release before starting another release plan.
 Labels and report filenames remain generic:
 `release-baseline`, `candidate`,

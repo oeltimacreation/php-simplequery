@@ -34,15 +34,14 @@ Maintained compatibility and migration records:
 - [synthetic migration validation](migration-validation.json) and its
   [performance control](migration-benchmark.json);
 
-The completed 0.10.0 plan is retired. Its accepted contracts are preserved in
-the changelog, upgrade guide, ADRs, and release review.
-
-The [0.11.0 release plan](../plans/0.11.md) defines the next qualification work.
-The [`0.11.0` candidate review](0.11-candidate-review.md) records local
-qualification. The [structured `EXISTS` evaluation](0.11-structured-exists.md)
-records the engine observations behind the accepted API boundary.
-
 Current release evidence:
+
+- [`0.11.0` candidate and release review](0.11-candidate-review.md) — local and
+  hosted qualification, distribution checks, and release finalization.
+- [Structured `EXISTS` evaluation](0.11-structured-exists.md) — live-engine
+  results that informed the API boundary.
+
+0.10 release evidence:
 
 - [`0.10.0` candidate and release review](0.10-candidate-review.md) — local
   qualification, accepted contract changes, hosted CI and code review, package

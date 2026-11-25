@@ -31,12 +31,10 @@ Application-focused guides:
 - [PDO, engine, and proxy quirks](reference/pdo-engine-proxy-quirks.md)
 
 Reference pages describe the contract in this checkout. The
-[upgrade guide](guides/upgrading.md) identifies changes in the `0.11.0`
-candidate. Upcoming work belongs in the active release plan.
+[upgrade guide](guides/upgrading.md) identifies changes in `0.11.0`.
 
 ## Project records
 
-- [0.11.0 release plan](plans/0.11.md)
 - [Maintainer documentation](maintainers/README.md)
 - [Architecture decisions](adr/README.md)
 - [Compatibility and release evidence](evidence/README.md)

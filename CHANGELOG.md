@@ -8,7 +8,7 @@ with ZeroVer releases before `1.0.0`.
 
 ## [Unreleased]
 
-The release candidate targets `0.11.0`.
+## [0.11.0] - 2026-11-25
 
 ### Added
 
@@ -408,7 +408,8 @@ The release candidate targets `0.11.0`.
 - A repeatable direct-migration playbook and complete intentional-difference
   checklist without a runtime Pixie dependency or compatibility façade.
 
-[Unreleased]: https://github.com/oeltimacreation/php-simplequery/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/oeltimacreation/php-simplequery/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/oeltimacreation/php-simplequery/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/oeltimacreation/php-simplequery/compare/v0.8.0...v0.8.1

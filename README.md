@@ -10,14 +10,14 @@ query builder—not an ORM, migration tool, connection pool, or retry layer.
 ## Install
 
 ```bash
-composer require oeltimacreation/php-simplequery:^0.10
+composer require oeltimacreation/php-simplequery:^0.11
 ```
 
 Your PHP installation also needs `ext-pdo` and the matching driver, such as
 `pdo_sqlite` or `pdo_mysql`.
 
-For the `0.11.0` candidate, see the [upgrade guide](docs/guides/upgrading.md#upgrading-from-010-to-011)
-and the [candidate review](docs/evidence/0.11-candidate-review.md).
+See the [upgrade guide](docs/guides/upgrading.md#upgrading-from-010-to-011)
+for changes in `0.11.0`.
 
 ## Quick start
 

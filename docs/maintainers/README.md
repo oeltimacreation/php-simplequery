@@ -15,7 +15,6 @@ information.
 - [Migration review report](migration-review.md)
 - [PDO, engine, and proxy quirks](../reference/pdo-engine-proxy-quirks.md)
 - [Release process](release-process.md)
-- [0.11.0 release plan](../plans/0.11.md)
 - [Security review checklist](security-review-checklist.md)
 - [Technical references](references.md)
 - [Support policy](../../SUPPORT.md)
