@@ -1,7 +1,7 @@
 # Development plans
 
-This directory contains active release planning. The current plan targets
-[0.11.0](0.11.md).
+This directory holds the active plan during release development. The most
+recent completed plan targeted `0.11.0`.
 
 A plan describes intended work, acceptance gates, and explicit non-goals. It
 is not part of the released public API contract. When a release is complete,
@@ -22,3 +22,7 @@ The completed `0.10.0` plan was retired at release finalization; its outcome
 is recorded in the `0.10.0` changelog section, the upgrade guide, ADR-006,
 ADR-008, ADR-010, ADR-026, and the
 [`0.10.0` candidate and release review](../evidence/0.10-candidate-review.md).
+
+The `0.11.0` plan was retired at release finalization. Its outcomes are
+recorded in the changelog, the upgrade guide, ADR-027, and the
+[`0.11.0` candidate and release review](../evidence/0.11-candidate-review.md).

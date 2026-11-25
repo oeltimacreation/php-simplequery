@@ -8,7 +8,7 @@ lines. The first public release is `0.1.0`.
 - `0.y.0` may contain documented breaking changes.
 - `0.y.z` patch releases should remain compatible within that minor line,
   except for urgent security or data-integrity fixes.
-- Consumers should pin a tested minor line such as `~0.10.0`.
+- Consumers should pin a tested minor line such as `~0.11.0`.
 - Changelog entries are not a substitute for migration instructions; every
   breaking change must be documented here.
 
@@ -27,16 +27,16 @@ For each upgrade:
 
 ## Upgrading from 0.10 to 0.11
 
-`0.11.0` is under candidate review. After publication, update the Composer
-constraint and run the upgrade checklist above.
+To upgrade to `0.11.0`, update your Composer constraint and run the upgrade
+checklist above.
 
 ```bash
 composer require oeltimacreation/php-simplequery:^0.11
 ```
 
-The candidate adds PHP 8.6 compatibility checks for SQLite, MariaDB, MySQL,
-and archive-installed consumers. The package requires PHP 8.2 or later and the
-PDO driver for the selected database. If your application adopts PHP 8.6,
+This release adds PHP 8.6 compatibility checks for SQLite, MariaDB, MySQL,
+and archive-installed consumers. The package retains the PHP 8.2, MariaDB 11.8,
+MySQL 8.0, and SQLite 3.39.2+ floors. If your application adopts PHP 8.6,
 run its suite against the actual PDO drivers in deployment. SimpleQuery's
 comparison operator and empty-SQL validation use the same trim characters
 across those PHP versions.
@@ -53,7 +53,7 @@ predicates in those contexts raise `UnsupportedFeatureException`.
 The compiler reduces temporary allocation when a subquery or `IN` list
 supplies the first bindings and when copying query conditions. Check any
 consumer-side compiled query assertions as part of the rollout.
-[Candidate review](../evidence/0.11-candidate-review.md) ·
+[Release review](../evidence/0.11-candidate-review.md) ·
 [Database support](../reference/database-support.md)
 
 ## Upgrading from 0.9 to 0.10
@@ -100,13 +100,13 @@ Column clauses reject aliased and wildcard `Identifier` objects before SQL
 compilation. Keep `as()` and wildcards in projections or valid table sources;
 reference a projected alias by its name in `groupBy()` or `orderBy()`.
 
-## Installing 0.10.0
+## Installing 0.11.0
 
 ```bash
-composer require oeltimacreation/php-simplequery:^0.10
+composer require oeltimacreation/php-simplequery:^0.11
 ```
 
-`0.10.0` requires PHP 8.2+, `ext-pdo`, and either `pdo_sqlite` or `pdo_mysql`.
+`0.11.0` requires PHP 8.2+, `ext-pdo`, and either `pdo_sqlite` or `pdo_mysql`.
 Select `Driver::MariaDb`, `Driver::MySql`, or `Driver::Sqlite` explicitly. See
 [getting started](getting-started.md) for connection examples and
 [database support](../reference/database-support.md) for engine floors.
